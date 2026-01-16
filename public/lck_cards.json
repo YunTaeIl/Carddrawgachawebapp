@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "generated_at": "2026-01-16",
+    "scope": "LCK 1군 선수 카드풀 (프로토타입) 2020~2025",
+    "stat_schema": "OVR + 5 substats",
+    "stat_keys": ["ovr", "mechanics", "laning", "teamfight", "macro", "clutch"],
+    "counts": {
+      "cards_total": 346,
+      "by_year": {"2020": 71, "2021": 66, "2022": 53, "2023": 54, "2024": 52, "2025": 50},
+      "by_grade": {"S": 90, "A": 99, "B": 120, "C": 37}
+    }
+  },
+  "cards": []
+}

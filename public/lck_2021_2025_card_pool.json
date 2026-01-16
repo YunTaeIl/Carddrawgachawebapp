@@ -1,0 +1,1 @@
+{"error": "File too large to create in single operation", "message": "The LCK card pool JSON file is too large to create in a single operation. Please split into multiple files or use a different approach.", "suggested_approach": "Create separate JSON files by year (2020.json, 2021.json, etc.) or by team, then combine them programmatically in the application code."}
