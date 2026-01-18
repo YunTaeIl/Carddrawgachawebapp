@@ -267,6 +267,63 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
             )}
           </div>
 
+          {/* 가챠 버튼 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* 단일 뽑기 */}
+            <div className="bg-gradient-to-br from-[#E4002B]/20 to-[#12182A] rounded-lg p-4 border-2 border-[#E4002B]/50">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-5 h-5 text-[#E4002B]" />
+                <h3 className="text-lg font-bold">단일 뽑기</h3>
+              </div>
+              <div className="mb-3">
+                <div className="text-2xl font-bold text-[#E4002B] mb-1">
+                  {GACHA_CONFIG.SINGLE_COST} RP
+                </div>
+                <div className="text-xs text-[#9AA6C3]">1장 획득</div>
+              </div>
+              <Button
+                onClick={handleSinglePull}
+                disabled={userData.currency < GACHA_CONFIG.SINGLE_COST}
+                className="w-full bg-[#E4002B] hover:bg-[#E4002B]/80 text-white font-bold py-3"
+              >
+                뽑기
+              </Button>
+            </div>
+
+            {/* 10연차 */}
+            <div className="bg-gradient-to-br from-[#2B6CFF]/20 to-[#12182A] rounded-lg p-4 border-2 border-[#2B6CFF]/50 relative overflow-hidden">
+              <div className="absolute top-2 right-2 bg-[#D4AF37] text-[#0B0F1A] px-2 py-0.5 rounded-full text-xs font-bold">
+                A+ 보장
+              </div>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-5 h-5 text-[#2B6CFF]" />
+                <h3 className="text-lg font-bold">10연차</h3>
+              </div>
+              <div className="mb-3">
+                <div className="text-2xl font-bold text-[#2B6CFF] mb-1">
+                  {GACHA_CONFIG.TEN_COST} RP
+                </div>
+                <div className="text-xs text-[#9AA6C3]">
+                  10장 획득 • {GACHA_CONFIG.SINGLE_COST * 10 - GACHA_CONFIG.TEN_COST}RP 할인
+                </div>
+              </div>
+              <Button
+                onClick={handleTenPull}
+                disabled={userData.currency < GACHA_CONFIG.TEN_COST}
+                className="w-full bg-[#2B6CFF] hover:bg-[#2B6CFF]/80 text-white font-bold py-3"
+              >
+                10연차 뽑기
+              </Button>
+            </div>
+          </div>
+
+          {/* 현재 재화 */}
+          <div className="mb-6 text-center">
+            <p className="text-sm text-[#9AA6C3]">
+              보유 RP: <span className="text-[#EAF0FF] font-bold">{userData.currency.toLocaleString()}</span>
+            </p>
+          </div>
+
           {/* 카드팩 미리보기 */}
           <div className="mb-8 flex justify-center">
             <div className={`relative w-64 h-96 rounded-2xl bg-gradient-to-br ${currentPackStyle.bg} ${currentPackStyle.border} border-4 ${currentPackStyle.glow} transform hover:scale-105 transition-transform duration-300`}>
@@ -336,63 +393,6 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
                 • 10연차: A 이상 최소 1장 보장
               </p>
             </div>
-          </div>
-
-          {/* 가챠 버튼 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 단일 뽑기 */}
-            <div className="bg-gradient-to-br from-[#E4002B]/20 to-[#12182A] rounded-xl p-6 border-2 border-[#E4002B]/50">
-              <div className="flex items-center gap-3 mb-4">
-                <Sparkles className="w-6 h-6 text-[#E4002B]" />
-                <h3 className="text-xl font-bold">단일 뽑기</h3>
-              </div>
-              <div className="mb-6">
-                <div className="text-3xl font-bold text-[#E4002B] mb-2">
-                  {GACHA_CONFIG.SINGLE_COST} RP
-                </div>
-                <div className="text-sm text-[#9AA6C3]">1장 획득</div>
-              </div>
-              <Button
-                onClick={handleSinglePull}
-                disabled={userData.currency < GACHA_CONFIG.SINGLE_COST}
-                className="w-full bg-[#E4002B] hover:bg-[#E4002B]/80 text-white font-bold py-6 text-lg"
-              >
-                뽑기
-              </Button>
-            </div>
-
-            {/* 10연차 */}
-            <div className="bg-gradient-to-br from-[#2B6CFF]/20 to-[#12182A] rounded-xl p-6 border-2 border-[#2B6CFF]/50 relative overflow-hidden">
-              <div className="absolute top-2 right-2 bg-[#D4AF37] text-[#0B0F1A] px-3 py-1 rounded-full text-xs font-bold">
-                A+ 보장
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <Sparkles className="w-6 h-6 text-[#2B6CFF]" />
-                <h3 className="text-xl font-bold">10연차</h3>
-              </div>
-              <div className="mb-6">
-                <div className="text-3xl font-bold text-[#2B6CFF] mb-2">
-                  {GACHA_CONFIG.TEN_COST} RP
-                </div>
-                <div className="text-sm text-[#9AA6C3]">
-                  10장 획득 • {GACHA_CONFIG.SINGLE_COST * 10 - GACHA_CONFIG.TEN_COST}RP 할인
-                </div>
-              </div>
-              <Button
-                onClick={handleTenPull}
-                disabled={userData.currency < GACHA_CONFIG.TEN_COST}
-                className="w-full bg-[#2B6CFF] hover:bg-[#2B6CFF]/80 text-white font-bold py-6 text-lg"
-              >
-                10연차 뽑기
-              </Button>
-            </div>
-          </div>
-
-          {/* 현재 재화 */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-[#9AA6C3]">
-              보유 RP: <span className="text-[#EAF0FF] font-bold">{userData.currency.toLocaleString()}</span>
-            </p>
           </div>
         </div>
       )}
