@@ -3,17 +3,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position } from "@/types/lck";
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
-import { pullSingle, pullTen, updateGachaState, craftCard, initializeCardPool } from "@/utils/gachaEngine";
+import { pullSingle, pullTen, updateGachaState, craftCard, initializeCardPool, CardPackType } from "@/utils/gachaEngine";
 import { toast } from "sonner";
 
 interface GameContextType {
   userData: UserData;
   isLoading: boolean;
-  cardPool: LCKCard[];  // 🔥 카드 풀 추가
+  cardPool: LCKCard[];
   
   // 가챠
-  pullSingleGacha: () => Promise<GachaResult | null>;
-  pullTenGacha: () => Promise<GachaResult[] | null>;
+  pullSingleGacha: (packType?: CardPackType) => Promise<GachaResult | null>;
+  pullTenGacha: (packType?: CardPackType) => Promise<GachaResult[] | null>;
   
   // 샤드
   upgradeCard: (cardInstanceId: string) => boolean;
@@ -98,14 +98,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [userData, isLoading]);
 
   // 단일 가챠
-  const pullSingleGacha = async (): Promise<GachaResult | null> => {
-    if (userData.currency < GACHA_CONFIG.SINGLE_COST) {
+  const pullSingleGacha = async (packType?: CardPackType): Promise<GachaResult | null> => {
+    const cost = packType ? GACHA_CONFIG.PACK_COSTS[packType] : GACHA_CONFIG.SINGLE_COST;
+    if (userData.currency < cost) {
       toast.error("재화가 부족합니다!");
       return null;
     }
 
     const ownedCardIds = userData.ownedCards.map(c => c.id);
-    const result = pullSingle(userData.gachaState, ownedCardIds);
+    const result = pullSingle(userData.gachaState, ownedCardIds, packType);
     
     // 새 카드 생성
     const newCard: UserCard = {
@@ -118,7 +119,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // 상태 업데이트
     setUserData(prev => ({
       ...prev,
-      currency: prev.currency - GACHA_CONFIG.SINGLE_COST,
+      currency: prev.currency - cost,
       shards: prev.shards + result.shardsGained,
       ownedCards: result.isDupe ? prev.ownedCards : [...prev.ownedCards, newCard],
       gachaState: updateGachaState(prev.gachaState, [result])
@@ -128,14 +129,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   // 10연차
-  const pullTenGacha = async (): Promise<GachaResult[] | null> => {
-    if (userData.currency < GACHA_CONFIG.TEN_COST) {
+  const pullTenGacha = async (packType?: CardPackType): Promise<GachaResult[] | null> => {
+    const cost = packType ? GACHA_CONFIG.PACK_COSTS[packType] : GACHA_CONFIG.TEN_COST;
+    if (userData.currency < cost) {
       toast.error("재화가 부족합니다!");
       return null;
     }
 
     const ownedCardIds = userData.ownedCards.map(c => c.id);
-    const results = pullTen(userData.gachaState, ownedCardIds);
+    const results = pullTen(userData.gachaState, ownedCardIds, packType);
     
     // 새 카드들 생성
     const newCards: UserCard[] = results
@@ -151,7 +153,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     setUserData(prev => ({
       ...prev,
-      currency: prev.currency - GACHA_CONFIG.TEN_COST,
+      currency: prev.currency - cost,
       shards: prev.shards + totalShards,
       ownedCards: [...prev.ownedCards, ...newCards],
       gachaState: updateGachaState(prev.gachaState, results)

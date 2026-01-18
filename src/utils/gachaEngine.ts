@@ -1,11 +1,36 @@
 // LCK 가챠 엔진: 확률 계산, 천장 시스템, 샤드 지급
 
-import { LCKCard, GachaState, GachaResult, GACHA_CONFIG, Grade } from "@/types/lck";
+import { LCKCard, GachaState, GachaResult, GACHA_CONFIG, Grade, Position } from "@/types/lck";
 import { getCardPool, getCardsByGrade } from "@/data/supabaseCards";
+
+// 카드팩 타입
+export type CardPackType = 
+  | "standard"
+  | "year_2013"
+  | "year_2014"
+  | "year_2015"
+  | "year_2016"
+  | "year_2017"
+  | "year_2018"
+  | "year_2019"
+  | "year_2020"
+  | "year_2021"
+  | "year_2022"
+  | "year_2023"
+  | "year_2024"
+  | "year_2025"
+  | "position_TOP"
+  | "position_JGL"
+  | "position_MID"
+  | "position_ADC"
+  | "position_SUP";
 
 // 카드 풀 캐싱
 let cachedCardPool: LCKCard[] | null = null;
 let cachedGradeMap: Map<Grade, LCKCard[]> = new Map();
+
+// 카드팩별 필터링된 풀 캐싱
+let cachedPackPools: Map<CardPackType, Map<Grade, LCKCard[]>> = new Map();
 
 // 카드 풀 초기화 (앱 시작 시 한번만)
 export async function initializeCardPool() {
@@ -18,11 +43,62 @@ export async function initializeCardPool() {
   cachedGradeMap.set("A", cachedCardPool.filter(c => c.grade === "A"));
   cachedGradeMap.set("B", cachedCardPool.filter(c => c.grade === "B"));
   cachedGradeMap.set("C", cachedCardPool.filter(c => c.grade === "C"));
+  
+  // 카드팩별 풀 초기화
+  initializePackPools();
 }
 
-// 등급별 카드 가져오기 (캐시 사용)
-function getCardsByGradeCached(grade: Grade): LCKCard[] {
-  return cachedGradeMap.get(grade) || [];
+// 카드팩별 풀 초기화
+function initializePackPools() {
+  if (!cachedCardPool) return;
+  
+  const packTypes: CardPackType[] = [
+    "year_2013", "year_2014", "year_2015", "year_2016", "year_2017", 
+    "year_2018", "year_2019", "year_2020", "year_2021", "year_2022", 
+    "year_2023", "year_2024", "year_2025",
+    "position_TOP", "position_JGL", "position_MID", "position_ADC", "position_SUP"
+  ];
+  
+  for (const packType of packTypes) {
+    const filteredPool = filterCardPoolByPack(cachedCardPool, packType);
+    const gradeMap = new Map<Grade, LCKCard[]>();
+    
+    gradeMap.set("S", filteredPool.filter(c => c.grade === "S"));
+    gradeMap.set("A", filteredPool.filter(c => c.grade === "A"));
+    gradeMap.set("B", filteredPool.filter(c => c.grade === "B"));
+    gradeMap.set("C", filteredPool.filter(c => c.grade === "C"));
+    
+    cachedPackPools.set(packType, gradeMap);
+  }
+}
+
+// 카드팩별 필터링
+function filterCardPoolByPack(pool: LCKCard[], packType: CardPackType): LCKCard[] {
+  if (packType === "standard") return pool;
+  
+  // 연도별 필터
+  if (packType.startsWith("year_")) {
+    const year = parseInt(packType.split("_")[1]);
+    return pool.filter(c => c.year === year);
+  }
+  
+  // 포지션별 필터
+  if (packType.startsWith("position_")) {
+    const position = packType.split("_")[1] as Position;
+    return pool.filter(c => c.position === position);
+  }
+  
+  return pool;
+}
+
+// 등급별 카드 가져오기 (카드팩별 캐시 사용)
+function getCardsByGradeCached(grade: Grade, packType: CardPackType = "standard"): LCKCard[] {
+  if (packType === "standard") {
+    return cachedGradeMap.get(grade) || [];
+  }
+  
+  const packPool = cachedPackPools.get(packType);
+  return packPool?.get(grade) || [];
 }
 
 /**
@@ -43,19 +119,19 @@ export function calculateSRate(s_pity_stack: number): number {
 /**
  * 단일 가챠 뽑기
  */
-export function pullSingle(gachaState: GachaState, ownedCardIds: string[]): GachaResult {
+export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packType: CardPackType = "standard"): GachaResult {
   let selectedCard: LCKCard;
   let isPity = false;
 
   // 하드 천장 체크
   if (gachaState.s_pity_stack >= GACHA_CONFIG.S_PITY_HARD) {
     // 무조건 S 등급
-    const sCards = getCardsByGradeCached("S");
+    const sCards = getCardsByGradeCached("S", packType);
     selectedCard = sCards[Math.floor(Math.random() * sCards.length)];
     isPity = true;
   } else if (gachaState.a_pity_stack >= GACHA_CONFIG.A_PITY_HARD) {
     // A 이상 확정
-    const aOrAbove = [...getCardsByGradeCached("S"), ...getCardsByGradeCached("A")];
+    const aOrAbove = [...getCardsByGradeCached("S", packType), ...getCardsByGradeCached("A", packType)];
     selectedCard = aOrAbove[Math.floor(Math.random() * aOrAbove.length)];
     isPity = true;
   } else {
@@ -74,7 +150,7 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[]): Gach
       grade = "C";
     }
     
-    const cardsOfGrade = getCardsByGradeCached(grade);
+    const cardsOfGrade = getCardsByGradeCached(grade, packType);
     selectedCard = cardsOfGrade[Math.floor(Math.random() * cardsOfGrade.length)];
   }
 
@@ -93,13 +169,13 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[]): Gach
 /**
  * 10연차
  */
-export function pullTen(gachaState: GachaState, ownedCardIds: string[]): GachaResult[] {
+export function pullTen(gachaState: GachaState, ownedCardIds: string[], packType: CardPackType = "standard"): GachaResult[] {
   const results: GachaResult[] = [];
   let tempState = { ...gachaState };
   let tempOwnedIds = [...ownedCardIds];
   
   for (let i = 0; i < 10; i++) {
-    const result = pullSingle(tempState, tempOwnedIds);
+    const result = pullSingle(tempState, tempOwnedIds, packType);
     results.push(result);
     
     // 임시로 보유 카드에 추가 (중복 방지용)
@@ -125,7 +201,7 @@ export function pullTen(gachaState: GachaState, ownedCardIds: string[]): GachaRe
   const hasAOrAbove = results.some(r => r.card.grade === "S" || r.card.grade === "A");
   if (!hasAOrAbove) {
     // 마지막 카드를 A로 변경
-    const aCards = getCardsByGradeCached("A");
+    const aCards = getCardsByGradeCached("A", packType);
     const replacementCard = aCards[Math.floor(Math.random() * aCards.length)];
     const isDupe = tempOwnedIds.includes(replacementCard.id);
     

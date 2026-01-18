@@ -69,6 +69,27 @@ export interface Synergy {
 export const GACHA_CONFIG = {
   SINGLE_COST: 200,
   TEN_COST: 1800,
+  PACK_COSTS: {
+    standard: 200, // 단일
+    year_2013: 200,
+    year_2014: 200,
+    year_2015: 200,
+    year_2016: 200,
+    year_2017: 200,
+    year_2018: 200,
+    year_2019: 200,
+    year_2020: 200,
+    year_2021: 200,
+    year_2022: 200,
+    year_2023: 200,
+    year_2024: 200,
+    year_2025: 200,
+    position_TOP: 200,
+    position_JGL: 200,
+    position_MID: 200,
+    position_ADC: 200,
+    position_SUP: 200
+  },
   BASE_RATES: {
     S: 0.02,
     A: 0.10,
