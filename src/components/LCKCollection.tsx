@@ -1,10 +1,10 @@
 // LCK 컬렉션 (인벤토리) 화면
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { ArrowLeft, Filter, Sparkles } from "lucide-react";
+import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Grade, Position, UserCard, GACHA_CONFIG } from "@/types/lck";
 import {
   Dialog,
@@ -24,29 +24,71 @@ interface LCKCollectionProps {
   onBack: () => void;
 }
 
+const CARDS_PER_PAGE = 20; // 한 페이지당 카드 수
+
 export function LCKCollection({ onBack }: LCKCollectionProps) {
   const { userData, upgradeCard, craftCardWithShards } = useGame();
   const [selectedCard, setSelectedCard] = useState<UserCard | null>(null);
   const [filterGrade, setFilterGrade] = useState<Grade | "all">("all");
   const [filterPosition, setFilterPosition] = useState<Position | "all">("all");
+  const [filterTeam, setFilterTeam] = useState<string>("all");
+  const [filterYear, setFilterYear] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"ovr" | "recent">("ovr");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // 필터링 & 정렬
-  let filteredCards = [...userData.ownedCards];
-  
-  if (filterGrade !== "all") {
-    filteredCards = filteredCards.filter(c => c.grade === filterGrade);
-  }
-  
-  if (filterPosition !== "all") {
-    filteredCards = filteredCards.filter(c => c.position === filterPosition);
-  }
-  
-  if (sortBy === "ovr") {
-    filteredCards.sort((a, b) => (b.stats.ovr + b.upgradeLevel) - (a.stats.ovr + a.upgradeLevel));
-  } else {
-    filteredCards.sort((a, b) => b.obtainedAt - a.obtainedAt);
-  }
+  // 고유 팀/연도 목록 추출
+  const uniqueTeams = useMemo(() => {
+    const teams = new Set(userData.ownedCards.map(c => c.team));
+    return Array.from(teams).sort();
+  }, [userData.ownedCards]);
+
+  const uniqueYears = useMemo(() => {
+    const years = new Set(userData.ownedCards.map(c => c.year));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [userData.ownedCards]);
+
+  // 필터링 & 정렬 (메모이제이션)
+  const filteredCards = useMemo(() => {
+    let cards = [...userData.ownedCards];
+    
+    if (filterGrade !== "all") {
+      cards = cards.filter(c => c.grade === filterGrade);
+    }
+    
+    if (filterPosition !== "all") {
+      cards = cards.filter(c => c.position === filterPosition);
+    }
+
+    if (filterTeam !== "all") {
+      cards = cards.filter(c => c.team === filterTeam);
+    }
+
+    if (filterYear !== "all") {
+      cards = cards.filter(c => c.year === parseInt(filterYear));
+    }
+    
+    if (sortBy === "ovr") {
+      cards.sort((a, b) => (b.stats.ovr + b.upgradeLevel) - (a.stats.ovr + a.upgradeLevel));
+    } else {
+      cards.sort((a, b) => b.obtainedAt - a.obtainedAt);
+    }
+
+    return cards;
+  }, [userData.ownedCards, filterGrade, filterPosition, filterTeam, filterYear, sortBy]);
+
+  // 페이지네이션
+  const totalPages = Math.ceil(filteredCards.length / CARDS_PER_PAGE);
+  const paginatedCards = useMemo(() => {
+    const start = (currentPage - 1) * CARDS_PER_PAGE;
+    const end = start + CARDS_PER_PAGE;
+    return filteredCards.slice(start, end);
+  }, [filteredCards, currentPage]);
+
+  // 필터 변경 시 첫 페이지로
+  const handleFilterChange = (setter: (v: any) => void) => (value: any) => {
+    setter(value);
+    setCurrentPage(1);
+  };
 
   const handleUpgrade = (cardInstanceId: string) => {
     const success = upgradeCard(cardInstanceId);
@@ -132,7 +174,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               <span className="text-sm text-[#9AA6C3]">필터:</span>
             </div>
             
-            <Select value={filterGrade} onValueChange={(v) => setFilterGrade(v as Grade | "all")}>
+            <Select value={filterGrade} onValueChange={handleFilterChange(setFilterGrade)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="등급" />
               </SelectTrigger>
@@ -145,7 +187,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               </SelectContent>
             </Select>
 
-            <Select value={filterPosition} onValueChange={(v) => setFilterPosition(v as Position | "all")}>
+            <Select value={filterPosition} onValueChange={handleFilterChange(setFilterPosition)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="포지션" />
               </SelectTrigger>
@@ -159,9 +201,33 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               </SelectContent>
             </Select>
 
+            <Select value={filterTeam} onValueChange={handleFilterChange(setFilterTeam)}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="팀" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체</SelectItem>
+                {uniqueTeams.map(team => (
+                  <SelectItem key={team} value={team}>{team}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterYear} onValueChange={handleFilterChange(setFilterYear)}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="연도" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체</SelectItem>
+                {uniqueYears.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <div className="flex-1" />
 
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as "ovr" | "recent")}>
+            <Select value={sortBy} onValueChange={handleFilterChange(setSortBy)}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="정렬" />
               </SelectTrigger>
@@ -175,17 +241,53 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
 
         {/* 카드 그리드 */}
         {filteredCards.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredCards.map((card) => (
-              <div
-                key={card.instanceId}
-                onClick={() => setSelectedCard(card)}
-                className="cursor-pointer hover:scale-105 transition-transform"
-              >
-                <LCKHoloCard card={card} size="medium" upgradeLevel={card.upgradeLevel} />
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
+              {paginatedCards.map((card) => (
+                <div
+                  key={card.instanceId}
+                  onClick={() => setSelectedCard(card)}
+                  className="cursor-pointer hover:scale-105 transition-transform"
+                >
+                  <LCKHoloCard card={card} size="medium" upgradeLevel={card.upgradeLevel} />
+                </div>
+              ))}
+            </div>
+
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 bg-[#12182A] rounded-xl p-4 border border-[#2B6CFF]/30">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="text-[#EAF0FF] hover:text-[#2B6CFF] disabled:opacity-30"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-[#9AA6C3]">
+                    페이지 <span className="text-[#2B6CFF] font-bold">{currentPage}</span> / {totalPages}
+                  </span>
+                  <span className="text-xs text-[#9AA6C3]">
+                    ({filteredCards.length}장 중 {(currentPage - 1) * CARDS_PER_PAGE + 1}-{Math.min(currentPage * CARDS_PER_PAGE, filteredCards.length)})
+                  </span>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="text-[#EAF0FF] hover:text-[#2B6CFF] disabled:opacity-30"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="text-center text-[#9AA6C3] py-20">
             <p className="text-lg mb-2">카드가 없습니다</p>

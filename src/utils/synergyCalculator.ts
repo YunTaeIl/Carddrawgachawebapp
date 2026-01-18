@@ -30,6 +30,112 @@ export interface SynergyBonus {
 }
 
 /**
+ * 팀명 정규화 (같은 조직은 하나로 통합)
+ */
+function normalizeTeamName(teamName: string): string {
+  const teamMapping: Record<string, string> = {
+    // T1/SKT 계열
+    "T1": "T1",
+    "SK Telecom T1": "T1",
+    "SKT": "T1",
+    "SKT T1": "T1",
+    
+    // Gen.G/Samsung 계열
+    "Gen.G": "GenG",
+    "Samsung Galaxy": "GenG",
+    "Samsung": "GenG",
+    "SSG": "GenG",
+    "Gen": "GenG",
+    
+    // CJ Entus 계열
+    "CJ Entus": "CJ",
+    "CJ Entus Frost": "CJ",
+    "CJ Entus Blaze": "CJ",
+    
+    // KT 계열
+    "KT Rolster": "KT",
+    "KT": "KT",
+    
+    // ROX/KOO 계열
+    "ROX Tigers": "ROX",
+    "KOO Tigers": "ROX",
+    "GE Tigers": "ROX",
+    
+    // DAMWON 계열
+    "DAMWON Gaming": "DWG",
+    "DWG KIA": "DWG",
+    "DWG": "DWG",
+    
+    // Sandbox 계열
+    "SANDBOX": "SB",
+    "Sandbox Gaming": "SB",
+    "Liiv SANDBOX": "SB",
+    
+    // BRION 계열
+    "Fredit BRION": "BRION",
+    "OKSavingsBank BRION": "BRION",
+    
+    // Dplus 계열
+    "Dplus KIA": "DK",
+    "Dplus Kia": "DK",
+    
+    // Nongshim 계열
+    "Nongshim RedForce": "NS",
+    
+    // Kwangdong/DN 계열
+    "Kwangdong Freecs": "KDF",
+    "DN Freecs": "KDF",
+    
+    // Hanwha 계열
+    "Hanwha Life Esports": "HLE",
+    
+    // DRX
+    "DRX": "DRX",
+    
+    // Griffin
+    "Griffin": "GRF",
+    
+    // Afreeca
+    "Afreeca Freecs": "AF",
+    
+    // Longzhu
+    "Longzhu Gaming": "LZ",
+    
+    // Jin Air
+    "Jin Air Green Wings": "JAG",
+    
+    // Kingzone
+    "Kingzone DragonX": "KZ",
+    
+    // MVP
+    "MVP": "MVP",
+    
+    // NaJin 계열
+    "NaJin e-mFire": "NJE",
+    "NaJin Black Sword": "NJE",
+    "NaJin White Shield": "NJE",
+    
+    // Incredible Miracle
+    "Incredible Miracle": "IM",
+    
+    // bbq
+    "bbq Olivers": "BBQ",
+    
+    // BNK
+    "BNK FEARX": "BNK",
+  };
+  
+  return teamMapping[teamName] || teamName;
+}
+
+/**
+ * 두 팀이 같은 조직인지 확인
+ */
+function isSameTeam(team1: string, team2: string): boolean {
+  return normalizeTeamName(team1) === normalizeTeamName(team2);
+}
+
+/**
  * 스쿼드에서 활성화된 시너지 계산
  */
 export function calculateActiveSynergies(squad: Squad): Synergy[] {
@@ -350,7 +456,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   // === 전설의 팀 로스터 시너지 ===
 
   // 한화생명 전차 (HLE 5명)
-  const hleCount = cards.filter(c => c.team === "Hanwha Life Esports").length;
+  const hleCount = cards.filter(c => normalizeTeamName(c.team) === "HLE").length;
   if (hleCount === 5) {
     activeSynergies.push({
       id: "hle_tank",
@@ -362,7 +468,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2022 DRX 우승 로스터
-  const drx2022 = cards.filter(c => c.team === "DRX" && c.year === 2022).length;
+  const drx2022 = cards.filter(c => normalizeTeamName(c.team) === "DRX" && c.year === 2022).length;
   if (drx2022 === 5) {
     activeSynergies.push({
       id: "drx_2022_worlds",
@@ -374,7 +480,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2019 Griffin (전설의 팀)
-  const griffin2019 = cards.filter(c => c.team === "Griffin" && c.year === 2019).length;
+  const griffin2019 = cards.filter(c => normalizeTeamName(c.team) === "GRF" && c.year === 2019).length;
   if (griffin2019 >= 3) {
     activeSynergies.push({
       id: "griffin_2019",
@@ -386,7 +492,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2020 DAMWON (Worlds 우승)
-  const dwg2020 = cards.filter(c => c.team === "DAMWON Gaming" && c.year === 2020).length;
+  const dwg2020 = cards.filter(c => normalizeTeamName(c.team) === "DWG" && c.year === 2020).length;
   if (dwg2020 === 5) {
     activeSynergies.push({
       id: "dwg_2020_worlds",
@@ -398,7 +504,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2015 SKT (완전체)
-  const skt2015 = cards.filter(c => c.team === "T1" && c.year === 2015).length;
+  const skt2015 = cards.filter(c => normalizeTeamName(c.team) === "T1" && c.year === 2015).length;
   if (skt2015 === 5) {
     activeSynergies.push({
       id: "skt_2015_golden",
@@ -410,7 +516,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2016 SKT
-  const skt2016 = cards.filter(c => c.team === "T1" && c.year === 2016).length;
+  const skt2016 = cards.filter(c => normalizeTeamName(c.team) === "T1" && c.year === 2016).length;
   if (skt2016 === 5) {
     activeSynergies.push({
       id: "skt_2016",
@@ -422,7 +528,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2023 T1 (황금 로스터)
-  const t1_2023 = cards.filter(c => c.team === "T1" && c.year === 2023).length;
+  const t1_2023 = cards.filter(c => normalizeTeamName(c.team) === "T1" && c.year === 2023).length;
   if (t1_2023 === 5) {
     activeSynergies.push({
       id: "t1_2023_golden",
@@ -434,7 +540,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2024 Gen.G (MSI 우승)
-  const geng2024 = cards.filter(c => c.team === "Gen.G" && c.year === 2024).length;
+  const geng2024 = cards.filter(c => normalizeTeamName(c.team) === "GenG" && c.year === 2024).length;
   if (geng2024 === 5) {
     activeSynergies.push({
       id: "geng_2024_msi",
@@ -446,7 +552,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2016 ROX Tigers
-  const rox2016 = cards.filter(c => c.team === "ROX Tigers" && c.year === 2016).length;
+  const rox2016 = cards.filter(c => normalizeTeamName(c.team) === "ROX" && c.year === 2016).length;
   if (rox2016 >= 4) {
     activeSynergies.push({
       id: "rox_2016",
@@ -458,7 +564,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2017 Longzhu Gaming (프고 이적)
-  const lz2017 = cards.filter(c => c.team === "Longzhu Gaming" && c.year === 2017).length;
+  const lz2017 = cards.filter(c => normalizeTeamName(c.team) === "LZ" && c.year === 2017).length;
   if (lz2017 >= 3) {
     activeSynergies.push({
       id: "lz_2017",
@@ -470,7 +576,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2018 KT (롤스터)
-  const kt2018 = cards.filter(c => c.team === "KT Rolster" && c.year === 2018).length;
+  const kt2018 = cards.filter(c => normalizeTeamName(c.team) === "KT" && c.year === 2018).length;
   if (kt2018 === 5) {
     activeSynergies.push({
       id: "kt_2018_roster",
@@ -482,7 +588,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   }
 
   // 2017 Samsung Galaxy (Worlds 우승)
-  const ssg2017 = cards.filter(c => c.team === "Gen.G" && c.year === 2017).length;
+  const ssg2017 = cards.filter(c => normalizeTeamName(c.team) === "GenG" && c.year === 2017).length;
   if (ssg2017 === 5) {
     activeSynergies.push({
       id: "ssg_2017_worlds",
