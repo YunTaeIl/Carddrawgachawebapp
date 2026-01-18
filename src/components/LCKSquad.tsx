@@ -1,10 +1,10 @@
 // LCK 스쿼드 빌더 화면
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { ArrowLeft, Users, TrendingUp, Search } from "lucide-react";
+import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Position, POSITION_NAMES, UserCard } from "@/types/lck";
 import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculator";
 import {
@@ -26,6 +26,8 @@ interface LCKSquadProps {
   onBack: () => void;
 }
 
+const CARDS_PER_PAGE = 15; // 한 페이지당 카드 수
+
 export function LCKSquad({ onBack }: LCKSquadProps) {
   const { userData, setSquadCard } = useGame();
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
@@ -35,11 +37,15 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
   const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   
   const synergies = calculateActiveSynergies(userData.squad);
   const stats = calculateSquadStats(userData.squad, synergies);
 
   const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
+
+  // 모든 연도 (2013~2025)
+  const allYears = Array.from({ length: 13 }, (_, i) => 2025 - i); // [2025, 2024, ..., 2013]
 
   const handleSlotClick = (position: Position) => {
     setSelectedPosition(position);
@@ -48,6 +54,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
     setGradeFilter("all");
     setYearFilter("all");
     setTeamFilter("all");
+    setCurrentPage(1);
   };
 
   const handleCardSelect = (card: UserCard) => {
@@ -92,11 +99,29 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
     // OVR 내림차순 정렬
     return cards.sort((a, b) => (b.stats.ovr + b.upgradeLevel) - (a.stats.ovr + a.upgradeLevel));
   };
+
+  // 페이징 처리된 카드 목록
+  const getPaginatedCards = (position: Position) => {
+    const allCards = getAvailableCards(position);
+    const start = (currentPage - 1) * CARDS_PER_PAGE;
+    const end = start + CARDS_PER_PAGE;
+    return {
+      cards: allCards.slice(start, end),
+      total: allCards.length,
+      totalPages: Math.ceil(allCards.length / CARDS_PER_PAGE)
+    };
+  };
   
   // 팀 목록 추출 (중복 제거)
   const getUniqueTeams = (): string[] => {
     const teams = new Set(userData.ownedCards.map(c => c.team));
     return Array.from(teams).sort();
+  };
+
+  // 필터 변경 시 1페이지로 리셋
+  const handleFilterChange = (setter: (v: any) => void) => (value: any) => {
+    setter(value);
+    setCurrentPage(1);
   };
 
   return (
@@ -284,7 +309,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
               />
               <Select
                 value={gradeFilter}
-                onValueChange={(value) => setGradeFilter(value)}
+                onValueChange={handleFilterChange(setGradeFilter)}
               >
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="등급">
@@ -301,7 +326,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
               </Select>
               <Select
                 value={yearFilter}
-                onValueChange={(value) => setYearFilter(value)}
+                onValueChange={handleFilterChange(setYearFilter)}
               >
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="연도">
@@ -310,17 +335,14 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">모든 연도</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2023">2023</SelectItem>
-                  <SelectItem value="2022">2022</SelectItem>
-                  <SelectItem value="2021">2021</SelectItem>
-                  <SelectItem value="2020">2020</SelectItem>
+                  {allYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select
                 value={teamFilter}
-                onValueChange={(value) => setTeamFilter(value)}
+                onValueChange={handleFilterChange(setTeamFilter)}
               >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="팀">
@@ -337,7 +359,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 mt-6 p-6">
               {selectedPosition &&
-                getAvailableCards(selectedPosition).map((card) => (
+                getPaginatedCards(selectedPosition).cards.map((card) => (
                   <div
                     key={card.instanceId}
                     className="flex justify-center"
@@ -351,13 +373,38 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
                     />
                   </div>
                 ))}
-              {selectedPosition && getAvailableCards(selectedPosition).length === 0 && (
+              {selectedPosition && getPaginatedCards(selectedPosition).cards.length === 0 && (
                 <div className="col-span-full text-center text-[#9AA6C3] py-12">
                   해당 포지션의 카드가 없습니다.<br />
                   <span className="text-xs">가챠를 통해 카드를 획득하세요!</span>
                 </div>
               )}
             </div>
+            {selectedPosition && getPaginatedCards(selectedPosition).total > CARDS_PER_PAGE && (
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mr-2"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm text-[#9AA6C3]">
+                  {currentPage} / {getPaginatedCards(selectedPosition).totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-2"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === getPaginatedCards(selectedPosition).totalPages}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

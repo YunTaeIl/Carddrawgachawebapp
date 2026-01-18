@@ -42,10 +42,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     return Array.from(teams).sort();
   }, [userData.ownedCards]);
 
-  const uniqueYears = useMemo(() => {
-    const years = new Set(userData.ownedCards.map(c => c.year));
-    return Array.from(years).sort((a, b) => b - a);
-  }, [userData.ownedCards]);
+  // 모든 연도 (2013~2025)
+  const allYears = Array.from({ length: 13 }, (_, i) => 2025 - i); // [2025, 2024, ..., 2013]
 
   // 필터링 & 정렬 (메모이제이션)
   const filteredCards = useMemo(() => {
@@ -219,7 +217,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">전체</SelectItem>
-                {uniqueYears.map(year => (
+                {allYears.map(year => (
                   <SelectItem key={year} value={year}>{year}</SelectItem>
                 ))}
               </SelectContent>
