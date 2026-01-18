@@ -127,12 +127,24 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packT
   if (gachaState.s_pity_stack >= GACHA_CONFIG.S_PITY_HARD) {
     // 무조건 S 등급
     const sCards = getCardsByGradeCached("S", packType);
-    selectedCard = sCards[Math.floor(Math.random() * sCards.length)];
+    if (sCards.length === 0) {
+      // 해당 팩에 S등급이 없으면 표준 풀에서 선택
+      const standardSCards = getCardsByGradeCached("S", "standard");
+      selectedCard = standardSCards[Math.floor(Math.random() * standardSCards.length)];
+    } else {
+      selectedCard = sCards[Math.floor(Math.random() * sCards.length)];
+    }
     isPity = true;
   } else if (gachaState.a_pity_stack >= GACHA_CONFIG.A_PITY_HARD) {
     // A 이상 확정
     const aOrAbove = [...getCardsByGradeCached("S", packType), ...getCardsByGradeCached("A", packType)];
-    selectedCard = aOrAbove[Math.floor(Math.random() * aOrAbove.length)];
+    if (aOrAbove.length === 0) {
+      // 해당 팩에 A+가 없으면 표준 풀에서 선택
+      const standardAOrAbove = [...getCardsByGradeCached("S", "standard"), ...getCardsByGradeCached("A", "standard")];
+      selectedCard = standardAOrAbove[Math.floor(Math.random() * standardAOrAbove.length)];
+    } else {
+      selectedCard = aOrAbove[Math.floor(Math.random() * aOrAbove.length)];
+    }
     isPity = true;
   } else {
     // 일반 확률
@@ -151,7 +163,13 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packT
     }
     
     const cardsOfGrade = getCardsByGradeCached(grade, packType);
-    selectedCard = cardsOfGrade[Math.floor(Math.random() * cardsOfGrade.length)];
+    if (cardsOfGrade.length === 0) {
+      // 해당 팩에 해당 등급이 없으면 표준 풀에서 선택
+      const standardCards = getCardsByGradeCached(grade, "standard");
+      selectedCard = standardCards[Math.floor(Math.random() * standardCards.length)];
+    } else {
+      selectedCard = cardsOfGrade[Math.floor(Math.random() * cardsOfGrade.length)];
+    }
   }
 
   // 중복 체크
@@ -201,7 +219,11 @@ export function pullTen(gachaState: GachaState, ownedCardIds: string[], packType
   const hasAOrAbove = results.some(r => r.card.grade === "S" || r.card.grade === "A");
   if (!hasAOrAbove) {
     // 마지막 카드를 A로 변경
-    const aCards = getCardsByGradeCached("A", packType);
+    let aCards = getCardsByGradeCached("A", packType);
+    if (aCards.length === 0) {
+      // 해당 팩에 A등급이 없으면 표준 풀에서 선택
+      aCards = getCardsByGradeCached("A", "standard");
+    }
     const replacementCard = aCards[Math.floor(Math.random() * aCards.length)];
     const isDupe = tempOwnedIds.includes(replacementCard.id);
     
