@@ -72,7 +72,7 @@ export const SAMPLE_CARDS: LCKCard[] = [
     year: 2024,
     team: "Gen.G",
     name: "Canyon",
-    position: "JNG",
+    position: "JGL",
     grade: "S",
     image: "",
     stats: { ovr: 99, mechanics: 94, laning: 99, teamfight: 96, macro: 96, clutch: 97 }
@@ -124,7 +124,7 @@ export const SAMPLE_CARDS: LCKCard[] = [
     year: 2024,
     team: "Dplus Kia",
     name: "Lucid",
-    position: "JNG",
+    position: "JGL",
     grade: "A",
     image: "",
     stats: { ovr: 89, mechanics: 91, laning: 95, teamfight: 82, macro: 92, clutch: 89 }
@@ -166,7 +166,7 @@ export const SAMPLE_CARDS: LCKCard[] = [
     year: 2024,
     team: "BNK FEARX",
     name: "Raptor",
-    position: "JNG",
+    position: "JGL",
     grade: "B",
     image: "",
     stats: { ovr: 82, mechanics: 89, laning: 77, teamfight: 88, macro: 88, clutch: 77 }
@@ -240,7 +240,7 @@ export const SAMPLE_CARDS: LCKCard[] = [
     year: 2024,
     team: "Hanwha Life Esports",
     name: "Peanut",
-    position: "JNG",
+    position: "JGL",
     grade: "S",
     image: "",
     stats: { ovr: 93, mechanics: 89, laning: 94, teamfight: 89, macro: 92, clutch: 92 }

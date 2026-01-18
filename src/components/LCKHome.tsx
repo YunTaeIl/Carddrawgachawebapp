@@ -7,15 +7,16 @@ import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { GACHA_CONFIG } from "@/types/lck";
 import { Coins, Sparkles, Users, Library, Zap, TrendingUp } from "lucide-react";
 import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculator";
+import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 
 interface LCKHomeProps {
-  onNavigate: (page: "home" | "gacha" | "squad" | "collection" | "test") => void;
+  onNavigate: (page: "home" | "gacha" | "squad" | "collection" | "test" | "terms") => void;
 }
 
 export function LCKHome({ onNavigate }: LCKHomeProps) {
   const { userData, addCurrency } = useGame();
 
-  const positions = ["TOP", "JNG", "MID", "ADC", "SUP"] as const;
+  const positions = ["TOP", "JGL", "MID", "ADC", "SUP"] as const;
   
   // 스쿼드 스탯 & 시너지 계산
   const synergies = calculateActiveSynergies(userData.squad);
@@ -27,13 +28,17 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       <div className="bg-gradient-to-b from-[#C8102E]/10 to-transparent border-b border-[#C8102E]/30">
         <div className="max-w-[1500px] mx-auto px-6 py-8">{/* 메인과 동일한 너비 */}
           <div className="text-center mb-6">
-            <h1 className="text-7xl font-bold mb-2 tracking-wider" style={{
-              background: 'linear-gradient(135deg, #C8102E 0%, #0047AB 50%, #FFB81C 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: '0 0 80px rgba(200, 16, 46, 0.5)'
-            }}>
-              LCK GACHA
+            <h1 className="flex items-center justify-center gap-4 mb-2">
+              <ImageWithFallback
+                src="https://qpzfzemhljgzscojkxnj.supabase.co/storage/v1/object/public/team-logos/lck-logo-white.svg"
+                alt="LCK Logo"
+                className="w-20 h-20 object-contain"
+              />
+              <span className="text-7xl font-bold tracking-wider text-white" style={{
+                textShadow: '0 0 40px rgba(255, 255, 255, 0.5), 0 0 80px rgba(200, 16, 46, 0.3)'
+              }}>
+                LCK GACHA
+              </span>
             </h1>
             <p className="text-xl text-[#8B95B5] font-display tracking-wide">SQUAD BUILDER</p>
           </div>
@@ -145,30 +150,41 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 <TrendingUp className="w-4 h-4 text-[#FFB81C]" />
                 <h3 className="font-bold font-display">스쿼드 스탯</h3>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-xs text-[#8B95B5]">총 OVR</div>
-                  <div className="text-2xl font-display font-bold text-[#FFB81C]">{stats.totalOVR}</div>
+              <div className="space-y-3">
+                {/* 총 OVR & 평균 OVR */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="text-xs text-[#8B95B5] mb-1">총 OVR</div>
+                    <div className="text-2xl font-display font-bold text-[#FFB81C]">{stats.totalOVR}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-[#8B95B5] mb-1">평균 OVR</div>
+                    <div className="text-2xl font-display font-bold text-[#0047AB]">{stats.avgOVR}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs text-[#8B95B5]">평균 OVR</div>
-                  <div className="text-2xl font-display font-bold text-[#0047AB]">{stats.avgOVR}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-[#8B95B5]">메카닉</div>
-                  <div className="text-lg font-display font-bold">{stats.totalMechanics}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-[#8B95B5]">한타</div>
-                  <div className="text-lg font-display font-bold">{stats.totalTeamfight}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-[#8B95B5]">운영</div>
-                  <div className="text-lg font-display font-bold">{stats.totalMacro}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-[#8B95B5]">클러치</div>
-                  <div className="text-lg font-display font-bold">{stats.totalClutch}</div>
+                
+                {/* 5개 스탯 */}
+                <div className="grid grid-cols-5 gap-2">
+                  <div className="text-center">
+                    <div className="text-xs text-[#8B95B5] mb-1">메카닉</div>
+                    <div className="text-lg font-display font-bold">{stats.totalMechanics}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-[#8B95B5] mb-1">라인전</div>
+                    <div className="text-lg font-display font-bold">{stats.totalLaning}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-[#8B95B5] mb-1">한타</div>
+                    <div className="text-lg font-display font-bold">{stats.totalTeamfight}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-[#8B95B5] mb-1">운영</div>
+                    <div className="text-lg font-display font-bold">{stats.totalMacro}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-[#8B95B5] mb-1">클러치</div>
+                    <div className="text-lg font-display font-bold">{stats.totalClutch}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -267,10 +283,10 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onNavigate("test")}
-            className="text-[#9AA6C3] hover:text-[#EAF0FF] font-display"
+            onClick={() => onNavigate("terms")}
+            className="text-[#8B95B5] hover:text-white text-xs"
           >
-            🎬 테스트 모드
+            이용약관 및 면책조항
           </Button>
         </div>
       </div>

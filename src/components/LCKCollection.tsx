@@ -152,7 +152,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               <SelectContent>
                 <SelectItem value="all">전체</SelectItem>
                 <SelectItem value="TOP">TOP</SelectItem>
-                <SelectItem value="JNG">JNG</SelectItem>
+                <SelectItem value="JGL">JGL</SelectItem>
                 <SelectItem value="MID">MID</SelectItem>
                 <SelectItem value="ADC">ADC</SelectItem>
                 <SelectItem value="SUP">SUP</SelectItem>
@@ -195,20 +195,20 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
 
         {/* 카드 상세 다이얼로그 */}
         <Dialog open={selectedCard !== null} onOpenChange={() => setSelectedCard(null)}>
-          <DialogContent className="max-w-2xl bg-[#12182A] text-[#EAF0FF]">
+          <DialogContent className="max-w-4xl bg-[#12182A] text-[#EAF0FF]">
             {selectedCard && (
               <>
                 <DialogHeader>
                   <DialogTitle>카드 상세</DialogTitle>
                 </DialogHeader>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div className="flex flex-col md:flex-row gap-6 mt-4">
                   {/* 카드 미리보기 */}
-                  <div className="flex justify-center">
+                  <div className="flex justify-center md:justify-start shrink-0">
                     <LCKHoloCard card={selectedCard} size="large" upgradeLevel={selectedCard.upgradeLevel} />
                   </div>
 
                   {/* 상세 정보 */}
-                  <div className="space-y-4">
+                  <div className="space-y-4 flex-1 min-w-0">
                     <div>
                       <h3 className="text-2xl font-bold mb-2">{selectedCard.name}</h3>
                       <div className="text-sm text-[#9AA6C3] space-y-1">
@@ -232,7 +232,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-[#9AA6C3]">기계</span>
+                          <span className="text-[#9AA6C3]">메카닉</span>
                           <span>{selectedCard.stats.mechanics}</span>
                         </div>
                         <div className="flex justify-between">

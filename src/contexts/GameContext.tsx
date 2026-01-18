@@ -3,12 +3,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position } from "@/types/lck";
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
-import { pullSingle, pullTen, updateGachaState, craftCard } from "@/utils/gachaEngine";
+import { pullSingle, pullTen, updateGachaState, craftCard, initializeCardPool } from "@/utils/gachaEngine";
 import { toast } from "sonner";
 
 interface GameContextType {
   userData: UserData;
   isLoading: boolean;
+  cardPool: LCKCard[];  // 🔥 카드 풀 추가
   
   // 가챠
   pullSingleGacha: () => Promise<GachaResult | null>;
@@ -31,12 +32,65 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export function GameProvider({ children }: { children: ReactNode }) {
   const [userData, setUserData] = useState<UserData>(getDefaultUserData());
   const [isLoading, setIsLoading] = useState(true);
+  const [cardPool, setCardPool] = useState<LCKCard[]>([]);  // 🔥 카드 풀 상태
 
   // 초기 로드
   useEffect(() => {
-    const loaded = loadUserData();
-    setUserData(loaded);
-    setIsLoading(false);
+    const loadData = async () => {
+      // 유저 데이터 로드
+      const loaded = loadUserData();
+      setUserData(loaded);
+      
+      // 🔥 카드 풀 캐싱: localStorage에서 먼저 로드, 백그라운드에서 업데이트
+      const cachedPool = localStorage.getItem('lck_card_pool_cache');
+      const cacheTimestamp = localStorage.getItem('lck_card_pool_timestamp');
+      const now = Date.now();
+      const CACHE_DURATION = 1000 * 60 * 60; // 1시간
+      
+      if (cachedPool && cacheTimestamp) {
+        const timestamp = parseInt(cacheTimestamp);
+        if (now - timestamp < CACHE_DURATION) {
+          // 캐시가 유효하면 즉시 사용
+          try {
+            const pool = JSON.parse(cachedPool);
+            setCardPool(pool);
+            setIsLoading(false);
+            console.log('카드 풀 캐시 로드 완료 (즉시)');
+            
+            // 백그라운드에서 업데이트 체크
+            initializeCardPool().then(async () => {
+              const { getCardPool } = await import("@/data/supabaseCards");
+              const pool = await getCardPool();
+              localStorage.setItem('lck_card_pool_cache', JSON.stringify(pool));
+              localStorage.setItem('lck_card_pool_timestamp', now.toString());
+              setCardPool(pool);
+            }).catch(err => console.error('백그라운드 카드 풀 업데이트 실패:', err));
+            
+            return;
+          } catch (err) {
+            console.error('캐시 파싱 실패:', err);
+          }
+        }
+      }
+      
+      // 캐시가 없거나 만료됨 → Supabase에서 로드
+      try {
+        await initializeCardPool();
+        const { getCardPool } = await import("@/data/supabaseCards");
+        const pool = await getCardPool();
+        setCardPool(pool);
+        setIsLoading(false);
+        // 캐시 저장
+        localStorage.setItem('lck_card_pool_cache', JSON.stringify(pool));
+        localStorage.setItem('lck_card_pool_timestamp', now.toString());
+        console.log('카드 풀 Supabase 로드 완료');
+      } catch (err) {
+        console.error('카드 풀 로드 실패:', err);
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
   }, []);
 
   // 저장 (userData 변경 시)
@@ -200,6 +254,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       value={{
         userData,
         isLoading,
+        cardPool,  // 🔥 카드 풀 추가
         pullSingleGacha,
         pullTenGacha,
         upgradeCard,

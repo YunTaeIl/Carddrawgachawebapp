@@ -6,6 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, X } from "lucide-react";
+import { getTeamLogoUrls } from "@/utils/teamLogos";
 
 interface FIFARevealProps {
   result: GachaResult;
@@ -16,23 +17,38 @@ interface FIFARevealProps {
 }
 
 export function FIFAReveal({ result, onComplete, onSkip, currentIndex, totalCount }: FIFARevealProps) {
-  const [stage, setStage] = useState(0);
+  const [stage, setStage] = useState(0); // 0부터 시작
   const card = result.card;
   const isS = card.grade === "S";
+  const [logoError, setLogoError] = useState(false);  // 🔥 로고 로드 실패 상태
+  const [logoUrlIndex, setLogoUrlIndex] = useState(0);  // 🔥 현재 시도 중인 URL 인덱스
+  
+  // 팀 로고 경로 (폴백 URL 배열)
+  const teamLogoUrls = getTeamLogoUrls(card.year, card.team);
+  const currentLogoUrl = teamLogoUrls[logoUrlIndex];
+  
+  // 로고 로드 실패 시 다음 URL 시도
+  const handleLogoError = () => {
+    if (logoUrlIndex < teamLogoUrls.length - 1) {
+      setLogoUrlIndex(logoUrlIndex + 1);
+    } else {
+      setLogoError(true);  // 모든 URL 실패
+    }
+  };
 
   useEffect(() => {
-    // S등급이 아니면 간단하게
+    // S등급이 아니면 바로 카드 표시
     if (!isS) {
-      setStage(4); // 바로 카드 표시
+      setStage(4);
       return;
     }
 
-    // S등급: 단계별 연출 (더 느리게)
+    // S등급: 연출 시작 (로고는 2.5초로 더 길게)
     const timers = [
-      setTimeout(() => setStage(1), 500),   // 연도
-      setTimeout(() => setStage(2), 2000),  // 포지션 (1.5초 후)
-      setTimeout(() => setStage(3), 3500),  // 팀 (1.5초 후)
-      setTimeout(() => setStage(4), 5000),  // 카드 등장 (1.5초 후)
+      setTimeout(() => setStage(1), 0),     // 바로 연도
+      setTimeout(() => setStage(2), 1500),  // 포지션 (1.5초 후)
+      setTimeout(() => setStage(3), 3000),  // 팀 로고 (1.5초 후)
+      setTimeout(() => setStage(4), 5500),  // 카드 등장 (2.5초 후) ← 로고 표시 시간 연장!
     ];
 
     return () => timers.forEach(clearTimeout);
@@ -42,10 +58,17 @@ export function FIFAReveal({ result, onComplete, onSkip, currentIndex, totalCoun
     onComplete();
   };
 
+  // stage -1일 때는 완전히 검은 화면만 (아무것도 안 보임)
+  if (stage === -1) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#0A0E27]" />
+    );
+  }
+
   return (
-    <div className="fixed inset-0 z-50 bg-[#0B0F1A]">
+    <div className="fixed inset-0 z-50 bg-[#0A0E27]">
       {/* Skip 버튼 */}
-      {totalCount > 1 && (
+      {totalCount > 1 && stage > 0 && (
         <div className="absolute top-4 right-4 z-[60]">
           <Button
             variant="ghost"
@@ -60,15 +83,15 @@ export function FIFAReveal({ result, onComplete, onSkip, currentIndex, totalCoun
       )}
 
       {/* 진행 표시 */}
-      {totalCount > 1 && (
+      {totalCount > 1 && stage > 0 && (
         <div className="absolute top-4 left-4 z-[60] text-[#9AA6C3] text-sm">
           {currentIndex} / {totalCount}
         </div>
       )}
 
       {/* S등급 FIFA 스타일 연출 */}
-      {isS && (
-        <div className="absolute inset-0 flex items-center justify-center">
+      {isS && stage < 4 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0A0E27]">
           {/* 배경 입자 효과 */}
           <div className="absolute inset-0">
             {[...Array(50)].map((_, i) => (
@@ -103,12 +126,12 @@ export function FIFAReveal({ result, onComplete, onSkip, currentIndex, totalCoun
             {stage === 1 && (
               <motion.div
                 className="absolute"
-                initial={{ opacity: 0, scale: 0.5, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.5, y: -50 }}
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.3 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="text-9xl font-display font-bold text-[#FFB81C]" style={{ textShadow: "0 0 40px #FFB81C" }}>
+                <div className="text-[12rem] font-display font-bold text-[#FFB81C]" style={{ textShadow: "0 0 60px #FFB81C" }}>
                   {card.year}
                 </div>
               </motion.div>
@@ -120,33 +143,56 @@ export function FIFAReveal({ result, onComplete, onSkip, currentIndex, totalCoun
             {stage === 2 && (
               <motion.div
                 className="absolute"
-                initial={{ opacity: 0, scale: 0.5, x: -50 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.5, x: 50 }}
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.3 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="text-7xl font-display font-bold text-[#C8102E]" style={{ textShadow: "0 0 30px #C8102E" }}>
-                  {POSITION_NAMES[card.position]}
+                <div className="text-[10rem] font-display font-bold text-[#C8102E]" style={{ textShadow: "0 0 50px #C8102E" }}>
+                  {card.position}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Stage 3: 팀 */}
+          {/* Stage 3: 팀 로고 */}
           <AnimatePresence>
             {stage === 3 && (
               <motion.div
                 className="absolute"
-                initial={{ opacity: 0, scale: 0.5, y: -50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 1.5, y: 0 }}
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.3 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="text-center">
-                  <div className="text-6xl font-display font-bold text-[#0047AB]" style={{ textShadow: "0 0 30px #0047AB" }}>
-                    {card.team}
+                {currentLogoUrl && !logoError ? (
+                  <div className="relative">
+                    {/* 로고 글로우 효과 */}
+                    <div 
+                      className="absolute inset-0 blur-3xl opacity-70"
+                      style={{
+                        background: `radial-gradient(circle, #0047AB, transparent 70%)`
+                      }}
+                    />
+                    {/* 팀 로고 */}
+                    <img 
+                      src={currentLogoUrl}
+                      alt={card.team}
+                      className="relative w-[500px] h-[500px] object-contain"
+                      style={{
+                        filter: "drop-shadow(0 0 40px #0047AB)"
+                      }}
+                      onError={handleLogoError}  // 🔥 로고 로드 실패 시 에러 처리
+                    />
                   </div>
-                </div>
+                ) : (
+                  // 로고가 없거나 로드 실패 시 팀 이름 표시
+                  <div className="text-center">
+                    <div className="text-[9rem] font-display font-bold text-[#0047AB]" style={{ textShadow: "0 0 50px #0047AB" }}>
+                      {card.team}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -155,7 +201,7 @@ export function FIFAReveal({ result, onComplete, onSkip, currentIndex, totalCoun
 
       {/* Stage 4: 카드 등장 */}
       <AnimatePresence>
-        {stage >= 4 && (
+        {stage === 4 && (
           <motion.div
             className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0E27]"
             initial={{ opacity: 0 }}
@@ -227,7 +273,7 @@ export function FIFAReveal({ result, onComplete, onSkip, currentIndex, totalCoun
       </AnimatePresence>
 
       {/* A/B/C 등급 간단 연출 배경 */}
-      {!isS && (
+      {!isS && stage === 4 && (
         <div className="absolute inset-0 bg-gradient-radial from-transparent to-[#0B0F1A] pointer-events-none" />
       )}
     </div>

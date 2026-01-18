@@ -1,0 +1,29 @@
+/* Pokemon Cards CSS 스타일 Foil 효과 */
+
+/* S등급: Galaxy Cosmos 효과 - 정적 */
+@keyframes sparkle-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* A등급: Diagonal Stripe Holo 효과 - hover 시에만 */
+
+/* B등급: Sparkle 효과 - 정적 */
+
+/* C등급: Reverse Holo 효과 - 정적 */
+
+/* 공통: 반짝임 - hover 시에만 */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

@@ -1,7 +1,32 @@
 // LCK 가챠 엔진: 확률 계산, 천장 시스템, 샤드 지급
 
 import { LCKCard, GachaState, GachaResult, GACHA_CONFIG, Grade } from "@/types/lck";
-import { getCardPool, getCardsByGrade } from "@/data/sampleCards";
+import { getCardPool, getCardsByGrade } from "@/data/supabaseCards";
+
+// 카드 풀 캐싱
+let cachedCardPool: LCKCard[] | null = null;
+let cachedGradeMap: Map<Grade, LCKCard[]> = new Map();
+
+// 카드 풀 초기화 (앱 시작 시 한번만)
+export async function initializeCardPool() {
+  if (cachedCardPool) return;
+  
+  cachedCardPool = await getCardPool();
+  
+  // 등급별로 분류
+  cachedGradeMap.set("S", cachedCardPool.filter(c => c.grade === "S"));
+  cachedGradeMap.set("A", cachedCardPool.filter(c => c.grade === "A"));
+  cachedGradeMap.set("B", cachedCardPool.filter(c => c.grade === "B"));
+  cachedGradeMap.set("C", cachedCardPool.filter(c => c.grade === "C"));
+  
+  console.log(`카드 풀 초기화 완료: 총 ${cachedCardPool.length}장`);
+  console.log(`S: ${cachedGradeMap.get("S")?.length}, A: ${cachedGradeMap.get("A")?.length}, B: ${cachedGradeMap.get("B")?.length}, C: ${cachedGradeMap.get("C")?.length}`);
+}
+
+// 등급별 카드 가져오기 (캐시 사용)
+function getCardsByGradeCached(grade: Grade): LCKCard[] {
+  return cachedGradeMap.get(grade) || [];
+}
 
 /**
  * S 등급 확률 계산 (소프트 천장 포함)
@@ -22,19 +47,18 @@ export function calculateSRate(s_pity_stack: number): number {
  * 단일 가챠 뽑기
  */
 export function pullSingle(gachaState: GachaState, ownedCardIds: string[]): GachaResult {
-  const pool = getCardPool();
   let selectedCard: LCKCard;
   let isPity = false;
 
   // 하드 천장 체크
   if (gachaState.s_pity_stack >= GACHA_CONFIG.S_PITY_HARD) {
     // 무조건 S 등급
-    const sCards = getCardsByGrade("S");
+    const sCards = getCardsByGradeCached("S");
     selectedCard = sCards[Math.floor(Math.random() * sCards.length)];
     isPity = true;
   } else if (gachaState.a_pity_stack >= GACHA_CONFIG.A_PITY_HARD) {
     // A 이상 확정
-    const aOrAbove = [...getCardsByGrade("S"), ...getCardsByGrade("A")];
+    const aOrAbove = [...getCardsByGradeCached("S"), ...getCardsByGradeCached("A")];
     selectedCard = aOrAbove[Math.floor(Math.random() * aOrAbove.length)];
     isPity = true;
   } else {
@@ -53,7 +77,7 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[]): Gach
       grade = "C";
     }
     
-    const cardsOfGrade = getCardsByGrade(grade);
+    const cardsOfGrade = getCardsByGradeCached(grade);
     selectedCard = cardsOfGrade[Math.floor(Math.random() * cardsOfGrade.length)];
   }
 
@@ -104,7 +128,7 @@ export function pullTen(gachaState: GachaState, ownedCardIds: string[]): GachaRe
   const hasAOrAbove = results.some(r => r.card.grade === "S" || r.card.grade === "A");
   if (!hasAOrAbove) {
     // 마지막 카드를 A로 변경
-    const aCards = getCardsByGrade("A");
+    const aCards = getCardsByGradeCached("A");
     const replacementCard = aCards[Math.floor(Math.random() * aCards.length)];
     const isDupe = tempOwnedIds.includes(replacementCard.id);
     
@@ -149,6 +173,6 @@ export function updateGachaState(
  * 샤드로 카드 제작
  */
 export function craftCard(grade: "A" | "S"): LCKCard {
-  const cards = getCardsByGrade(grade);
+  const cards = getCardsByGradeCached(grade);
   return cards[Math.floor(Math.random() * cards.length)];
 }

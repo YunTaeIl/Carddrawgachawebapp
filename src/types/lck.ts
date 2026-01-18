@@ -1,7 +1,7 @@
 // LCK 카드 타입 정의
 
 export type Grade = "S" | "A" | "B" | "C";
-export type Position = "TOP" | "JNG" | "MID" | "ADC" | "SUP";
+export type Position = "TOP" | "JGL" | "MID" | "ADC" | "SUP";
 
 export interface CardStats {
   ovr: number;
@@ -44,7 +44,7 @@ export interface UserData {
   gachaState: GachaState;
   squad: {
     TOP: UserCard | null;
-    JNG: UserCard | null;
+    JGL: UserCard | null;
     MID: UserCard | null;
     ADC: UserCard | null;
     SUP: UserCard | null;
@@ -94,15 +94,15 @@ export const GACHA_CONFIG = {
 };
 
 export const GRADE_COLORS = {
-  S: "#FFB81C", // LCK Gold
-  A: "#0047AB", // LCK Blue
-  B: "#8B95B5", // Silver-Gray
-  C: "#5B5B5B"  // Gray
+  S: "#FFD700", // 밝은 골드 (더 눈에 띄게)
+  A: "#E0E0E0", // 밝은 실버 (배경과 대비)
+  B: "#CD7F32", // 브론즈
+  C: "#808080"  // 다크 그레이
 };
 
 export const POSITION_NAMES = {
   TOP: "탑",
-  JNG: "정글",
+  JGL: "정글",
   MID: "미드",
   ADC: "원딜",
   SUP: "서포터"

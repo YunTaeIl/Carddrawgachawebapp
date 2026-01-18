@@ -18,6 +18,7 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
   const [isRevealing, setIsRevealing] = useState(false);
   const [currentResults, setCurrentResults] = useState<GachaResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showBlackScreen, setShowBlackScreen] = useState(false); // 검은 화면 표시 여부
 
   const handleSinglePull = async () => {
     const result = await pullSingleGacha();
@@ -25,7 +26,17 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
 
     setCurrentResults([result]);
     setCurrentIndex(0);
-    setIsRevealing(true);
+    
+    // S등급이면 검은 화면 먼저
+    if (result.card.grade === "S") {
+      setShowBlackScreen(true);
+      setTimeout(() => {
+        setShowBlackScreen(false);
+        setIsRevealing(true);
+      }, 1500);
+    } else {
+      setIsRevealing(true);
+    }
   };
 
   const handleTenPull = async () => {
@@ -34,12 +45,35 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
 
     setCurrentResults(results);
     setCurrentIndex(0);
-    setIsRevealing(true);
+    
+    // 첫 번째 카드가 S등급이면 검은 화면 먼저
+    if (results[0].card.grade === "S") {
+      setShowBlackScreen(true);
+      setTimeout(() => {
+        setShowBlackScreen(false);
+        setIsRevealing(true);
+      }, 1500);
+    } else {
+      setIsRevealing(true);
+    }
   };
 
   const handleRevealComplete = () => {
     if (currentIndex < currentResults.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+      const nextCard = currentResults[currentIndex + 1];
+      
+      // 다음 카드가 S등급이면 검은 화면 먼저
+      if (nextCard.card.grade === "S") {
+        setIsRevealing(false);
+        setShowBlackScreen(true);
+        setTimeout(() => {
+          setCurrentIndex(currentIndex + 1);
+          setShowBlackScreen(false);
+          setIsRevealing(true);
+        }, 1500);
+      } else {
+        setCurrentIndex(currentIndex + 1);
+      }
     } else {
       setIsRevealing(false);
       setCurrentResults([]);
@@ -48,16 +82,39 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
   };
 
   const handleSkipAll = () => {
-    setIsRevealing(false);
-    setCurrentResults([]);
-    setCurrentIndex(0);
+    // 현재 인덱스 이후에 S등급이 있는지 확인
+    const nextSIndex = currentResults.findIndex((r, idx) => idx > currentIndex && r.card.grade === "S");
+    
+    if (nextSIndex !== -1) {
+      // 다음 S등급으로 이동
+      const nextCard = currentResults[nextSIndex];
+      setIsRevealing(false);
+      setShowBlackScreen(true);
+      setTimeout(() => {
+        setCurrentIndex(nextSIndex);
+        setShowBlackScreen(false);
+        setIsRevealing(true);
+      }, 1500);
+    } else {
+      // S등급이 더 없으면 완전히 종료
+      setIsRevealing(false);
+      setShowBlackScreen(false);
+      setCurrentResults([]);
+      setCurrentIndex(0);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-[#EAF0FF] p-6">
+      {/* S등급 준비 중 검은 화면 */}
+      {showBlackScreen && (
+        <div className="fixed inset-0 z-50 bg-[#0A0E27]" />
+      )}
+
       {/* 연출 중일 때 */}
       {isRevealing && currentResults.length > 0 && (
         <FIFAReveal
+          key={`reveal-${currentIndex}`}
           result={currentResults[currentIndex]}
           onComplete={handleRevealComplete}
           onSkip={handleSkipAll}

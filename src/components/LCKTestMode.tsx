@@ -4,18 +4,20 @@ import React, { useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { FIFAReveal } from "@/components/FIFAReveal";
 import { GachaResult, LCKCard } from "@/types/lck";
-import { getCardsByGrade } from "@/data/sampleCards";
 import { ArrowLeft } from "lucide-react";
+import { useGame } from "@/contexts/GameContext";
 
 interface LCKTestModeProps {
   onBack: () => void;
 }
 
 export function LCKTestMode({ onBack }: LCKTestModeProps) {
+  const { cardPool } = useGame();
   const [testResult, setTestResult] = useState<GachaResult | null>(null);
 
   const testGrade = (grade: "S" | "A" | "B" | "C") => {
-    const cards = getCardsByGrade(grade);
+    // cardPool에서 해당 등급 필터링
+    const cards = cardPool.filter(card => card.grade === grade);
     if (cards.length === 0) return;
 
     const randomCard = cards[Math.floor(Math.random() * cards.length)];

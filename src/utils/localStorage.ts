@@ -16,7 +16,7 @@ export function getDefaultUserData(): UserData {
     },
     squad: {
       TOP: null,
-      JNG: null,
+      JGL: null,
       MID: null,
       ADC: null,
       SUP: null

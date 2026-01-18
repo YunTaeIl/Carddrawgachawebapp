@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { ArrowLeft, Users, TrendingUp } from "lucide-react";
+import { ArrowLeft, Users, TrendingUp, Search } from "lucide-react";
 import { Position, POSITION_NAMES, UserCard } from "@/types/lck";
 import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculator";
 import {
@@ -13,6 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select";
+import { Input } from "@/app/components/ui/input";
 
 interface LCKSquadProps {
   onBack: () => void;
@@ -22,13 +30,24 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
   const { userData, setSquadCard } = useGame();
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   
+  // 검색 & 필터 상태
+  const [searchQuery, setSearchQuery] = useState("");
+  const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [teamFilter, setTeamFilter] = useState<string>("all");
+  
   const synergies = calculateActiveSynergies(userData.squad);
   const stats = calculateSquadStats(userData.squad, synergies);
 
-  const positions: Position[] = ["TOP", "JNG", "MID", "ADC", "SUP"];
+  const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
 
   const handleSlotClick = (position: Position) => {
     setSelectedPosition(position);
+    // 다이얼로그 열 때 필터 초기화
+    setSearchQuery("");
+    setGradeFilter("all");
+    setYearFilter("all");
+    setTeamFilter("all");
   };
 
   const handleCardSelect = (card: UserCard) => {
@@ -42,14 +61,47 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
     setSquadCard(position, null);
   };
 
-  // 해당 포지션의 카드들 필터링
+  // 해당 포지션의 카드들 필터링 + 검색 + 필터 적용
   const getAvailableCards = (position: Position): UserCard[] => {
-    return userData.ownedCards.filter(c => c.position === position);
+    let cards = userData.ownedCards.filter(c => c.position === position);
+    
+    // 검색어 필터
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      cards = cards.filter(c => 
+        c.name.toLowerCase().includes(query) ||
+        c.team.toLowerCase().includes(query)
+      );
+    }
+    
+    // 등급 필터
+    if (gradeFilter !== "all") {
+      cards = cards.filter(c => c.grade === gradeFilter);
+    }
+    
+    // 연도 필터
+    if (yearFilter !== "all") {
+      cards = cards.filter(c => c.year === parseInt(yearFilter));
+    }
+    
+    // 팀 필터
+    if (teamFilter !== "all") {
+      cards = cards.filter(c => c.team === teamFilter);
+    }
+    
+    // OVR 내림차순 정렬
+    return cards.sort((a, b) => (b.stats.ovr + b.upgradeLevel) - (a.stats.ovr + a.upgradeLevel));
+  };
+  
+  // 팀 목록 추출 (중복 제거)
+  const getUniqueTeams = (): string[] => {
+    const teams = new Set(userData.ownedCards.map(c => c.team));
+    return Array.from(teams).sort();
   };
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-[#EAF0FF] p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1800px] mx-auto">
         {/* 헤더 */}
         <div className="flex items-center gap-4 mb-8">
           <Button
@@ -63,49 +115,48 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
           <h1 className="text-3xl font-bold">스쿼드 빌더</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
           {/* 좌측: 스쿼드 배치 */}
-          <div className="lg:col-span-2">
-            <div className="bg-[#12182A] rounded-xl p-6 border border-[#2B6CFF]/30">
+          <div className="lg:col-span-5">
+            <div className="bg-[#12182A] rounded-xl p-8 border border-[#2B6CFF]/30 overflow-x-auto">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <Users className="w-5 h-5" />
                 스쿼드 배치
               </h2>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {positions.map((position) => {
                   const card = userData.squad[position];
                   return (
                     <div
                       key={position}
-                      className="bg-[#0B0F1A] rounded-lg p-4 border-2 border-[#2B6CFF]/30 hover:border-[#2B6CFF] transition-colors"
+                      className="bg-[#0B0F1A] rounded-lg p-3 border-2 border-[#2B6CFF]/30 hover:border-[#2B6CFF] transition-colors"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col items-center gap-3">
                         {/* 포지션 라벨 */}
-                        <div className="flex-shrink-0 w-20 text-center">
-                          <div className="text-sm text-[#9AA6C3]">{POSITION_NAMES[position]}</div>
-                          <div className="text-2xl font-bold text-[#2B6CFF]">{position}</div>
+                        <div className="text-center">
+                          <div className="text-xs text-[#9AA6C3]">{POSITION_NAMES[position]}</div>
+                          <div className="text-xl font-bold text-[#2B6CFF]">{position}</div>
                         </div>
 
                         {/* 카드 또는 빈 슬롯 */}
                         {card ? (
-                          <div className="flex-1 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="flex-shrink-0">
-                                <LCKHoloCard card={card} size="small" upgradeLevel={card.upgradeLevel} />
-                              </div>
-                              <div>
-                                <div className="text-sm text-[#9AA6C3]">{card.team} ({card.year})</div>
-                                <div className="text-lg font-bold">{card.name}</div>
-                                <div className="text-sm text-[#9AA6C3]">
-                                  OVR {card.stats.ovr + card.upgradeLevel}
-                                </div>
+                          <div className="flex flex-col items-center gap-2 w-full">
+                            <div className="flex-shrink-0">
+                              <LCKHoloCard card={card} size="small" upgradeLevel={card.upgradeLevel} />
+                            </div>
+                            <div className="text-center w-full">
+                              <div className="text-xs text-[#9AA6C3] truncate">{card.team}</div>
+                              <div className="text-sm font-bold truncate">{card.name}</div>
+                              <div className="text-xs text-[#9AA6C3]">
+                                OVR {card.stats.ovr + card.upgradeLevel}
                               </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col gap-1 w-full">
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="w-full text-xs"
                                 onClick={() => handleSlotClick(position)}
                               >
                                 변경
@@ -113,6 +164,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="w-full text-xs"
                                 onClick={() => handleRemoveCard(position)}
                               >
                                 제거
@@ -120,10 +172,10 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
                             </div>
                           </div>
                         ) : (
-                          <div className="flex-1">
+                          <div className="w-full">
                             <Button
                               variant="outline"
-                              className="w-full h-24 border-dashed border-2"
+                              className="w-full h-[293px] border-dashed border-2 text-sm"
                               onClick={() => handleSlotClick(position)}
                             >
                               + 카드 배치
@@ -214,25 +266,93 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
 
         {/* 카드 선택 다이얼로그 */}
         <Dialog open={selectedPosition !== null} onOpenChange={() => setSelectedPosition(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-[#12182A] text-[#EAF0FF]">
+          <DialogContent 
+            className="!max-w-none bg-[#12182A] text-[#EAF0FF]"
+            style={{ width: '95vw', maxHeight: '90vh', overflowY: 'auto' }}
+          >
             <DialogHeader>
-              <DialogTitle>
-                {selectedPosition && `${POSITION_NAMES[selectedPosition]} 선택`}
+              <DialogTitle className="text-2xl">
+                {selectedPosition && `${POSITION_NAMES[selectedPosition]} 카드 선택`}
               </DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            <div className="flex items-center gap-4 mb-4">
+              <Input
+                placeholder="카드 이름 또는 팀 검색"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1"
+              />
+              <Select
+                value={gradeFilter}
+                onValueChange={(value) => setGradeFilter(value)}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="등급">
+                    {gradeFilter === "all" ? "모든 등급" : gradeFilter}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 등급</SelectItem>
+                  <SelectItem value="S">S</SelectItem>
+                  <SelectItem value="A">A</SelectItem>
+                  <SelectItem value="B">B</SelectItem>
+                  <SelectItem value="C">C</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={yearFilter}
+                onValueChange={(value) => setYearFilter(value)}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="연도">
+                    {yearFilter === "all" ? "모든 연도" : yearFilter}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 연도</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2023">2023</SelectItem>
+                  <SelectItem value="2022">2022</SelectItem>
+                  <SelectItem value="2021">2021</SelectItem>
+                  <SelectItem value="2020">2020</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={teamFilter}
+                onValueChange={(value) => setTeamFilter(value)}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="팀">
+                    {teamFilter === "all" ? "모든 팀" : teamFilter}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 팀</SelectItem>
+                  {getUniqueTeams().map(team => (
+                    <SelectItem key={team} value={team}>{team}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 mt-6 p-6">
               {selectedPosition &&
                 getAvailableCards(selectedPosition).map((card) => (
                   <div
                     key={card.instanceId}
-                    onClick={() => handleCardSelect(card)}
-                    className="cursor-pointer hover:scale-105 transition-transform"
+                    className="flex justify-center"
                   >
-                    <LCKHoloCard card={card} size="medium" upgradeLevel={card.upgradeLevel} />
+                    <LCKHoloCard 
+                      card={card} 
+                      size="medium" 
+                      upgradeLevel={card.upgradeLevel}
+                      onClick={() => handleCardSelect(card)}
+                      disableFlip={true}
+                    />
                   </div>
                 ))}
               {selectedPosition && getAvailableCards(selectedPosition).length === 0 && (
-                <div className="col-span-3 text-center text-[#9AA6C3] py-12">
+                <div className="col-span-full text-center text-[#9AA6C3] py-12">
                   해당 포지션의 카드가 없습니다.<br />
                   <span className="text-xs">가챠를 통해 카드를 획득하세요!</span>
                 </div>
