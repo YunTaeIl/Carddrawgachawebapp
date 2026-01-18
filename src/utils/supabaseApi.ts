@@ -55,15 +55,8 @@ export async function fetchAllCards(): Promise<LCKCard[]> {
       throw new Error(data.error || "Failed to fetch cards");
     }
 
-    // 🔥 디버깅: 첫 번째 카드의 image 값 확인
-    if (data.cards && data.cards.length > 0) {
-      console.log('🔍 첫 번째 카드 원본 데이터:', data.cards[0]);
-      console.log('🔍 image 필드:', data.cards[0].image);
-    }
-
     return data.cards.map(convertServerCard);
   } catch (error) {
-    console.error("Error fetching cards from Supabase:", error);
     throw error;
   }
 }

@@ -18,9 +18,6 @@ export async function initializeCardPool() {
   cachedGradeMap.set("A", cachedCardPool.filter(c => c.grade === "A"));
   cachedGradeMap.set("B", cachedCardPool.filter(c => c.grade === "B"));
   cachedGradeMap.set("C", cachedCardPool.filter(c => c.grade === "C"));
-  
-  console.log(`카드 풀 초기화 완료: 총 ${cachedCardPool.length}장`);
-  console.log(`S: ${cachedGradeMap.get("S")?.length}, A: ${cachedGradeMap.get("A")?.length}, B: ${cachedGradeMap.get("B")?.length}, C: ${cachedGradeMap.get("C")?.length}`);
 }
 
 // 등급별 카드 가져오기 (캐시 사용)

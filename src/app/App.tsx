@@ -21,12 +21,9 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        console.log("카드 데이터 로딩 중...");
         await initializeCardPool();
-        console.log("카드 풀 로딩 완료!");
         setIsInitialized(true);
       } catch (error) {
-        console.error("카드 풀 로딩 실패:", error);
         // 실패해도 계속 진행 (로컬 데이터 사용)
         setIsInitialized(true);
       }

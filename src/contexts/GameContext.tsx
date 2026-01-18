@@ -41,7 +41,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const loaded = loadUserData();
       setUserData(loaded);
       
-      // 🔥 카드 풀 캐싱: localStorage에서 먼저 로드, 백그라운드에서 업데이트
+      // 카드 풀 캐싱: localStorage에서 먼저 로드, 백그라운드에서 업데이트
       const cachedPool = localStorage.getItem('lck_card_pool_cache');
       const cacheTimestamp = localStorage.getItem('lck_card_pool_timestamp');
       const now = Date.now();
@@ -55,7 +55,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
             const pool = JSON.parse(cachedPool);
             setCardPool(pool);
             setIsLoading(false);
-            console.log('카드 풀 캐시 로드 완료 (즉시)');
             
             // 백그라운드에서 업데이트 체크
             initializeCardPool().then(async () => {
@@ -64,11 +63,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
               localStorage.setItem('lck_card_pool_cache', JSON.stringify(pool));
               localStorage.setItem('lck_card_pool_timestamp', now.toString());
               setCardPool(pool);
-            }).catch(err => console.error('백그라운드 카드 풀 업데이트 실패:', err));
+            }).catch(() => {});
             
             return;
           } catch (err) {
-            console.error('캐시 파싱 실패:', err);
+            // 캐시 파싱 실패 시 계속 진행
           }
         }
       }
@@ -83,9 +82,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // 캐시 저장
         localStorage.setItem('lck_card_pool_cache', JSON.stringify(pool));
         localStorage.setItem('lck_card_pool_timestamp', now.toString());
-        console.log('카드 풀 Supabase 로드 완료');
       } catch (err) {
-        console.error('카드 풀 로드 실패:', err);
         setIsLoading(false);
       }
     };

@@ -27,12 +27,9 @@ export function getDefaultUserData(): UserData {
 export function loadUserData(): UserData {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      return getDefaultUserData();
-    }
+    if (!stored) return getDefaultUserData();
     return JSON.parse(stored) as UserData;
   } catch (error) {
-    console.error("Failed to load user data:", error);
     return getDefaultUserData();
   }
 }
@@ -41,7 +38,7 @@ export function saveUserData(data: UserData): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error("Failed to save user data:", error);
+    // Silent fail
   }
 }
 

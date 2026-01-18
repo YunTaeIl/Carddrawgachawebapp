@@ -1,4 +1,4 @@
-// Supabase KV Store에서 LCK 카드 데이터 가져오기
+// Supabase 카드 데이터 레이어
 
 import { LCKCard } from '@/types/lck';
 import { fetchAllCards, fetchCardById } from '@/utils/supabaseApi';
@@ -9,28 +9,25 @@ export async function getAllCards(): Promise<LCKCard[]> {
     const cards = await fetchAllCards();
     return cards;
   } catch (error) {
-    console.error('카드 데이터 로드 실패:', error);
     return [];
   }
 }
 
 // 등급별 카드 가져오기
-export async function getCardsByGrade(grade: 'S' | 'A' | 'B' | 'C'): Promise<LCKCard[]> {
+export async function getCardsByGrade(grade: "S" | "A" | "B" | "C"): Promise<LCKCard[]> {
   try {
-    const allCards = await fetchAllCards();
+    const allCards = await getAllCards();
     return allCards.filter(card => card.grade === grade);
   } catch (error) {
-    console.error('등급별 카드 데이터 로드 실패:', error);
     return [];
   }
 }
 
-// ID로 카드 가져오기
-export async function getCardById(id: string): Promise<LCKCard | null> {
+// 카드 ID로 가져오기
+export async function getCardByIdFromDB(id: string): Promise<LCKCard | null> {
   try {
     return await fetchCardById(id);
   } catch (error) {
-    console.error('카드 ID 조회 실패:', error);
     return null;
   }
 }
