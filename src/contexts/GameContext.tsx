@@ -118,8 +118,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
           total_pulls: data.gachaState.total_pulls
         });
         console.log("✅ DB 저장 성공");
-      } catch (error) {
-        console.error("❌ DB 저장 실패:", error);
+      } catch (error: any) {
+        // 401 에러는 조용히 무시 (서버 배포 대기 중)
+        if (error.message?.includes("401")) {
+          console.warn("⚠️ DB 저장 실패 (서버 인증 문제, LocalStorage에는 저장됨)");
+        } else {
+          console.error("❌ DB 저장 실패:", error);
+        }
       }
     }, 1000);
   };
