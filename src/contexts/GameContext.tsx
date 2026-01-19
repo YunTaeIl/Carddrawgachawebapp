@@ -132,13 +132,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     setUserData(newData);
 
-    // DB 저장 (로그인 시)
+    // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
     if (isAuthenticated && accessToken && !result.isDupe) {
-      try {
-        await addUserCardDirect(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel);
-      } catch (error) {
-        console.error("카드 DB 저장 실패:", error);
-      }
+      addUserCardDirect(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel)
+        .catch(error => console.error("카드 DB 저장 실패:", error));
     }
 
     return result;
@@ -178,17 +175,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     setUserData(newData);
 
-    // DB 저장 (로그인 시)
+    // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
     if (isAuthenticated && accessToken) {
-      try {
-        for (const result of results) {
-          if (!result.isDupe) {
-            await addUserCardDirect(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel);
-          }
-        }
-      } catch (error) {
-        console.error("카드 DB 저장 실패:", error);
-      }
+      // 에러가 나도 가챠 결과는 정상 반환
+      Promise.all(
+        results
+          .filter(result => !result.isDupe)
+          .map(result => 
+            addUserCardDirect(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel)
+              .catch(error => console.error("카드 DB 저장 실패:", error))
+          )
+      ).catch(() => {
+        // 전체 실패해도 무시
+      });
     }
 
     return results;
