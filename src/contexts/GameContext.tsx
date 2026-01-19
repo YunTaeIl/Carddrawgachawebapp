@@ -116,11 +116,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (!cardPool || cardPool.length === 0) {
-        console.log("⏭️ 카드 풀 준비 중...");
-        return;
-      }
-
       console.log("📥 DB에서 데이터 로드 시작!");
       
       try {
@@ -136,7 +131,48 @@ export function GameProvider({ children }: { children: ReactNode }) {
         
         if (dbCards.length === 0) {
           console.warn("⚠️ DB에 저장된 카드가 없습니다!");
+          
+          // 게임 데이터만 업데이트
+          setUserData(prevData => ({
+            ...prevData,
+            currency: gameData.currency,
+            shards: gameData.shards,
+            gachaState: {
+              s_pity_stack: gameData.s_pity_stack,
+              a_pity_stack: gameData.a_pity_stack,
+              total_pulls: gameData.total_pulls
+            }
+          }));
+          
           toast.info("DB에 저장된 카드가 없습니다. 가챠를 뽑아보세요!");
+          return;
+        }
+        
+        // 카드 풀이 준비될 때까지 대기
+        if (!cardPool || cardPool.length === 0) {
+          console.log("⏳ 카드 풀 로드 대기 중... DB 카드는 ${dbCards.length}개 준비됨");
+          
+          // 게임 데이터만 먼저 업데이트
+          setUserData(prevData => ({
+            ...prevData,
+            currency: gameData.currency,
+            shards: gameData.shards,
+            gachaState: {
+              s_pity_stack: gameData.s_pity_stack,
+              a_pity_stack: gameData.a_pity_stack,
+              total_pulls: gameData.total_pulls
+            }
+          }));
+          
+          // 카드 풀 로드되면 다시 시도
+          const checkInterval = setInterval(() => {
+            if (cardPool && cardPool.length > 0) {
+              clearInterval(checkInterval);
+              console.log("✅ 카드 풀 로드 완료! DB 카드 매칭 시작...");
+              loadFromDB(); // 재귀 호출
+            }
+          }, 100);
+          
           return;
         }
         
@@ -195,7 +231,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
 
     loadFromDB();
-  }, [isAuthenticated, accessToken, cardPool?.length]);
+  }, [isAuthenticated, accessToken]);
 
   // 데이터 변경 시 저장
   useEffect(() => {
