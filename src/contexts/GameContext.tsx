@@ -165,11 +165,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
+    console.log("🎰 10연차 시작...");
+    
     // 보유 카드 ID 목록
     const ownedCardIds = userData.cards.map(c => c.id);
+    console.log("📦 보유 카드 개수:", ownedCardIds.length);
     
     // 10연차 실행
+    console.log("🎲 pullTen 호출 중...", { gachaState: userData.gachaState, packType });
     const results = pullTen(userData.gachaState, ownedCardIds, packType || "standard");
+    console.log("✅ pullTen 결과:", results);
+    
+    if (!results || !Array.isArray(results)) {
+      console.error("❌ pullTen이 올바른 결과를 반환하지 않음:", results);
+      toast.error("가챠 시스템 오류!");
+      return null;
+    }
     
     let newCards = [...userData.cards];
     let totalShards = 0;
