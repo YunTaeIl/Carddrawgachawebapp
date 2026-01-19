@@ -122,8 +122,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // 가챠 실행
     const result = pullSingle(userData.gachaState, ownedCardIds, packType || "standard");
     
-    // 천장 카운터 업데이트
-    const updatedGachaState = updateGachaState(userData.gachaState, result);
+    // 천장 카운터 업데이트 (배열로 감싸서 전달)
+    const updatedGachaState = updateGachaState(userData.gachaState, [result]);
     
     // 새 카드 추가 (중복이 아닐 때만)
     const newCard: UserCard = {
@@ -201,13 +201,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // 마지막 결과의 gachaState 사용
-    const finalGachaState = results.length > 0 
-      ? updateGachaState(
-          results.reduce((state, r) => updateGachaState(state, r), userData.gachaState),
-          results[results.length - 1]
-        )
-      : userData.gachaState;
+    // pullTen 내부에서 이미 천장 계산을 했으므로, 수동으로 계산
+    const finalGachaState = updateGachaState(userData.gachaState, results);
 
     const newData: UserData = {
       ...userData,
@@ -231,8 +226,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     // 결과에 UserCard 반영
     return results.map((result, index) => {
-      if (!result.isDupe && newUserCards[index]) {
-        return { ...result, card: newUserCards[index] };
+      const newCardIndex = newUserCards.findIndex(c => c.id === result.card.id);
+      if (!result.isDupe && newCardIndex !== -1) {
+        return { ...result, card: newUserCards[newCardIndex] };
       }
       return result;
     });
