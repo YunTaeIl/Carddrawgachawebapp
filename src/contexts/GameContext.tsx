@@ -216,12 +216,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
     if (isAuthenticated && accessToken && newUserCards.length > 0) {
+      console.log(`💾 ${newUserCards.length}개 카드를 DB에 저장 중...`);
       Promise.all(
-        newUserCards.map(card => 
+        newUserCards.map((card, idx) => 
           addUserCardDirect(accessToken, card.id, card.instanceId, card.upgradeLevel)
-            .catch(error => console.error("카드 DB 저장 실패:", error))
+            .then(() => console.log(`✅ 카드 ${idx + 1}/${newUserCards.length} 저장 성공:`, card.name))
+            .catch(error => console.error(`❌ 카드 ${idx + 1}/${newUserCards.length} 저장 실패:`, card.name, error))
         )
-      ).catch(() => {});
+      ).then(() => {
+        console.log("🎉 모든 카드 DB 저장 완료!");
+      }).catch(() => {
+        console.error("❌ 일부 카드 저장 실패");
+      });
     }
 
     // 결과에 UserCard 반영
