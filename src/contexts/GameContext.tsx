@@ -5,7 +5,13 @@ import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position } from
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
 import { pullSingle, pullTen, updateGachaState, craftCard, initializeCardPool, CardPackType } from "@/utils/gachaEngine";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateGameDataDirect, addUserCardDirect, upgradeUserCardDirect } from "@/utils/supabaseDirect";
+import { 
+  updateGameDataDirect, 
+  addUserCardDirect, 
+  upgradeUserCardDirect,
+  getGameDataDirect,
+  getUserCardsDirect
+} from "@/utils/supabaseDirect";
 import { toast } from "sonner";
 
 interface GameContextType {
@@ -95,6 +101,77 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     loadData();
   }, []);
+
+  // 로그인 시 DB에서 데이터 로드
+  useEffect(() => {
+    const loadFromDB = async () => {
+      if (!isAuthenticated || !accessToken) {
+        console.log("⏭️ DB 로드 스킵 (비로그인)");
+        return;
+      }
+
+      console.log("📥 DB에서 데이터 로드 중...");
+      
+      try {
+        // 게임 데이터 로드
+        const gameData = await getGameDataDirect(accessToken);
+        console.log("✅ 게임 데이터 로드 성공:", gameData);
+        
+        // 보유 카드 로드
+        const dbCards = await getUserCardsDirect(accessToken);
+        console.log(`✅ 보유 카드 ${dbCards.length}개 로드 성공`);
+        
+        // DB 카드 데이터를 UserCard 형식으로 변환
+        const userCards: UserCard[] = await Promise.all(
+          dbCards.map(async (dbCard) => {
+            // cardPool에서 카드 정보 찾기
+            const cardInfo = cardPool.find(c => c.id === dbCard.card_id);
+            if (!cardInfo) {
+              console.warn(`카드 정보를 찾을 수 없음: ${dbCard.card_id}`);
+              return null;
+            }
+            
+            return {
+              ...cardInfo,
+              instanceId: dbCard.instance_id,
+              upgradeLevel: dbCard.upgrade_level || 0,
+              obtainedAt: new Date(dbCard.obtained_at).getTime()
+            };
+          })
+        ).then(cards => cards.filter(c => c !== null) as UserCard[]);
+        
+        // userData 업데이트 (DB 데이터로)
+        const mergedData: UserData = {
+          ...userData,
+          currency: gameData.currency,
+          shards: gameData.shards,
+          ownedCards: userCards,
+          gachaState: {
+            s_pity_stack: gameData.s_pity_stack,
+            a_pity_stack: gameData.a_pity_stack,
+            total_pulls: gameData.total_pulls
+          }
+        };
+        
+        setUserData(mergedData);
+        saveUserData(mergedData); // LocalStorage도 업데이트
+        
+        console.log("🎉 DB 데이터 로드 완료!", { 
+          currency: gameData.currency, 
+          shards: gameData.shards, 
+          cards: userCards.length 
+        });
+      } catch (error) {
+        console.error("❌ DB 데이터 로드 실패:", error);
+        toast.error("DB 데이터 로드 실패. LocalStorage 데이터를 사용합니다.");
+      }
+    };
+
+    // cardPool이 준비되고 로그인 상태가 변경되면 실행
+    if (cardPool.length > 0) {
+      loadFromDB();
+    }
+  }, [isAuthenticated, accessToken, cardPool.length]);
 
   // 데이터 변경 시 저장
   useEffect(() => {

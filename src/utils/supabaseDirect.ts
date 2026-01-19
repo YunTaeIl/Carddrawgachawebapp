@@ -2,6 +2,74 @@
 import { createClient } from "@supabase/supabase-js";
 import { projectId, publicAnonKey } from "@/utils/supabase/info";
 
+// 게임 데이터 조회
+export async function getGameDataDirect(accessToken: string) {
+  const supabase = createClient(
+    `https://${projectId}.supabase.co`,
+    publicAnonKey,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    }
+  );
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("인증되지 않은 사용자입니다.");
+  }
+  
+  const { data, error } = await supabase
+    .from("user_game_data")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+  
+  if (error) {
+    console.error("게임 데이터 조회 실패:", error);
+    throw error;
+  }
+  
+  return data;
+}
+
+// 보유 카드 조회
+export async function getUserCardsDirect(accessToken: string) {
+  const supabase = createClient(
+    `https://${projectId}.supabase.co`,
+    publicAnonKey,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    }
+  );
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("인증되지 않은 사용자입니다.");
+  }
+  
+  const { data, error } = await supabase
+    .from("user_cards")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("obtained_at", { ascending: false });
+  
+  if (error) {
+    console.error("카드 조회 실패:", error);
+    throw error;
+  }
+  
+  return data || [];
+}
+
 // 게임 데이터 업데이트
 export async function updateGameDataDirect(
   accessToken: string,
