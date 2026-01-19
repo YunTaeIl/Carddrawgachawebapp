@@ -38,6 +38,8 @@ export async function getGameDataDirect(accessToken: string) {
 
 // 보유 카드 조회
 export async function getUserCardsDirect(accessToken: string) {
+  console.log("🔍 getUserCardsDirect 시작, accessToken:", accessToken.substring(0, 30) + "...");
+  
   const supabase = createClient(
     `https://${projectId}.supabase.co`,
     publicAnonKey,
@@ -50,11 +52,21 @@ export async function getUserCardsDirect(accessToken: string) {
     }
   );
   
-  const { data: { user } } = await supabase.auth.getUser();
+  console.log("🔐 인증 사용자 확인 중...");
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError) {
+    console.error("❌ 인증 에러:", authError);
+    throw authError;
+  }
   
   if (!user) {
+    console.error("❌ 사용자 없음");
     throw new Error("인증되지 않은 사용자입니다.");
   }
+  
+  console.log("✅ 인증된 사용자 ID:", user.id);
+  console.log("📊 user_cards 테이블 조회 중... WHERE user_id =", user.id);
   
   const { data, error } = await supabase
     .from("user_cards")
@@ -63,9 +75,13 @@ export async function getUserCardsDirect(accessToken: string) {
     .order("obtained_at", { ascending: false });
   
   if (error) {
-    console.error("카드 조회 실패:", error);
+    console.error("❌ 카드 조회 에러:", error);
+    console.error("에러 상세:", JSON.stringify(error, null, 2));
     throw error;
   }
+  
+  console.log("✅ user_cards 조회 결과:", data);
+  console.log(`📦 총 ${data?.length || 0}개 카드 발견`);
   
   return data || [];
 }
