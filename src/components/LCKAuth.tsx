@@ -1,8 +1,7 @@
-// LCK 로그인/회원가입 화면
+// LCK 로그인/회원가입 화면 (간단 버전)
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
 import { DialogTitle } from "@/app/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -12,27 +11,14 @@ interface LCKAuthProps {
 }
 
 export function LCKAuth({ onSuccess }: LCKAuthProps) {
-  const { signInGoogle, signInKakao, isAuthenticated, hasProfile, createProfile, user } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [username, setUsername] = useState("");
+  const { signInGoogle, signInKakao } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [needsProfile, setNeedsProfile] = useState(false);
-
-  // 로그인 후 프로필 확인
-  useEffect(() => {
-    if (isAuthenticated && !hasProfile) {
-      setNeedsProfile(true);
-    } else if (isAuthenticated && hasProfile) {
-      toast.success("로그인 성공!");
-      onSuccess?.();
-    }
-  }, [isAuthenticated, hasProfile]);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
       await signInGoogle();
-      // OAuth 리다이렉트가 발생하므로 여기서는 성공 메시지 표시 안 함
+      // OAuth 리다이렉트 발생
     } catch (error) {
       console.error("Google 로그인 실패:", error);
       toast.error("Google 로그인에 실패했습니다");
@@ -44,7 +30,7 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
     setIsLoading(true);
     try {
       await signInKakao();
-      // OAuth 리다이렉트가 발생하므로 여기서는 성공 메시지 표시 안 함
+      // OAuth 리다이렉트 발생
     } catch (error) {
       console.error("Kakao 로그인 실패:", error);
       toast.error("카카오 로그인에 실패했습니다");
@@ -52,84 +38,10 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
     }
   };
 
-  const handleCreateProfile = async () => {
-    if (!username.trim() || username.length < 2 || username.length > 20) {
-      toast.error("닉네임은 2~20자로 입력해주세요");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await createProfile(username);
-      toast.success("프로필이 생성되었습니다!");
-      setNeedsProfile(false);
-      onSuccess?.();
-    } catch (error: any) {
-      console.error("프로필 생성 실패:", error);
-      
-      // 401 에러면 서버 문제, 일단 로컬모드로 진행
-      if (error.message?.includes("401") || error.message?.includes("Unauthorized")) {
-        toast.info("⚠️ 서버 연결 실패. 로컬 모드로 플레이합니다 (데이터는 이 기기에만 저장됩니다)");
-        setNeedsProfile(false);
-        onSuccess?.();
-      } else {
-        toast.error("프로필 생성에 실패했습니다");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 프로필 생성 화면
-  if (needsProfile) {
-    return (
-      <div className="p-2">
-        <DialogTitle className="sr-only">프로필 생성</DialogTitle>
-        
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-display font-bold text-[#C8102E] mb-2">
-            프로필 생성
-          </h2>
-          <p className="text-sm text-[#9AA6C3]">
-            사용할 닉네임을 입력해주세요
-          </p>
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-[#9AA6C3] mb-2">
-            닉네임
-          </label>
-          <Input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="닉네임을 입력하세요"
-            className="w-full"
-            maxLength={20}
-            disabled={isLoading}
-          />
-          <p className="text-xs text-[#9AA6C3] mt-1">
-            2~20자, 한글/영문/숫자 가능
-          </p>
-        </div>
-
-        <Button
-          onClick={handleCreateProfile}
-          disabled={isLoading || !username.trim()}
-          className="w-full bg-[#C8102E] hover:bg-[#C8102E]/80 text-white font-bold py-6"
-        >
-          {isLoading ? "생성 중..." : "프로필 생성"}
-        </Button>
-      </div>
-    );
-  }
-
-  // 로그인 화면
   return (
     <div className="p-2">
-      {/* 제목 */}
       <DialogTitle className="sr-only">로그인 / 회원가입</DialogTitle>
       
-      {/* LCK 로고 */}
       <div className="text-center mb-6">
         <h2 className="text-3xl font-display font-bold text-[#C8102E] mb-2">
           LCK 계정
@@ -139,7 +51,6 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
         </p>
       </div>
 
-      {/* 소셜 로그인 버튼 */}
       <div className="space-y-3">
         <Button
           onClick={handleGoogleLogin}
@@ -164,7 +75,7 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Google로 {mode === "login" ? "로그인" : "회원가입"}
+          Google로 로그인
         </Button>
 
         <Button
@@ -178,33 +89,8 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
               d="M12 3C6.477 3 2 6.253 2 10.253c0 2.625 1.77 4.924 4.432 6.247-.184.682-.602 2.268-.693 2.633-.109.438.161.433.339.315.144-.096 2.299-1.548 3.124-2.1.579.079 1.17.12 1.798.12 5.523 0 10-3.253 10-7.253S17.523 3 12 3z"
             />
           </svg>
-          카카오로 {mode === "login" ? "로그인" : "회원가입"}
+          카카오로 로그인
         </Button>
-      </div>
-
-      {/* 모드 전환 */}
-      <div className="mt-6 text-center">
-        {mode === "login" ? (
-          <p className="text-sm text-[#9AA6C3]">
-            처음 방문하셨나요?{" "}
-            <button
-              onClick={() => setMode("signup")}
-              className="text-[#2B6CFF] hover:underline font-bold"
-            >
-              회원가입
-            </button>
-          </p>
-        ) : (
-          <p className="text-sm text-[#9AA6C3]">
-            이미 계정이 있으신가요?{" "}
-            <button
-              onClick={() => setMode("login")}
-              className="text-[#2B6CFF] hover:underline font-bold"
-            >
-              로그인
-            </button>
-          </p>
-        )}
       </div>
     </div>
   );
