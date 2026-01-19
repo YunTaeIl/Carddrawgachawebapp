@@ -116,29 +116,44 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    const result = pullSingle(cardPool, userData.gachaState, packType);
+    // 보유 카드 ID 목록
+    const ownedCardIds = userData.cards.map(c => c.id);
+    
+    // 가챠 실행
+    const result = pullSingle(userData.gachaState, ownedCardIds, packType || "standard");
+    
+    // 천장 카운터 업데이트
+    const updatedGachaState = updateGachaState(userData.gachaState, result);
+    
+    // 새 카드 추가 (중복이 아닐 때만)
+    const newCard: UserCard = {
+      ...result.card,
+      instanceId: `${result.card.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      upgradeLevel: 0,
+      obtainedAt: new Date().toISOString()
+    };
     
     const newCards = result.isDupe 
       ? userData.cards 
-      : [...userData.cards, result.card];
+      : [...userData.cards, newCard];
 
     const newData: UserData = {
       ...userData,
       cards: newCards,
       currency: userData.currency - cost,
-      shards: userData.shards + (result.isDupe ? result.shardsGained : 0),
-      gachaState: result.updatedGachaState
+      shards: userData.shards + result.shardsGained,
+      gachaState: updatedGachaState
     };
 
     setUserData(newData);
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
     if (isAuthenticated && accessToken && !result.isDupe) {
-      addUserCardDirect(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel)
+      addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel)
         .catch(error => console.error("카드 DB 저장 실패:", error));
     }
 
-    return result;
+    return { ...result, card: newCard, updatedGachaState };
   };
 
   // 가챠 10연속 뽑기
@@ -150,20 +165,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    const results = pullTen(cardPool, userData.gachaState, packType);
+    // 보유 카드 ID 목록
+    const ownedCardIds = userData.cards.map(c => c.id);
+    
+    // 10연차 실행
+    const results = pullTen(userData.gachaState, ownedCardIds, packType || "standard");
     
     let newCards = [...userData.cards];
     let totalShards = 0;
+    const newUserCards: UserCard[] = [];
 
     results.forEach((result) => {
       if (!result.isDupe) {
-        newCards.push(result.card);
+        const userCard: UserCard = {
+          ...result.card,
+          instanceId: `${result.card.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          upgradeLevel: 0,
+          obtainedAt: new Date().toISOString()
+        };
+        newCards.push(userCard);
+        newUserCards.push(userCard);
       } else {
         totalShards += result.shardsGained;
       }
     });
 
-    const finalGachaState = results[results.length - 1].updatedGachaState;
+    // 마지막 결과의 gachaState 사용
+    const finalGachaState = results.length > 0 
+      ? updateGachaState(
+          results.reduce((state, r) => updateGachaState(state, r), userData.gachaState),
+          results[results.length - 1]
+        )
+      : userData.gachaState;
 
     const newData: UserData = {
       ...userData,
@@ -176,21 +209,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setUserData(newData);
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
-    if (isAuthenticated && accessToken) {
-      // 에러가 나도 가챠 결과는 정상 반환
+    if (isAuthenticated && accessToken && newUserCards.length > 0) {
       Promise.all(
-        results
-          .filter(result => !result.isDupe)
-          .map(result => 
-            addUserCardDirect(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel)
-              .catch(error => console.error("카드 DB 저장 실패:", error))
-          )
-      ).catch(() => {
-        // 전체 실패해도 무시
-      });
+        newUserCards.map(card => 
+          addUserCardDirect(accessToken, card.id, card.instanceId, card.upgradeLevel)
+            .catch(error => console.error("카드 DB 저장 실패:", error))
+        )
+      ).catch(() => {});
     }
 
-    return results;
+    // 결과에 UserCard 반영
+    return results.map((result, index) => {
+      if (!result.isDupe && newUserCards[index]) {
+        return { ...result, card: newUserCards[index] };
+      }
+      return result;
+    });
   };
 
   // 카드 강화
