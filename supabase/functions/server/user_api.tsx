@@ -8,18 +8,24 @@ const supabase = createClient(
 
 // 유저 인증 확인
 export async function getUserFromToken(authHeader: string | null) {
+  console.log("🔐 getUserFromToken called, authHeader:", authHeader ? `Bearer ${authHeader.substring(7, 20)}...` : "NULL");
+  
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.error("❌ Invalid auth header format");
     return null;
   }
   
   const token = authHeader.substring(7);
+  console.log("🔑 Extracted token:", token.substring(0, 20) + "...");
+  
   const { data: { user }, error } = await supabase.auth.getUser(token);
   
   if (error || !user) {
-    console.error("Auth error:", error);
+    console.error("❌ Auth error:", error);
     return null;
   }
   
+  console.log("✅ User authenticated:", user.id);
   return user;
 }
 

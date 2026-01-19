@@ -40,68 +40,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // DB 저장 디바운스용
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 초기 로드
-  useEffect(() => {
-    const loadData = async () => {
-      // 유저 데이터 로드 (LocalStorage)
-      const loaded = loadUserData();
-      setUserData(loaded);
-      
-      // 카드 풀 캐싱
-      const cachedPool = localStorage.getItem('lck_card_pool_cache');
-      const cacheTimestamp = localStorage.getItem('lck_card_pool_timestamp');
-      const now = Date.now();
-      const CACHE_DURATION = 1000 * 60 * 60; // 1시간
-      
-      if (cachedPool && cacheTimestamp) {
-        const timestamp = parseInt(cacheTimestamp);
-        if (now - timestamp < CACHE_DURATION) {
-          try {
-            const pool = JSON.parse(cachedPool);
-            setCardPool(pool);
-            setIsLoading(false);
-            
-            // 백그라운드 업데이트
-            initializeCardPool().then(async () => {
-              const { getCardPool } = await import("@/data/supabaseCards");
-              const pool = await getCardPool();
-              localStorage.setItem('lck_card_pool_cache', JSON.stringify(pool));
-              localStorage.setItem('lck_card_pool_timestamp', now.toString());
-              setCardPool(pool);
-            }).catch(() => {});
-            
-            return;
-          } catch (err) {}
-        }
-      }
-      
-      // 캐시 없음 → Supabase에서 로드
-      try {
-        await initializeCardPool();
-        const { getCardPool } = await import("@/data/supabaseCards");
-        const pool = await getCardPool();
-        setCardPool(pool);
-        setIsLoading(false);
-        localStorage.setItem('lck_card_pool_cache', JSON.stringify(pool));
-        localStorage.setItem('lck_card_pool_timestamp', now.toString());
-      } catch (err) {
-        setIsLoading(false);
-      }
-    };
-    
-    loadData();
-  }, []);
-
-  // LocalStorage 저장 (항상)
-  useEffect(() => {
-    if (!isLoading) {
-      saveUserData(userData);
-    }
-  }, [userData, isLoading]);
-
   // DB 저장 함수 (디바운스)
   const saveGameDataToDB = async (data: UserData) => {
-    if (!isAuthenticated || !accessToken) return;
+    if (!isAuthenticated || !accessToken) {
+      console.log("⏭️ DB 저장 스킵 (비로그인)");
+      return;
+    }
+    
+    console.log("💾 DB 저장 시작... accessToken:", accessToken.substring(0, 20) + "...");
     
     // 디바운스: 1초 후 저장
     if (saveTimeoutRef.current) {
@@ -129,125 +75,157 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }, 1000);
   };
 
-  // 단일 가챠
+  // 초기 데이터 로드
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // LocalStorage에서 로드
+        const saved = loadUserData();
+        setUserData(saved);
+        
+        // 카드 풀 초기화
+        const pool = await initializeCardPool();
+        setCardPool(pool);
+      } catch (error) {
+        console.error("데이터 로드 실패:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
+
+  // 데이터 변경 시 저장
+  useEffect(() => {
+    if (!isLoading) {
+      // LocalStorage 저장
+      saveUserData(userData);
+      
+      // DB 저장 (로그인 시)
+      saveGameDataToDB(userData);
+    }
+  }, [userData, isLoading]);
+
+  // 가챠 1회 뽑기
   const pullSingleGacha = async (packType?: CardPackType): Promise<GachaResult | null> => {
-    const cost = packType ? GACHA_CONFIG.PACK_COSTS[packType] : GACHA_CONFIG.SINGLE_COST;
+    const cost = packType ? GACHA_CONFIG.PACK_PRICES[packType] : GACHA_CONFIG.SINGLE_PULL_COST;
+    
     if (userData.currency < cost) {
-      toast.error("재화가 부족합니다!");
+      toast.error("RP가 부족합니다!");
       return null;
     }
 
-    const ownedCardIds = userData.ownedCards.map(c => c.id);
-    const result = pullSingle(userData.gachaState, ownedCardIds, packType);
+    const result = pullSingle(cardPool, userData.gachaState, packType);
     
-    const newCard: UserCard = {
-      ...result.card,
-      instanceId: `${result.card.id}_${Date.now()}_${Math.random()}`,
-      obtainedAt: Date.now(),
-      upgradeLevel: 0
+    const newCards = result.isDupe 
+      ? userData.cards 
+      : [...userData.cards, result.card];
+
+    const newData: UserData = {
+      ...userData,
+      cards: newCards,
+      currency: userData.currency - cost,
+      shards: userData.shards + (result.isDupe ? result.shardsGained : 0),
+      gachaState: result.updatedGachaState
     };
 
-    const newUserData = {
-      ...userData,
-      currency: userData.currency - cost,
-      shards: userData.shards + result.shardsGained,
-      ownedCards: result.isDupe ? userData.ownedCards : [...userData.ownedCards, newCard],
-      gachaState: updateGachaState(userData.gachaState, [result])
-    };
-    
-    setUserData(newUserData);
+    setUserData(newData);
 
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken && !result.isDupe) {
       try {
-        await apiAddUserCard(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel);
+        await apiAddUserCard(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel);
       } catch (error) {
         console.error("카드 DB 저장 실패:", error);
       }
     }
-    
-    saveGameDataToDB(newUserData);
 
     return result;
   };
 
-  // 10연차
+  // 가챠 10연속 뽑기
   const pullTenGacha = async (packType?: CardPackType): Promise<GachaResult[] | null> => {
-    const cost = packType ? GACHA_CONFIG.TEN_COSTS[packType] : GACHA_CONFIG.TEN_COSTS.standard;
+    const cost = packType ? GACHA_CONFIG.PACK_PRICES[packType] * 10 : GACHA_CONFIG.TEN_PULL_COST;
+    
     if (userData.currency < cost) {
-      toast.error("재화가 부족합니다!");
+      toast.error("RP가 부족합니다!");
       return null;
     }
 
-    const ownedCardIds = userData.ownedCards.map(c => c.id);
-    const results = pullTen(userData.gachaState, ownedCardIds, packType);
+    const results = pullTen(cardPool, userData.gachaState, packType);
     
-    const newCards: UserCard[] = results
-      .filter(r => !r.isDupe)
-      .map(r => ({
-        ...r.card,
-        instanceId: `${r.card.id}_${Date.now()}_${Math.random()}`,
-        obtainedAt: Date.now(),
-        upgradeLevel: 0
-      }));
+    let newCards = [...userData.cards];
+    let totalShards = 0;
 
-    const totalShards = results.reduce((sum, r) => sum + r.shardsGained, 0);
+    results.forEach((result) => {
+      if (!result.isDupe) {
+        newCards.push(result.card);
+      } else {
+        totalShards += result.shardsGained;
+      }
+    });
 
-    const newUserData = {
+    const finalGachaState = results[results.length - 1].updatedGachaState;
+
+    const newData: UserData = {
       ...userData,
+      cards: newCards,
       currency: userData.currency - cost,
       shards: userData.shards + totalShards,
-      ownedCards: [...userData.ownedCards, ...newCards],
-      gachaState: updateGachaState(userData.gachaState, results)
+      gachaState: finalGachaState
     };
-    
-    setUserData(newUserData);
+
+    setUserData(newData);
 
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken) {
       try {
-        for (const card of newCards) {
-          await apiAddUserCard(accessToken, card.id, card.instanceId, card.upgradeLevel);
+        for (const result of results) {
+          if (!result.isDupe) {
+            await apiAddUserCard(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel);
+          }
         }
       } catch (error) {
         console.error("카드 DB 저장 실패:", error);
       }
     }
-    
-    saveGameDataToDB(newUserData);
 
     return results;
   };
 
   // 카드 강화
   const upgradeCard = async (cardInstanceId: string): Promise<boolean> => {
-    const cardIndex = userData.ownedCards.findIndex(c => c.instanceId === cardInstanceId);
-    if (cardIndex === -1) return false;
-    
-    const card = userData.ownedCards[cardIndex];
-    if (card.upgradeLevel >= GACHA_CONFIG.MAX_UPGRADE) {
-      toast.error("최대 강화 레벨입니다!");
-      return false;
-    }
-    
-    if (userData.shards < GACHA_CONFIG.UPGRADE_COST) {
-      toast.error("샤드가 부족합니다!");
+    const cardIndex = userData.cards.findIndex(c => c.instanceId === cardInstanceId);
+    if (cardIndex === -1) {
+      toast.error("카드를 찾을 수 없습니다!");
       return false;
     }
 
-    const newCards = [...userData.ownedCards];
-    newCards[cardIndex] = {
-      ...newCards[cardIndex],
-      upgradeLevel: newCards[cardIndex].upgradeLevel + 1
-    };
+    const card = userData.cards[cardIndex];
+    const currentLevel = card.upgradeLevel;
     
-    const newUserData = {
+    if (currentLevel >= 10) {
+      toast.error("최대 강화 레벨입니다!");
+      return false;
+    }
+
+    const cost = GACHA_CONFIG.UPGRADE_COST[currentLevel + 1];
+    if (userData.shards < cost) {
+      toast.error(`샤드가 부족합니다! (필요: ${cost})`);
+      return false;
+    }
+
+    const newCards = [...userData.cards];
+    newCards[cardIndex] = { ...card, upgradeLevel: currentLevel + 1 };
+
+    const newData: UserData = {
       ...userData,
-      shards: userData.shards - GACHA_CONFIG.UPGRADE_COST,
-      ownedCards: newCards
+      cards: newCards,
+      shards: userData.shards - cost
     };
-    
-    setUserData(newUserData);
+
+    setUserData(newData);
 
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken) {
@@ -257,37 +235,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
         console.error("강화 DB 저장 실패:", error);
       }
     }
-    
-    saveGameDataToDB(newUserData);
 
-    toast.success(`${card.name} 강화 성공! (+1 OVR)`);
+    toast.success(`강화 성공! Lv.${currentLevel + 1}`);
     return true;
   };
 
   // 샤드로 카드 제작
   const craftCardWithShards = async (grade: "A" | "S"): Promise<UserCard | null> => {
-    const cost = GACHA_CONFIG.CRAFT_COSTS[grade];
+    const cost = GACHA_CONFIG.CRAFT_COST[grade];
     
     if (userData.shards < cost) {
-      toast.error("샤드가 부족합니다!");
+      toast.error(`샤드가 부족합니다! (필요: ${cost})`);
       return null;
     }
 
-    const craftedCard = craftCard(grade);
-    const newCard: UserCard = {
-      ...craftedCard,
-      instanceId: `${craftedCard.id}_${Date.now()}_${Math.random()}`,
-      obtainedAt: Date.now(),
-      upgradeLevel: 0
+    const newCard = craftCard(cardPool, grade);
+    
+    const newData: UserData = {
+      ...userData,
+      cards: [...userData.cards, newCard],
+      shards: userData.shards - cost
     };
 
-    const newUserData = {
-      ...userData,
-      shards: userData.shards - cost,
-      ownedCards: [...userData.ownedCards, newCard]
-    };
-    
-    setUserData(newUserData);
+    setUserData(newData);
 
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken) {
@@ -297,57 +267,53 @@ export function GameProvider({ children }: { children: ReactNode }) {
         console.error("제작 카드 DB 저장 실패:", error);
       }
     }
-    
-    saveGameDataToDB(newUserData);
 
-    toast.success(`${grade}등급 카드 제작 성공!`);
+    toast.success(`${grade}등급 카드 제작 완료!`);
     return newCard;
   };
 
   // 스쿼드 설정
   const setSquadCard = (position: Position, card: UserCard | null) => {
-    setUserData(prev => ({
-      ...prev,
+    setUserData({
+      ...userData,
       squad: {
-        ...prev.squad,
+        ...userData.squad,
         [position]: card
       }
-    }));
-    
-    // 스쿼드는 LocalStorage만 (나중에 추가 가능)
+    });
   };
 
   // 게임 리셋
   const resetGame = () => {
-    setUserData(getDefaultUserData());
-    toast.success("게임이 초기화되었습니다!");
+    const defaultData = getDefaultUserData();
+    setUserData(defaultData);
+    saveUserData(defaultData);
+    toast.success("게임 데이터가 초기화되었습니다!");
   };
 
-  // 재화 추가
+  // 재화 추가 (테스트용)
   const addCurrency = (amount: number) => {
-    const newUserData = {
+    setUserData({
       ...userData,
       currency: userData.currency + amount
-    };
-    setUserData(newUserData);
-    saveGameDataToDB(newUserData);
+    });
+  };
+
+  const value: GameContextType = {
+    userData,
+    isLoading,
+    cardPool,
+    pullSingleGacha,
+    pullTenGacha,
+    upgradeCard,
+    craftCardWithShards,
+    setSquadCard,
+    resetGame,
+    addCurrency
   };
 
   return (
-    <GameContext.Provider
-      value={{
-        userData,
-        isLoading,
-        cardPool,
-        pullSingleGacha,
-        pullTenGacha,
-        upgradeCard,
-        craftCardWithShards,
-        setSquadCard,
-        resetGame,
-        addCurrency
-      }}
-    >
+    <GameContext.Provider value={value}>
       {children}
     </GameContext.Provider>
   );
