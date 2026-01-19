@@ -2,6 +2,7 @@
 
 import { LCKCard, GachaState, GachaResult, GACHA_CONFIG, Grade, Position } from "@/types/lck";
 import { getCardPool, getCardsByGrade } from "@/data/supabaseCards";
+import { SAMPLE_CARDS } from "@/data/sampleCards";
 
 // 카드팩 타입
 export type CardPackType = 
@@ -34,9 +35,20 @@ let cachedPackPools: Map<CardPackType, Map<Grade, LCKCard[]>> = new Map();
 
 // 카드 풀 초기화 (앱 시작 시 한번만)
 export async function initializeCardPool() {
-  if (cachedCardPool) return;
+  if (cachedCardPool && cachedCardPool.length > 0) return;
   
-  cachedCardPool = await getCardPool();
+  try {
+    cachedCardPool = await getCardPool();
+    
+    // 카드가 없으면 샘플 데이터 사용
+    if (!cachedCardPool || cachedCardPool.length === 0) {
+      console.warn("Supabase에서 카드를 가져올 수 없어 샘플 데이터를 사용합니다");
+      cachedCardPool = SAMPLE_CARDS;
+    }
+  } catch (error) {
+    console.error("카드 풀 초기화 실패, 샘플 데이터 사용:", error);
+    cachedCardPool = SAMPLE_CARDS;
+  }
   
   // 등급별로 분류
   cachedGradeMap.set("S", cachedCardPool.filter(c => c.grade === "S"));
@@ -120,7 +132,12 @@ export function calculateSRate(s_pity_stack: number): number {
  * 단일 가챠 뽑기
  */
 export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packType: CardPackType = "standard"): GachaResult {
-  let selectedCard: LCKCard;
+  // 카드 풀이 초기화되지 않았으면 에러
+  if (!cachedCardPool || cachedCardPool.length === 0) {
+    throw new Error("카드 풀이 초기화되지 않았습니다. initializeCardPool()을 먼저 호출하세요.");
+  }
+
+  let selectedCard: LCKCard | undefined;
   let isPity = false;
 
   // 하드 천장 체크
@@ -170,6 +187,11 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packT
     } else {
       selectedCard = cardsOfGrade[Math.floor(Math.random() * cardsOfGrade.length)];
     }
+  }
+
+  // selectedCard가 여전히 undefined면 에러
+  if (!selectedCard) {
+    throw new Error("카드를 선택할 수 없습니다. 카드 풀이 비어있거나 초기화되지 않았습니다.");
   }
 
   // 중복 체크

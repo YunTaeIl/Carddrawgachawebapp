@@ -102,8 +102,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-[#EAF0FF] p-6">
       <div className="max-w-7xl mx-auto">
-        {/* 헤더 */}
-        <div className="flex items-center justify-between mb-8">
+        {/* 헤더 - 모바일 최적화 */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -113,17 +113,17 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             >
               <ArrowLeft className="w-6 h-6" />
             </Button>
-            <h1 className="text-3xl font-bold">컬렉션</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">컬렉션</h1>
           </div>
           
-          <div className="text-sm text-[#9AA6C3]">
-            보유: {userData.ownedCards.length}장
+          <div className="text-sm text-[#9AA6C3] sm:text-right">
+            보유: <span className="font-bold">{userData.ownedCards.length}</span>장
           </div>
         </div>
 
-        {/* 샤드 제작 */}
-        <div className="bg-[#12182A] rounded-xl p-6 mb-6 border border-[#D4AF37]/30">
-          <div className="flex items-center justify-between mb-4">
+        {/* 샤드 제작 - 모바일 최적화 */}
+        <div className="bg-[#12182A] rounded-xl p-4 sm:p-6 mb-6 border border-[#D4AF37]/30">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[#D4AF37]" />
               <h3 className="text-lg font-bold">샤드 제작</h3>
@@ -133,10 +133,10 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="bg-[#0B0F1A] p-4 rounded-lg border border-[#B7C2D6]/50">
               <div className="flex justify-between items-center mb-3">
-                <div className="text-lg font-bold text-[#B7C2D6]">A 등급 제작</div>
+                <div className="text-base sm:text-lg font-bold text-[#B7C2D6]">A 등급 제작</div>
                 <div className="text-sm text-[#9AA6C3]">300 샤드</div>
               </div>
               <Button
@@ -150,7 +150,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             
             <div className="bg-[#0B0F1A] p-4 rounded-lg border border-[#D4AF37]/50">
               <div className="flex justify-between items-center mb-3">
-                <div className="text-lg font-bold text-[#D4AF37]">S 등급 제작</div>
+                <div className="text-base sm:text-lg font-bold text-[#D4AF37]">S 등급 제작</div>
                 <div className="text-sm text-[#9AA6C3]">900 샤드</div>
               </div>
               <Button
@@ -164,16 +164,16 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           </div>
         </div>
 
-        {/* 필터 & 정렬 */}
+        {/* 필터 & 정렬 - 모바일 최적화 */}
         <div className="bg-[#12182A] rounded-xl p-4 mb-6 border border-[#2B6CFF]/30">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-[#9AA6C3]" />
-              <span className="text-sm text-[#9AA6C3]">필터:</span>
-            </div>
-            
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="w-4 h-4 text-[#9AA6C3]" />
+            <span className="text-sm text-[#9AA6C3]">필터 & 정렬</span>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             <Select value={filterGrade} onValueChange={handleFilterChange(setFilterGrade)}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="등급" />
               </SelectTrigger>
               <SelectContent>
@@ -186,7 +186,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             </Select>
 
             <Select value={filterPosition} onValueChange={handleFilterChange(setFilterPosition)}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="포지션" />
               </SelectTrigger>
               <SelectContent>
@@ -200,7 +200,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             </Select>
 
             <Select value={filterTeam} onValueChange={handleFilterChange(setFilterTeam)}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="팀" />
               </SelectTrigger>
               <SelectContent>
@@ -212,7 +212,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             </Select>
 
             <Select value={filterYear} onValueChange={handleFilterChange(setFilterYear)}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="연도" />
               </SelectTrigger>
               <SelectContent>
@@ -223,10 +223,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               </SelectContent>
             </Select>
 
-            <div className="flex-1" />
-
             <Select value={sortBy} onValueChange={handleFilterChange(setSortBy)}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:col-span-2 lg:col-span-2">
                 <SelectValue placeholder="정렬" />
               </SelectTrigger>
               <SelectContent>
@@ -237,24 +235,24 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           </div>
         </div>
 
-        {/* 카드 그리드 */}
+        {/* 카드 그리드 - 모바일 최적화 */}
         {filteredCards.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 mb-8">
               {paginatedCards.map((card) => (
                 <div
                   key={card.instanceId}
                   onClick={() => setSelectedCard(card)}
-                  className="cursor-pointer hover:scale-105 transition-transform"
+                  className="cursor-pointer hover:scale-105 transition-transform flex justify-center"
                 >
                   <LCKHoloCard card={card} size="medium" upgradeLevel={card.upgradeLevel} />
                 </div>
               ))}
             </div>
 
-            {/* 페이지네이션 */}
+            {/* 페이지네이션 - 모바일 최적화 */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 bg-[#12182A] rounded-xl p-4 border border-[#2B6CFF]/30">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 bg-[#12182A] rounded-xl p-4 border border-[#2B6CFF]/30">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -265,7 +263,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-center">
                   <span className="text-sm text-[#9AA6C3]">
                     페이지 <span className="text-[#2B6CFF] font-bold">{currentPage}</span> / {totalPages}
                   </span>
@@ -293,15 +291,15 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           </div>
         )}
 
-        {/* 카드 상세 다이얼로그 */}
+        {/* 카드 상세 다이얼로그 - 모바일 최적화 */}
         <Dialog open={selectedCard !== null} onOpenChange={() => setSelectedCard(null)}>
-          <DialogContent className="max-w-4xl bg-[#12182A] text-[#EAF0FF]">
+          <DialogContent className="max-w-4xl bg-[#12182A] text-[#EAF0FF] max-h-[90vh] overflow-y-auto">
             {selectedCard && (
               <>
                 <DialogHeader>
-                  <DialogTitle>카드 상세</DialogTitle>
+                  <DialogTitle className="text-xl sm:text-2xl">카드 상세</DialogTitle>
                 </DialogHeader>
-                <div className="flex flex-col md:flex-row gap-6 mt-4">
+                <div className="flex flex-col md:flex-row gap-4 sm:gap-6 mt-4">
                   {/* 카드 미리보기 */}
                   <div className="flex justify-center md:justify-start shrink-0">
                     <LCKHoloCard card={selectedCard} size="large" upgradeLevel={selectedCard.upgradeLevel} />
@@ -310,7 +308,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                   {/* 상세 정보 */}
                   <div className="space-y-4 flex-1 min-w-0">
                     <div>
-                      <h3 className="text-2xl font-bold mb-2">{selectedCard.name}</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2">{selectedCard.name}</h3>
                       <div className="text-sm text-[#9AA6C3] space-y-1">
                         <div>{selectedCard.team} ({selectedCard.year})</div>
                         <div>{selectedCard.position}</div>

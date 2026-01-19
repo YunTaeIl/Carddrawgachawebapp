@@ -67,29 +67,55 @@ export interface Synergy {
 }
 
 export const GACHA_CONFIG = {
+  // 기본 단일 뽑기 가격
   SINGLE_COST: 200,
-  TEN_COST: 1800,
-  PACK_COSTS: {
-    standard: 200, // 단일
-    year_2013: 200,
-    year_2014: 200,
-    year_2015: 200,
-    year_2016: 200,
-    year_2017: 200,
-    year_2018: 200,
-    year_2019: 200,
-    year_2020: 200,
-    year_2021: 200,
-    year_2022: 200,
-    year_2023: 200,
-    year_2024: 200,
-    year_2025: 200,
-    position_TOP: 200,
-    position_JGL: 200,
-    position_MID: 200,
-    position_ADC: 200,
-    position_SUP: 200
+  
+  // 10연차 가격 (팩 타입별)
+  TEN_COSTS: {
+    standard: 2000,      // 기본팩: 단일 10회 (할인 없음)
+    year_2013: 3500,     // 연도별 팩: 프리미엄 가격
+    year_2014: 3500,
+    year_2015: 3500,
+    year_2016: 3500,
+    year_2017: 3500,
+    year_2018: 3500,
+    year_2019: 3500,
+    year_2020: 3500,
+    year_2021: 3500,
+    year_2022: 3500,
+    year_2023: 3500,
+    year_2024: 3500,
+    year_2025: 3500,
+    position_TOP: 4500,   // 포지션별 팩: 울트라 프리미엄
+    position_JGL: 4500,
+    position_MID: 4500,
+    position_ADC: 4500,
+    position_SUP: 4500
   },
+  
+  // 팩별 단일 뽑기 가격
+  PACK_COSTS: {
+    standard: 200,        // 기본팩
+    year_2013: 400,       // 연도별 팩: 2배
+    year_2014: 400,
+    year_2015: 400,
+    year_2016: 400,
+    year_2017: 400,
+    year_2018: 400,
+    year_2019: 400,
+    year_2020: 400,
+    year_2021: 400,
+    year_2022: 400,
+    year_2023: 400,
+    year_2024: 400,
+    year_2025: 400,
+    position_TOP: 500,    // 포지션별 팩: 2.5배 (희소성)
+    position_JGL: 500,
+    position_MID: 500,
+    position_ADC: 500,
+    position_SUP: 500
+  },
+  
   BASE_RATES: {
     S: 0.02,
     A: 0.10,

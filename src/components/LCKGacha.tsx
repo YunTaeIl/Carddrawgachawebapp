@@ -54,6 +54,11 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
   const [packCategory, setPackCategory] = useState<"standard" | "year" | "position">("standard");
 
   const currentPackStyle = PACK_STYLES[selectedPack];
+  
+  // 현재 선택된 팩의 가격 계산
+  const singleCost = GACHA_CONFIG.PACK_COSTS[selectedPack];
+  const tenCost = GACHA_CONFIG.TEN_COSTS[selectedPack];
+  const discount = singleCost * 10 - tenCost;
 
   const handleSinglePull = async () => {
     const result = await pullSingleGacha(selectedPack);
@@ -277,13 +282,13 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
               </div>
               <div className="mb-3">
                 <div className="text-2xl font-bold text-[#E4002B] mb-1">
-                  {GACHA_CONFIG.SINGLE_COST} RP
+                  {singleCost} RP
                 </div>
                 <div className="text-xs text-[#9AA6C3]">1장 획득</div>
               </div>
               <Button
                 onClick={handleSinglePull}
-                disabled={userData.currency < GACHA_CONFIG.SINGLE_COST}
+                disabled={userData.currency < singleCost}
                 className="w-full bg-[#E4002B] hover:bg-[#E4002B]/80 text-white font-bold py-3"
               >
                 뽑기
@@ -301,15 +306,15 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
               </div>
               <div className="mb-3">
                 <div className="text-2xl font-bold text-[#2B6CFF] mb-1">
-                  {GACHA_CONFIG.TEN_COST} RP
+                  {tenCost} RP
                 </div>
                 <div className="text-xs text-[#9AA6C3]">
-                  10장 획득 • {GACHA_CONFIG.SINGLE_COST * 10 - GACHA_CONFIG.TEN_COST}RP 할인
+                  10장 획득 • {discount}RP 할인
                 </div>
               </div>
               <Button
                 onClick={handleTenPull}
-                disabled={userData.currency < GACHA_CONFIG.TEN_COST}
+                disabled={userData.currency < tenCost}
                 className="w-full bg-[#2B6CFF] hover:bg-[#2B6CFF]/80 text-white font-bold py-3"
               >
                 10연차 뽑기

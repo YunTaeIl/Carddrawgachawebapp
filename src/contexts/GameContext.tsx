@@ -130,7 +130,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // 10연차
   const pullTenGacha = async (packType?: CardPackType): Promise<GachaResult[] | null> => {
-    const cost = packType ? GACHA_CONFIG.PACK_COSTS[packType] : GACHA_CONFIG.TEN_COST;
+    const cost = packType ? GACHA_CONFIG.TEN_COSTS[packType] : GACHA_CONFIG.TEN_COSTS.standard;
     if (userData.currency < cost) {
       toast.error("재화가 부족합니다!");
       return null;
@@ -275,3 +275,5 @@ export function useGame() {
   }
   return context;
 }
+
+// Timestamp update: 2025-01-19

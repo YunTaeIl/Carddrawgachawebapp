@@ -296,68 +296,79 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
             style={{ width: '95vw', maxHeight: '90vh', overflowY: 'auto' }}
           >
             <DialogHeader>
-              <DialogTitle className="text-2xl">
+              <DialogTitle className="text-xl md:text-2xl">
                 {selectedPosition && `${POSITION_NAMES[selectedPosition]} 카드 선택`}
               </DialogTitle>
             </DialogHeader>
-            <div className="flex items-center gap-4 mb-4">
+            
+            {/* 검색 & 필터 - 모바일 최적화 */}
+            <div className="space-y-3">
+              {/* 검색 */}
               <Input
                 placeholder="카드 이름 또는 팀 검색"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1"
+                className="w-full"
               />
-              <Select
-                value={gradeFilter}
-                onValueChange={handleFilterChange(setGradeFilter)}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="등급">
-                    {gradeFilter === "all" ? "모든 등급" : gradeFilter}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 등급</SelectItem>
-                  <SelectItem value="S">S</SelectItem>
-                  <SelectItem value="A">A</SelectItem>
-                  <SelectItem value="B">B</SelectItem>
-                  <SelectItem value="C">C</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={yearFilter}
-                onValueChange={handleFilterChange(setYearFilter)}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="연도">
-                    {yearFilter === "all" ? "모든 연도" : yearFilter}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 연도</SelectItem>
-                  {allYears.map(year => (
-                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={teamFilter}
-                onValueChange={handleFilterChange(setTeamFilter)}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="팀">
-                    {teamFilter === "all" ? "모든 팀" : teamFilter}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 팀</SelectItem>
-                  {getUniqueTeams().map(team => (
-                    <SelectItem key={team} value={team}>{team}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              
+              {/* 필터들 - 모바일: 세로 / 데스크톱: 가로 */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Select
+                  value={gradeFilter}
+                  onValueChange={handleFilterChange(setGradeFilter)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="등급">
+                      {gradeFilter === "all" ? "모든 등급" : gradeFilter}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">모든 등급</SelectItem>
+                    <SelectItem value="S">S</SelectItem>
+                    <SelectItem value="A">A</SelectItem>
+                    <SelectItem value="B">B</SelectItem>
+                    <SelectItem value="C">C</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select
+                  value={yearFilter}
+                  onValueChange={handleFilterChange(setYearFilter)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="연도">
+                      {yearFilter === "all" ? "모든 연도" : yearFilter}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">모든 연도</SelectItem>
+                    {allYears.map(year => (
+                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select
+                  value={teamFilter}
+                  onValueChange={handleFilterChange(setTeamFilter)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="팀">
+                      {teamFilter === "all" ? "모든 팀" : teamFilter}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">모든 팀</SelectItem>
+                    {getUniqueTeams().map(team => (
+                      <SelectItem key={team} value={team}>{team}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 mt-6 p-6">
+            
+            {/* 카드 그리드 - 모바일 최적화 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 mt-4 p-2 sm:p-4 lg:p-6">
               {selectedPosition &&
                 getPaginatedCards(selectedPosition).cards.map((card) => (
                   <div
@@ -380,24 +391,24 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
                 </div>
               )}
             </div>
+            
+            {/* 페이지네이션 */}
             {selectedPosition && getPaginatedCards(selectedPosition).total > CARDS_PER_PAGE && (
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center items-center gap-2 mt-4">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mr-2"
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-sm text-[#9AA6C3]">
+                <span className="text-sm text-[#9AA6C3] px-2">
                   {currentPage} / {getPaginatedCards(selectedPosition).totalPages}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="ml-2"
                   onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === getPaginatedCards(selectedPosition).totalPages}
                 >

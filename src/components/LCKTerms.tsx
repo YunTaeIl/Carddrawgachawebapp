@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@/app/components/ui/button";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, Info, AlertCircle } from "lucide-react";
 
 interface LCKTermsProps {
   onBack: () => void;
@@ -85,12 +85,38 @@ export function LCKTerms({ onBack }: LCKTermsProps) {
                 서버로 전송되지 않습니다.
               </p>
               <p>
-                • 본 사이트는 <strong className="text-white">개인정보를 수집하지 않으며</strong>, 회원가입이나 로그인 기능이 없습니다.
-              </p>
-              <p>
                 • 선수 카드 데이터는 <strong className="text-white">공개 데이터베이스(Supabase)</strong>에서 불러오며,
                 개인 식별 정보는 포함되지 않습니다.
               </p>
+            </div>
+          </section>
+
+          {/* ⚠️ 비로그인 경고 (추가) */}
+          <section className="bg-[#E4002B]/10 border-2 border-[#E4002B]/50 rounded-lg p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-[#E4002B] flex-shrink-0 mt-1" />
+              <div>
+                <h2 className="text-xl font-bold text-[#E4002B] mb-2">⚠️ 비로그인 사용자 주의사항</h2>
+                <div className="space-y-3 text-[#E4002B] text-sm">
+                  <p>
+                    <strong className="text-white">로그인하지 않은 상태</strong>에서 게임을 플레이할 경우,
+                    수집한 카드와 모든 게임 데이터가 <strong className="text-white">브라우저 로컬 스토리지에만 저장</strong>됩니다.
+                  </p>
+                  <p>
+                    다음과 같은 경우 <strong className="text-white">모든 데이터가 영구적으로 삭제</strong>됩니다:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>브라우저 쿠키 및 사이트 데이터 삭제</li>
+                    <li>브라우저 캐시 비우기</li>
+                    <li>시크릿/프라이빗 모드 사용</li>
+                    <li>다른 브라우저나 기기에서 접속</li>
+                    <li>브라우저 재설치 또는 OS 초기화</li>
+                  </ul>
+                  <p className="font-bold mt-4">
+                    💡 <strong className="text-white">로그인</strong>하여 데이터를 안전하게 보관하세요!
+                  </p>
+                </div>
+              </div>
             </div>
           </section>
 

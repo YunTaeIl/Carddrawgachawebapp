@@ -1,0 +1,4 @@
+// Supabase 프로젝트 정보
+
+export const projectId = "qpzfzemhljgzscojkxnj";
+export const publicAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwemZ6ZW1obGpnenNjb2preG5qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2NDM5MTksImV4cCI6MjA4NDIxOTkxOX0.N78bAvRQFVBtrpib9SB-ljsNXokv2nxZsU-aHGCdSAE";
