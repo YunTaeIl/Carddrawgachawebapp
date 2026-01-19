@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { GameProvider } from "@/contexts/GameContext";
 import { LCKHome } from "@/components/LCKHome";
 import { LCKGacha } from "@/components/LCKGacha";
@@ -57,6 +58,7 @@ function App() {
         )}
         
         <Toaster />
+        <Analytics />
       </div>
     </GameProvider>
   );
