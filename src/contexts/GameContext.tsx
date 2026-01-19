@@ -5,7 +5,7 @@ import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position } from
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
 import { pullSingle, pullTen, updateGachaState, craftCard, initializeCardPool, CardPackType } from "@/utils/gachaEngine";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateGameData, addUserCard as apiAddUserCard, upgradeUserCard as apiUpgradeUserCard } from "@/utils/userApi";
+import { updateGameDataDirect, addUserCardDirect, upgradeUserCardDirect } from "@/utils/supabaseDirect";
 import { toast } from "sonner";
 
 interface GameContextType {
@@ -56,7 +56,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        await updateGameData(accessToken, {
+        await updateGameDataDirect(accessToken, {
           currency: data.currency,
           shards: data.shards,
           s_pity_stack: data.gachaState.s_pity_stack,
@@ -135,7 +135,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken && !result.isDupe) {
       try {
-        await apiAddUserCard(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel);
+        await addUserCardDirect(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel);
       } catch (error) {
         console.error("카드 DB 저장 실패:", error);
       }
@@ -183,7 +183,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       try {
         for (const result of results) {
           if (!result.isDupe) {
-            await apiAddUserCard(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel);
+            await addUserCardDirect(accessToken, result.card.id, result.card.instanceId, result.card.upgradeLevel);
           }
         }
       } catch (error) {
@@ -230,7 +230,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken) {
       try {
-        await apiUpgradeUserCard(accessToken, cardInstanceId, newCards[cardIndex].upgradeLevel);
+        await upgradeUserCardDirect(accessToken, cardInstanceId, newCards[cardIndex].upgradeLevel);
       } catch (error) {
         console.error("강화 DB 저장 실패:", error);
       }
@@ -262,7 +262,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken) {
       try {
-        await apiAddUserCard(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel);
+        await addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel);
       } catch (error) {
         console.error("제작 카드 DB 저장 실패:", error);
       }
