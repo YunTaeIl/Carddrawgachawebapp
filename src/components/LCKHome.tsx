@@ -335,8 +335,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
 
       {/* 로그인/회원가입 다이얼로그 */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent className="bg-[#0A0E27] text-white">
-          <LCKAuth />
+        <DialogContent className="bg-[#0A0E27] text-white border-[#2B6CFF]/30">
+          <LCKAuth onSuccess={() => setShowAuthDialog(false)} />
         </DialogContent>
       </Dialog>
     </div>
