@@ -45,14 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
       
-      // 401은 인증 문제 (토큰 만료 등)
+      // 401은 인증 문제 - 일단 프로필 없음으로 처리하고 계속 진행
       if (error.message?.includes("401") || error.message?.includes("Unauthorized")) {
-        console.warn("인증 토큰이 유효하지 않습니다. 재로그인이 필요할 수 있습니다.");
+        console.warn("⚠️ 프로필 확인 API 인증 실패 (서버 배포 대기 중일 수 있음). 프로필 생성 화면으로 이동합니다.");
         setHasProfile(false);
         return false;
       }
       
       console.error("프로필 확인 중 알 수 없는 에러:", error);
+      // 에러가 나도 일단 프로필 없음으로 처리해서 앱은 사용 가능하게
       setHasProfile(false);
       return false;
     }

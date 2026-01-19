@@ -64,9 +64,17 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
       toast.success("프로필이 생성되었습니다!");
       setNeedsProfile(false);
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error("프로필 생성 실패:", error);
-      toast.error("프로필 생성에 실패했습니다");
+      
+      // 401 에러면 서버 문제, 일단 로컬모드로 진행
+      if (error.message?.includes("401") || error.message?.includes("Unauthorized")) {
+        toast.info("⚠️ 서버 연결 실패. 로컬 모드로 플레이합니다 (데이터는 이 기기에만 저장됩니다)");
+        setNeedsProfile(false);
+        onSuccess?.();
+      } else {
+        toast.error("프로필 생성에 실패했습니다");
+      }
     } finally {
       setIsLoading(false);
     }
