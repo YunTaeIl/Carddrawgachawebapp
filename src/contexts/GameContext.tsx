@@ -105,6 +105,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // 로그인 시 DB에서 데이터 로드
   useEffect(() => {
     const loadFromDB = async () => {
+      console.log("🔍 DB 로드 조건 체크:", { 
+        isAuthenticated, 
+        hasAccessToken: !!accessToken, 
+        cardPoolLength: cardPool?.length 
+      });
+
       if (!isAuthenticated || !accessToken) {
         console.log("⏭️ DB 로드 스킵 (비로그인)");
         return;
@@ -115,24 +121,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      console.log("📥 DB에서 데이터 로드 중...");
+      console.log("📥 DB에서 데이터 로드 시작!");
       
       try {
         // 게임 데이터 로드
+        console.log("1️⃣ 게임 데이터 조회 중...");
         const gameData = await getGameDataDirect(accessToken);
         console.log("✅ 게임 데이터 로드 성공:", gameData);
         
         // 보유 카드 로드
+        console.log("2️⃣ 보유 카드 조회 중...");
         const dbCards = await getUserCardsDirect(accessToken);
-        console.log(`✅ 보유 카드 ${dbCards.length}개 로드 성공`);
+        console.log(`✅ 보유 카드 ${dbCards.length}개 로드 성공:`, dbCards);
+        
+        if (dbCards.length === 0) {
+          console.warn("⚠️ DB에 저장된 카드가 없습니다!");
+          toast.info("DB에 저장된 카드가 없습니다. 가챠를 뽑아보세요!");
+          return;
+        }
         
         // DB 카드 데이터를 UserCard 형식으로 변환
+        console.log("3️⃣ 카드 데이터 변환 중...");
         const userCards: UserCard[] = await Promise.all(
           dbCards.map(async (dbCard) => {
             // cardPool에서 카드 정보 찾기
             const cardInfo = cardPool.find(c => c.id === dbCard.card_id);
             if (!cardInfo) {
-              console.warn(`카드 정보를 찾을 수 없음: ${dbCard.card_id}`);
+              console.warn(`⚠️ 카드 정보를 찾을 수 없음: ${dbCard.card_id}`);
               return null;
             }
             
@@ -144,6 +159,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
             };
           })
         ).then(cards => cards.filter(c => c !== null) as UserCard[]);
+        
+        console.log(`4️⃣ 변환 완료: ${userCards.length}개 카드`);
         
         // userData 업데이트 (DB 데이터로)
         setUserData(prevData => {
@@ -160,6 +177,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           };
           
           saveUserData(mergedData); // LocalStorage도 업데이트
+          console.log("5️⃣ UserData 업데이트 완료!");
           return mergedData;
         });
         
@@ -168,6 +186,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           shards: gameData.shards, 
           cards: userCards.length 
         });
+        
+        toast.success(`DB에서 ${userCards.length}개 카드 로드 완료!`);
       } catch (error) {
         console.error("❌ DB 데이터 로드 실패:", error);
         toast.error("DB 데이터 로드 실패. LocalStorage 데이터를 사용합니다.");
