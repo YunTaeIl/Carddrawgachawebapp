@@ -208,7 +208,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
 
     loadFromDB();
-  }, [isAuthenticated, accessToken, cardPool.length]);
+  }, [isAuthenticated, accessToken, cardPool?.length]);
 
   // 데이터 변경 시 저장
   useEffect(() => {
