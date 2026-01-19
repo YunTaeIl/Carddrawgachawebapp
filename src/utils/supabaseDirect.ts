@@ -1,6 +1,28 @@
-// Supabase 직접 접근 (클라이언트용)
-import { createClient } from "@supabase/supabase-js";
+// Supabase 직접 접근 (클라이언트용) - 싱글톤 패턴
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { projectId, publicAnonKey } from "@/utils/supabase/info";
+
+// 싱글톤 클라이언트
+let supabaseClient: SupabaseClient | null = null;
+
+function getSupabaseClient(accessToken?: string): SupabaseClient {
+  if (!supabaseClient) {
+    supabaseClient = createClient(
+      `https://${projectId}.supabase.co`,
+      publicAnonKey
+    );
+  }
+  
+  // accessToken이 있으면 헤더 설정
+  if (accessToken) {
+    supabaseClient.auth.setSession({
+      access_token: accessToken,
+      refresh_token: ""
+    } as any);
+  }
+  
+  return supabaseClient;
+}
 
 // 게임 데이터 업데이트
 export async function updateGameDataDirect(
@@ -13,17 +35,7 @@ export async function updateGameDataDirect(
     total_pulls?: number;
   }
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
+  const supabase = getSupabaseClient(accessToken);
   
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -53,17 +65,7 @@ export async function addUserCardDirect(
   instanceId: string,
   upgradeLevel: number = 0
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
+  const supabase = getSupabaseClient(accessToken);
   
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -97,17 +99,7 @@ export async function upgradeUserCardDirect(
   instanceId: string,
   newLevel: number
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
+  const supabase = getSupabaseClient(accessToken);
   
   const { data, error } = await supabase
     .from("user_cards")

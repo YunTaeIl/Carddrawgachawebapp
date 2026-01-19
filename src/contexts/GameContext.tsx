@@ -109,7 +109,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // 가챠 1회 뽑기
   const pullSingleGacha = async (packType?: CardPackType): Promise<GachaResult | null> => {
-    const cost = packType ? GACHA_CONFIG.PACK_PRICES[packType] : GACHA_CONFIG.SINGLE_PULL_COST;
+    const cost = packType ? GACHA_CONFIG.PACK_COSTS[packType] : GACHA_CONFIG.SINGLE_COST;
     
     if (userData.currency < cost) {
       toast.error("RP가 부족합니다!");
@@ -146,7 +146,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // 가챠 10연속 뽑기
   const pullTenGacha = async (packType?: CardPackType): Promise<GachaResult[] | null> => {
-    const cost = packType ? GACHA_CONFIG.PACK_PRICES[packType] * 10 : GACHA_CONFIG.TEN_PULL_COST;
+    const cost = packType ? GACHA_CONFIG.TEN_COSTS[packType] : GACHA_CONFIG.TEN_COSTS.standard;
     
     if (userData.currency < cost) {
       toast.error("RP가 부족합니다!");
