@@ -110,6 +110,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      if (!cardPool || cardPool.length === 0) {
+        console.log("⏭️ 카드 풀 준비 중...");
+        return;
+      }
+
       console.log("📥 DB에서 데이터 로드 중...");
       
       try {
@@ -141,20 +146,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ).then(cards => cards.filter(c => c !== null) as UserCard[]);
         
         // userData 업데이트 (DB 데이터로)
-        const mergedData: UserData = {
-          ...userData,
-          currency: gameData.currency,
-          shards: gameData.shards,
-          ownedCards: userCards,
-          gachaState: {
-            s_pity_stack: gameData.s_pity_stack,
-            a_pity_stack: gameData.a_pity_stack,
-            total_pulls: gameData.total_pulls
-          }
-        };
-        
-        setUserData(mergedData);
-        saveUserData(mergedData); // LocalStorage도 업데이트
+        setUserData(prevData => {
+          const mergedData: UserData = {
+            ...prevData,
+            currency: gameData.currency,
+            shards: gameData.shards,
+            ownedCards: userCards,
+            gachaState: {
+              s_pity_stack: gameData.s_pity_stack,
+              a_pity_stack: gameData.a_pity_stack,
+              total_pulls: gameData.total_pulls
+            }
+          };
+          
+          saveUserData(mergedData); // LocalStorage도 업데이트
+          return mergedData;
+        });
         
         console.log("🎉 DB 데이터 로드 완료!", { 
           currency: gameData.currency, 
@@ -167,11 +174,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // cardPool이 준비되고 로그인 상태가 변경되면 실행
-    if (cardPool.length > 0) {
-      loadFromDB();
-    }
-  }, [isAuthenticated, accessToken, cardPool.length]);
+    loadFromDB();
+  }, [isAuthenticated, accessToken, cardPool?.length]);
 
   // 데이터 변경 시 저장
   useEffect(() => {
