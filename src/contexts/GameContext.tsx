@@ -117,7 +117,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     // 보유 카드 ID 목록
-    const ownedCardIds = userData.cards.map(c => c.id);
+    const ownedCardIds = userData.ownedCards.map(c => c.id);
     
     // 가챠 실행
     const result = pullSingle(userData.gachaState, ownedCardIds, packType || "standard");
@@ -130,16 +130,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ...result.card,
       instanceId: `${result.card.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       upgradeLevel: 0,
-      obtainedAt: new Date().toISOString()
+      obtainedAt: Date.now()
     };
     
     const newCards = result.isDupe 
-      ? userData.cards 
-      : [...userData.cards, newCard];
+      ? userData.ownedCards 
+      : [...userData.ownedCards, newCard];
 
     const newData: UserData = {
       ...userData,
-      cards: newCards,
+      ownedCards: newCards,
       currency: userData.currency - cost,
       shards: userData.shards + result.shardsGained,
       gachaState: updatedGachaState
@@ -168,7 +168,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     console.log("🎰 10연차 시작...");
     
     // 보유 카드 ID 목록
-    const ownedCardIds = userData.cards.map(c => c.id);
+    const ownedCardIds = userData.ownedCards.map(c => c.id);
     console.log("📦 보유 카드 개수:", ownedCardIds.length);
     
     // 10연차 실행
@@ -182,7 +182,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
     
-    let newCards = [...userData.cards];
+    let newCards = [...userData.ownedCards];
     let totalShards = 0;
     const newUserCards: UserCard[] = [];
 
@@ -192,7 +192,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...result.card,
           instanceId: `${result.card.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           upgradeLevel: 0,
-          obtainedAt: new Date().toISOString()
+          obtainedAt: Date.now()
         };
         newCards.push(userCard);
         newUserCards.push(userCard);
@@ -211,7 +211,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const newData: UserData = {
       ...userData,
-      cards: newCards,
+      ownedCards: newCards,
       currency: userData.currency - cost,
       shards: userData.shards + totalShards,
       gachaState: finalGachaState
@@ -240,13 +240,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // 카드 강화
   const upgradeCard = async (cardInstanceId: string): Promise<boolean> => {
-    const cardIndex = userData.cards.findIndex(c => c.instanceId === cardInstanceId);
+    const cardIndex = userData.ownedCards.findIndex(c => c.instanceId === cardInstanceId);
     if (cardIndex === -1) {
       toast.error("카드를 찾을 수 없습니다!");
       return false;
     }
 
-    const card = userData.cards[cardIndex];
+    const card = userData.ownedCards[cardIndex];
     const currentLevel = card.upgradeLevel;
     
     if (currentLevel >= 10) {
@@ -260,12 +260,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    const newCards = [...userData.cards];
+    const newCards = [...userData.ownedCards];
     newCards[cardIndex] = { ...card, upgradeLevel: currentLevel + 1 };
 
     const newData: UserData = {
       ...userData,
-      cards: newCards,
+      ownedCards: newCards,
       shards: userData.shards - cost
     };
 
@@ -297,7 +297,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     const newData: UserData = {
       ...userData,
-      cards: [...userData.cards, newCard],
+      ownedCards: [...userData.ownedCards, newCard],
       shards: userData.shards - cost
     };
 
