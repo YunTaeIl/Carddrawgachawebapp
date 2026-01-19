@@ -1,4 +1,4 @@
-// 인증 상태 관리 Context (간단 버전)
+// 인증 상태 관리 Context (프로필 추가)
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@supabase/supabase-js";
@@ -12,6 +12,7 @@ const supabase = createClient(
 
 interface AuthContextType {
   user: User | null;
+  accessToken: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   signInGoogle: () => Promise<void>;
@@ -23,18 +24,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // 초기 세션 확인
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setAccessToken(session?.access_token ?? null);
       setIsLoading(false);
     });
 
     // 인증 상태 변경 리스너
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setAccessToken(session?.access_token ?? null);
     });
 
     return () => subscription.unsubscribe();
@@ -69,12 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setAccessToken(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        accessToken,
         isLoading,
         isAuthenticated: !!user,
         signInGoogle,

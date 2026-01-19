@@ -1,9 +1,11 @@
-// 게임 전역 상태 관리 (LocalStorage만 사용)
+// 게임 전역 상태 관리 (DB 동기화 포함)
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position } from "@/types/lck";
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
 import { pullSingle, pullTen, updateGachaState, craftCard, initializeCardPool, CardPackType } from "@/utils/gachaEngine";
+import { useAuth } from "@/contexts/AuthContext";
+import { updateGameData, addUserCard as apiAddUserCard, upgradeUserCard as apiUpgradeUserCard } from "@/utils/userApi";
 import { toast } from "sonner";
 
 interface GameContextType {
@@ -16,8 +18,8 @@ interface GameContextType {
   pullTenGacha: (packType?: CardPackType) => Promise<GachaResult[] | null>;
   
   // 샤드
-  upgradeCard: (cardInstanceId: string) => boolean;
-  craftCardWithShards: (grade: "A" | "S") => UserCard | null;
+  upgradeCard: (cardInstanceId: string) => Promise<boolean>;
+  craftCardWithShards: (grade: "A" | "S") => Promise<UserCard | null>;
   
   // 스쿼드
   setSquadCard: (position: Position, card: UserCard | null) => void;
@@ -30,9 +32,13 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, accessToken } = useAuth();
   const [userData, setUserData] = useState<UserData>(getDefaultUserData());
   const [isLoading, setIsLoading] = useState(true);
   const [cardPool, setCardPool] = useState<LCKCard[]>([]);
+  
+  // DB 저장 디바운스용
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 초기 로드
   useEffect(() => {
@@ -86,12 +92,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
     loadData();
   }, []);
 
-  // 저장 (userData 변경 시)
+  // LocalStorage 저장 (항상)
   useEffect(() => {
     if (!isLoading) {
       saveUserData(userData);
     }
   }, [userData, isLoading]);
+
+  // DB 저장 함수 (디바운스)
+  const saveGameDataToDB = async (data: UserData) => {
+    if (!isAuthenticated || !accessToken) return;
+    
+    // 디바운스: 1초 후 저장
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await updateGameData(accessToken, {
+          currency: data.currency,
+          shards: data.shards,
+          s_pity_stack: data.gachaState.s_pity_stack,
+          a_pity_stack: data.gachaState.a_pity_stack,
+          total_pulls: data.gachaState.total_pulls
+        });
+        console.log("✅ DB 저장 성공");
+      } catch (error) {
+        console.error("❌ DB 저장 실패:", error);
+      }
+    }, 1000);
+  };
 
   // 단일 가챠
   const pullSingleGacha = async (packType?: CardPackType): Promise<GachaResult | null> => {
@@ -111,13 +142,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
       upgradeLevel: 0
     };
 
-    setUserData(prev => ({
-      ...prev,
-      currency: prev.currency - cost,
-      shards: prev.shards + result.shardsGained,
-      ownedCards: result.isDupe ? prev.ownedCards : [...prev.ownedCards, newCard],
-      gachaState: updateGachaState(prev.gachaState, [result])
-    }));
+    const newUserData = {
+      ...userData,
+      currency: userData.currency - cost,
+      shards: userData.shards + result.shardsGained,
+      ownedCards: result.isDupe ? userData.ownedCards : [...userData.ownedCards, newCard],
+      gachaState: updateGachaState(userData.gachaState, [result])
+    };
+    
+    setUserData(newUserData);
+
+    // DB 저장 (로그인 시)
+    if (isAuthenticated && accessToken && !result.isDupe) {
+      try {
+        await apiAddUserCard(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel);
+      } catch (error) {
+        console.error("카드 DB 저장 실패:", error);
+      }
+    }
+    
+    saveGameDataToDB(newUserData);
 
     return result;
   };
@@ -144,19 +188,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const totalShards = results.reduce((sum, r) => sum + r.shardsGained, 0);
 
-    setUserData(prev => ({
-      ...prev,
-      currency: prev.currency - cost,
-      shards: prev.shards + totalShards,
-      ownedCards: [...prev.ownedCards, ...newCards],
-      gachaState: updateGachaState(prev.gachaState, results)
-    }));
+    const newUserData = {
+      ...userData,
+      currency: userData.currency - cost,
+      shards: userData.shards + totalShards,
+      ownedCards: [...userData.ownedCards, ...newCards],
+      gachaState: updateGachaState(userData.gachaState, results)
+    };
+    
+    setUserData(newUserData);
+
+    // DB 저장 (로그인 시)
+    if (isAuthenticated && accessToken) {
+      try {
+        for (const card of newCards) {
+          await apiAddUserCard(accessToken, card.id, card.instanceId, card.upgradeLevel);
+        }
+      } catch (error) {
+        console.error("카드 DB 저장 실패:", error);
+      }
+    }
+    
+    saveGameDataToDB(newUserData);
 
     return results;
   };
 
   // 카드 강화
-  const upgradeCard = (cardInstanceId: string): boolean => {
+  const upgradeCard = async (cardInstanceId: string): Promise<boolean> => {
     const cardIndex = userData.ownedCards.findIndex(c => c.instanceId === cardInstanceId);
     if (cardIndex === -1) return false;
     
@@ -171,26 +230,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    setUserData(prev => {
-      const newCards = [...prev.ownedCards];
-      newCards[cardIndex] = {
-        ...newCards[cardIndex],
-        upgradeLevel: newCards[cardIndex].upgradeLevel + 1
-      };
-      
-      return {
-        ...prev,
-        shards: prev.shards - GACHA_CONFIG.UPGRADE_COST,
-        ownedCards: newCards
-      };
-    });
+    const newCards = [...userData.ownedCards];
+    newCards[cardIndex] = {
+      ...newCards[cardIndex],
+      upgradeLevel: newCards[cardIndex].upgradeLevel + 1
+    };
+    
+    const newUserData = {
+      ...userData,
+      shards: userData.shards - GACHA_CONFIG.UPGRADE_COST,
+      ownedCards: newCards
+    };
+    
+    setUserData(newUserData);
+
+    // DB 저장 (로그인 시)
+    if (isAuthenticated && accessToken) {
+      try {
+        await apiUpgradeUserCard(accessToken, cardInstanceId, newCards[cardIndex].upgradeLevel);
+      } catch (error) {
+        console.error("강화 DB 저장 실패:", error);
+      }
+    }
+    
+    saveGameDataToDB(newUserData);
 
     toast.success(`${card.name} 강화 성공! (+1 OVR)`);
     return true;
   };
 
   // 샤드로 카드 제작
-  const craftCardWithShards = (grade: "A" | "S"): UserCard | null => {
+  const craftCardWithShards = async (grade: "A" | "S"): Promise<UserCard | null> => {
     const cost = GACHA_CONFIG.CRAFT_COSTS[grade];
     
     if (userData.shards < cost) {
@@ -206,11 +276,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
       upgradeLevel: 0
     };
 
-    setUserData(prev => ({
-      ...prev,
-      shards: prev.shards - cost,
-      ownedCards: [...prev.ownedCards, newCard]
-    }));
+    const newUserData = {
+      ...userData,
+      shards: userData.shards - cost,
+      ownedCards: [...userData.ownedCards, newCard]
+    };
+    
+    setUserData(newUserData);
+
+    // DB 저장 (로그인 시)
+    if (isAuthenticated && accessToken) {
+      try {
+        await apiAddUserCard(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel);
+      } catch (error) {
+        console.error("제작 카드 DB 저장 실패:", error);
+      }
+    }
+    
+    saveGameDataToDB(newUserData);
 
     toast.success(`${grade}등급 카드 제작 성공!`);
     return newCard;
@@ -225,6 +308,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         [position]: card
       }
     }));
+    
+    // 스쿼드는 LocalStorage만 (나중에 추가 가능)
   };
 
   // 게임 리셋
@@ -235,10 +320,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // 재화 추가
   const addCurrency = (amount: number) => {
-    setUserData(prev => ({
-      ...prev,
-      currency: prev.currency + amount
-    }));
+    const newUserData = {
+      ...userData,
+      currency: userData.currency + amount
+    };
+    setUserData(newUserData);
+    saveGameDataToDB(newUserData);
   };
 
   return (
