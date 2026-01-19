@@ -37,8 +37,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await getUserProfile(token);
       setHasProfile(!!result.profile);
       return !!result.profile;
-    } catch (error) {
-      console.error("프로필 확인 실패:", error);
+    } catch (error: any) {
+      // 404는 정상 (프로필 없음)
+      if (error.message?.includes("404") || error.message?.includes("not found")) {
+        console.log("프로필이 아직 생성되지 않았습니다");
+        setHasProfile(false);
+        return false;
+      }
+      
+      // 401은 인증 문제 (토큰 만료 등)
+      if (error.message?.includes("401") || error.message?.includes("Unauthorized")) {
+        console.warn("인증 토큰이 유효하지 않습니다. 재로그인이 필요할 수 있습니다.");
+        setHasProfile(false);
+        return false;
+      }
+      
+      console.error("프로필 확인 중 알 수 없는 에러:", error);
       setHasProfile(false);
       return false;
     }

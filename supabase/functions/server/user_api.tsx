@@ -1,32 +1,43 @@
 // 유저 데이터 관리 API
 import { createClient } from "jsr:@supabase/supabase-js@2.49.8";
 
-const supabase = createClient(
+// 관리용 클라이언트 (SERVICE_ROLE_KEY)
+const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+);
+
+// 인증용 클라이언트 (ANON_KEY)
+const supabaseAuth = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_ANON_KEY")!,
 );
 
 // 유저 인증 확인
 export async function getUserFromToken(authHeader: string | null) {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.log("Authorization 헤더 없음 또는 형식 오류");
     return null;
   }
   
   const token = authHeader.substring(7);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  
+  // ANON_KEY로 생성한 클라이언트로 토큰 검증
+  const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
   
   if (error || !user) {
-    console.error("Auth error:", error);
+    console.error("토큰 검증 실패:", error);
     return null;
   }
   
+  console.log("인증 성공:", user.id);
   return user;
 }
 
 // 유저 프로필 생성
 export async function createUserProfile(userId: string, username: string) {
   // 1. 프로필 생성
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = await supabaseAdmin
     .from("user_profiles")
     .insert({ id: userId, username })
     .select()
@@ -38,7 +49,7 @@ export async function createUserProfile(userId: string, username: string) {
   }
   
   // 2. 게임 데이터 초기화
-  const { error: gameDataError } = await supabase
+  const { error: gameDataError } = await supabaseAdmin
     .from("user_game_data")
     .insert({
       user_id: userId,
@@ -55,7 +66,7 @@ export async function createUserProfile(userId: string, username: string) {
   }
   
   // 3. 스쿼드 초기화
-  const { error: squadError } = await supabase
+  const { error: squadError } = await supabaseAdmin
     .from("user_squads")
     .insert({
       user_id: userId,
@@ -76,7 +87,7 @@ export async function createUserProfile(userId: string, username: string) {
 
 // 유저 프로필 조회
 export async function getUserProfile(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("user_profiles")
     .select("*")
     .eq("id", userId)
@@ -92,7 +103,7 @@ export async function getUserProfile(userId: string) {
 
 // 게임 데이터 조회
 export async function getGameData(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("user_game_data")
     .select("*")
     .eq("user_id", userId)
@@ -117,7 +128,7 @@ export async function updateGameData(
     total_pulls?: number;
   }
 ) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("user_game_data")
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("user_id", userId)
@@ -134,7 +145,7 @@ export async function updateGameData(
 
 // 보유 카드 조회
 export async function getUserCards(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("user_cards")
     .select("*")
     .eq("user_id", userId)
@@ -155,7 +166,7 @@ export async function addUserCard(
   instanceId: string,
   upgradeLevel: number = 0
 ) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("user_cards")
     .insert({
       user_id: userId,
@@ -177,7 +188,7 @@ export async function addUserCard(
 
 // 카드 강화
 export async function upgradeUserCard(instanceId: string, newLevel: number) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("user_cards")
     .update({ upgrade_level: newLevel })
     .eq("instance_id", instanceId)
@@ -194,7 +205,7 @@ export async function upgradeUserCard(instanceId: string, newLevel: number) {
 
 // 스쿼드 조회
 export async function getUserSquad(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("user_squads")
     .select("*")
     .eq("user_id", userId)
@@ -219,7 +230,7 @@ export async function updateUserSquad(
     sup_card_instance_id?: string | null;
   }
 ) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("user_squads")
     .update({ ...squad, updated_at: new Date().toISOString() })
     .eq("user_id", userId)
