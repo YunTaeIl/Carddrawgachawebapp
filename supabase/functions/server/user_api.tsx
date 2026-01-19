@@ -16,22 +16,43 @@ const supabaseAuth = createClient(
 // 유저 인증 확인
 export async function getUserFromToken(authHeader: string | null) {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.log("Authorization 헤더 없음 또는 형식 오류");
+    console.log("❌ Authorization 헤더 없음 또는 형식 오류");
     return null;
   }
   
   const token = authHeader.substring(7);
+  console.log("🔑 토큰 검증 시작, 토큰 길이:", token.length);
   
-  // ANON_KEY로 생성한 클라이언트로 토큰 검증
-  const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
-  
-  if (error || !user) {
-    console.error("토큰 검증 실패:", error);
+  try {
+    // ANON_KEY로 생성한 클라이언트로 토큰 검증
+    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
+    
+    if (error) {
+      console.error("❌ 토큰 검증 실패 (supabaseAuth):", error.message);
+      
+      // 대안: supabaseAdmin으로 시도
+      const { data: { user: adminUser }, error: adminError } = await supabaseAdmin.auth.getUser(token);
+      
+      if (adminError || !adminUser) {
+        console.error("❌ 토큰 검증 실패 (supabaseAdmin):", adminError?.message);
+        return null;
+      }
+      
+      console.log("✅ 인증 성공 (admin 클라이언트):", adminUser.id);
+      return adminUser;
+    }
+    
+    if (!user) {
+      console.error("❌ 토큰은 유효하지만 사용자 정보 없음");
+      return null;
+    }
+    
+    console.log("✅ 인증 성공 (auth 클라이언트):", user.id);
+    return user;
+  } catch (err) {
+    console.error("❌ 예외 발생:", err);
     return null;
   }
-  
-  console.log("인증 성공:", user.id);
-  return user;
 }
 
 // 유저 프로필 생성
