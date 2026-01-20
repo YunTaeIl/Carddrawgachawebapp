@@ -68,22 +68,45 @@ export async function getUserCardsDirect(accessToken: string) {
   console.log("✅ 인증된 사용자 ID:", user.id);
   console.log("📊 user_cards 테이블 조회 중... WHERE user_id =", user.id);
   
-  const { data, error } = await supabase
-    .from("user_cards")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("obtained_at", { ascending: false });
+  // 모든 카드 가져오기 (페이지네이션 없이)
+  let allCards: any[] = [];
+  let page = 0;
+  const pageSize = 1000; // Supabase 기본 최대값
   
-  if (error) {
-    console.error("❌ 카드 조회 에러:", error);
-    console.error("에러 상세:", JSON.stringify(error, null, 2));
-    throw error;
+  while (true) {
+    const { data, error, count } = await supabase
+      .from("user_cards")
+      .select("*", { count: 'exact' })
+      .eq("user_id", user.id)
+      .order("obtained_at", { ascending: false })
+      .range(page * pageSize, (page + 1) * pageSize - 1);
+    
+    if (error) {
+      console.error("❌ 카드 조회 에러:", error);
+      console.error("에러 상세:", JSON.stringify(error, null, 2));
+      throw error;
+    }
+    
+    console.log(`📄 페이지 ${page + 1} 조회 결과: ${data?.length || 0}개 (전체: ${count}개)`);
+    
+    if (!data || data.length === 0) {
+      break;
+    }
+    
+    allCards = [...allCards, ...data];
+    
+    // 더 이상 데이터가 없으면 중단
+    if (data.length < pageSize) {
+      break;
+    }
+    
+    page++;
   }
   
-  console.log("✅ user_cards 조회 결과:", data);
-  console.log(`📦 총 ${data?.length || 0}개 카드 발견`);
+  console.log("✅ user_cards 조회 완료:", allCards);
+  console.log(`📦 총 ${allCards.length}개 카드 발견`);
   
-  return data || [];
+  return allCards;
 }
 
 // 게임 데이터 업데이트
