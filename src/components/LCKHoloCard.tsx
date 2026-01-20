@@ -556,11 +556,11 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
                   >
                     <div className="text-[8px] font-bold tracking-wide leading-none">OVR</div>
                     <div className="text-xl font-display font-bold leading-none flex items-baseline gap-0.5 mt-0.5">
-                      <span style={{ color: synergyBonus && synergyBonus.ovr > 0 ? "#10B981" : undefined }}>
+                      <span style={{ color: synergyBonus && synergyBonus.ovr > 0 ? "#9333EA" : undefined }}>
                         {displayOVR}
                       </span>
                       {synergyBonus && synergyBonus.ovr > 0 && (
-                        <span className="text-xs" style={{ color: "#10B981" }}>(+{synergyBonus.ovr})</span>
+                        <span className="text-xs font-black" style={{ color: "#9333EA" }}>(+{synergyBonus.ovr})</span>
                       )}
                     </div>
                   </div>
@@ -606,13 +606,13 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
                       className="text-xs font-display font-bold px-1 py-0.5 rounded flex items-center justify-center gap-0.5"
                       style={{
                         background: `linear-gradient(135deg, ${gradeColor}33 0%, ${gradeColor}11 100%)`,
-                        color: synergyBonus && synergyBonus.mec > 0 ? "#10B981" : gradeColor,
+                        color: synergyBonus && synergyBonus.mec > 0 ? "#9333EA" : gradeColor,
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
                       <span>{card.stats.mechanics + (synergyBonus?.mec || 0)}</span>
                       {synergyBonus && synergyBonus.mec > 0 && (
-                        <span className="text-[9px]">(+{synergyBonus.mec})</span>
+                        <span className="text-[9px] font-black">(+{synergyBonus.mec})</span>
                       )}
                     </div>
                   </div>
@@ -622,13 +622,13 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
                       className="text-xs font-display font-bold px-1 py-0.5 rounded flex items-center justify-center gap-0.5"
                       style={{
                         background: `linear-gradient(135deg, ${gradeColor}33 0%, ${gradeColor}11 100%)`,
-                        color: synergyBonus && synergyBonus.tf > 0 ? "#10B981" : gradeColor,
+                        color: synergyBonus && synergyBonus.tf > 0 ? "#9333EA" : gradeColor,
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
                       <span>{card.stats.teamfight + (synergyBonus?.tf || 0)}</span>
                       {synergyBonus && synergyBonus.tf > 0 && (
-                        <span className="text-[9px]">(+{synergyBonus.tf})</span>
+                        <span className="text-[9px] font-black">(+{synergyBonus.tf})</span>
                       )}
                     </div>
                   </div>
@@ -638,13 +638,13 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
                       className="text-xs font-display font-bold px-1 py-0.5 rounded flex items-center justify-center gap-0.5"
                       style={{
                         background: `linear-gradient(135deg, ${gradeColor}33 0%, ${gradeColor}11 100%)`,
-                        color: synergyBonus && synergyBonus.clu > 0 ? "#10B981" : gradeColor,
+                        color: synergyBonus && synergyBonus.clu > 0 ? "#9333EA" : gradeColor,
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
                       <span>{card.stats.clutch + (synergyBonus?.clu || 0)}</span>
                       {synergyBonus && synergyBonus.clu > 0 && (
-                        <span className="text-[9px]">(+{synergyBonus.clu})</span>
+                        <span className="text-[9px] font-black">(+{synergyBonus.clu})</span>
                       )}
                     </div>
                   </div>
