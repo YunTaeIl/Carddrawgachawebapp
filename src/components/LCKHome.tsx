@@ -416,21 +416,21 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       <div className="max-w-[1500px] mx-auto px-6 py-8">{/* 카드 5장 + 간격에 맞춘 최적 너비 */}
         {/* MY SQUAD 섹션 */}
         <div className="mb-12" ref={squadRef}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-4xl font-bold font-display tracking-wide">MY SQUAD</h2>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold font-display tracking-wide">MY SQUAD</h2>
+            <div className="flex items-center gap-2 md:gap-3">
               <Button
                 onClick={() => onNavigate("squad")}
-                className="bg-[#0047AB] hover:bg-[#0047AB]/80 font-display"
+                className="bg-[#0047AB] hover:bg-[#003D8F] font-display flex-1 md:flex-none py-2.5 md:py-3 flex items-center justify-center"
               >
-                <Users className="w-4 h-4 mr-2" />
-                스쿼드 편집
+                <Users className="w-4 h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">스쿼드 </span>편집
               </Button>
               <Button
                 onClick={handleShareSquad}
-                className="bg-[#9333EA] hover:bg-[#9333EA]/80 font-display"
+                className="bg-[#C8102E] hover:bg-[#A00D25] font-display flex-1 md:flex-none py-2.5 md:py-3 flex items-center justify-center"
               >
-                <Share2 className="w-4 h-4 mr-2" />
+                <Share2 className="w-4 h-4 mr-1 md:mr-2" />
                 공유
               </Button>
             </div>
