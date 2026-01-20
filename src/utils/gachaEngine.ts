@@ -35,18 +35,25 @@ let cachedPackPools: Map<CardPackType, Map<Grade, LCKCard[]>> = new Map();
 
 // 카드 풀 초기화 (앱 시작 시 한번만)
 export async function initializeCardPool() {
-  if (cachedCardPool && cachedCardPool.length > 0) return;
+  if (cachedCardPool && cachedCardPool.length > 0) {
+    console.log(`♻️ 캐시된 카드 풀 사용: ${cachedCardPool.length}개`);
+    return cachedCardPool;
+  }
+  
+  console.log("🔄 Supabase에서 카드 풀 로드 중...");
   
   try {
     cachedCardPool = await getCardPool();
     
     // 카드가 없으면 샘플 데이터 사용
     if (!cachedCardPool || cachedCardPool.length === 0) {
-      console.warn("Supabase에서 카드를 가져올 수 없어 샘플 데이터를 사용합니다");
+      console.warn("⚠️ Supabase에서 카드를 가져올 수 없어 샘플 데이터를 사용합니다");
       cachedCardPool = SAMPLE_CARDS;
+    } else {
+      console.log(`✅ Supabase에서 ${cachedCardPool.length}개 카드 로드 성공!`);
     }
   } catch (error) {
-    console.error("카드 풀 초기화 실패, 샘플 데이터 사용:", error);
+    console.error("❌ 카드 풀 초기화 실패, 샘플 데이터 사용:", error);
     cachedCardPool = SAMPLE_CARDS;
   }
   
@@ -56,8 +63,9 @@ export async function initializeCardPool() {
   cachedGradeMap.set("B", cachedCardPool.filter(c => c.grade === "B"));
   cachedGradeMap.set("C", cachedCardPool.filter(c => c.grade === "C"));
   
-  // 카드팩별 풀 초기화
-  initializePackPools();
+  console.log(`📊 등급별 분류 완료: S(${cachedGradeMap.get("S")?.length}) A(${cachedGradeMap.get("A")?.length}) B(${cachedGradeMap.get("B")?.length}) C(${cachedGradeMap.get("C")?.length})`);
+  
+  return cachedCardPool;
 }
 
 // 카드팩별 풀 초기화
