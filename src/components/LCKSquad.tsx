@@ -175,65 +175,57 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
     try {
       toast.info("이미지 생성 중...");
       
-      // 짧은 대기 시간만 두고 바로 캡처
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // toBlob 사용 - pixelRatio 낮춰서 속도 개선
       const blob = await htmlToImage.toBlob(squadRef.current, {
         quality: 0.95,
-        pixelRatio: 1.5, // 2에서 1.5로 낮춤
+        pixelRatio: 1.5,
         backgroundColor: '#0B0F1A',
         cacheBust: true,
       });
       
       if (!blob) {
-        throw new Error('이미지 생성 실패: blob이 null입니다.');
+        throw new Error('이미지 생성 실패');
       }
       
-      // 모바일: 네이티브 공유
-      if (isMobile() && navigator.share && navigator.canShare) {
-        const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
-        
-        if (navigator.canShare({ files: [file] })) {
-          try {
+      // 모바일 감지
+      const mobile = isMobile();
+      console.log('모바일 여부:', mobile);
+      console.log('navigator.share 존재:', !!navigator.share);
+      
+      // 모바일에서 네이티브 공유 시도
+      if (mobile && navigator.share) {
+        try {
+          const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
+          
+          // canShare 체크
+          const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+          console.log('파일 공유 가능:', canShareFiles);
+          
+          if (canShareFiles) {
             await navigator.share({
               files: [file],
               title: 'LCK 스쿼드',
               text: `내 LCK 스쿼드 (평균 OVR ${stats.avgOVR})`,
             });
-            toast.success("스쿼드를 공유했습니다!");
-          } catch (shareError: any) {
-            // 사용자가 공유 취소한 경우
-            if (shareError.name === 'AbortError') {
-              console.log('공유 취소됨');
-            } else {
-              console.error('공유 실패:', shareError);
-              // 공유 실패 시 다운로드로 폴백
-              downloadImage(blob);
-            }
+            toast.success("공유 완료!");
+            return;
           }
-        } else {
-          // 파일 공유 불가능한 경우 다운로드
-          downloadImage(blob);
+        } catch (shareError: any) {
+          console.error('네이티브 공유 실패:', shareError);
+          if (shareError.name !== 'AbortError') {
+            // 취소가 아닌 실패인 경우만 다운로드로 폴백
+            downloadImage(blob);
+          }
+          return;
         }
-      } else {
-        // PC: 다운로드
-        downloadImage(blob);
       }
+      
+      // PC 또는 공유 불가능한 경우 다운로드
+      downloadImage(blob);
+      
     } catch (error) {
-      console.error('=== 이미지 생성 실패 ===');
-      console.error('Error object:', error);
-      console.error('Error type:', typeof error);
-      console.error('Error constructor:', error?.constructor?.name);
-      
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-      } else if (error && typeof error === 'object') {
-        console.error('Error keys:', Object.keys(error));
-        console.error('Error values:', Object.values(error));
-      }
-      
+      console.error('이미지 생성 실패:', error);
       toast.error('이미지 생성에 실패했습니다.');
     }
   };
