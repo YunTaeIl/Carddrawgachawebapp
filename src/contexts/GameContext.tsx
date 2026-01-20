@@ -118,6 +118,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...prevData,
           currency: gameData.currency,
           shards: gameData.shards,
+          lastCheckIn: gameData.last_check_in || undefined,
           gachaState: {
             s_pity_stack: gameData.s_pity_stack,
             a_pity_stack: gameData.a_pity_stack,

@@ -149,6 +149,24 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     }
   };
 
+  // 오늘 출석했는지 확인
+  const hasCheckedInToday = () => {
+    if (!userData.lastCheckIn) return false;
+    
+    const lastCheckIn = new Date(userData.lastCheckIn);
+    const now = new Date();
+    
+    // 한국 시간 기준 계산
+    const koreaOffset = 9 * 60 * 60 * 1000; // 9시간을 밀리초로
+    const lastCheckInKorea = new Date(lastCheckIn.getTime() + koreaOffset);
+    const nowKorea = new Date(now.getTime() + koreaOffset);
+    
+    const lastCheckInDate = new Date(lastCheckInKorea.getFullYear(), lastCheckInKorea.getMonth(), lastCheckInKorea.getDate());
+    const todayDate = new Date(nowKorea.getFullYear(), nowKorea.getMonth(), nowKorea.getDate());
+    
+    return lastCheckInDate.getTime() === todayDate.getTime();
+  };
+
   const handleShareSquad = async () => {
     console.log('=== 공유 시작 ===');
     console.log('User Agent:', navigator.userAgent);

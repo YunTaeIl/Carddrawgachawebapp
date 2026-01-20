@@ -49,6 +49,7 @@ export interface UserData {
     ADC: UserCard | null;
     SUP: UserCard | null;
   };
+  lastCheckIn?: string; // 마지막 출석 체크 시간
 }
 
 export interface GachaResult {
