@@ -394,24 +394,32 @@ function removeDuplicateSynergies(synergies: ActiveSynergy[]): ActiveSynergy[] {
     result.push(sorted[0]);
   }
   
-  // 추가 필터링: 일반 시너지 간 우선순위 처리
-  // 단일팀·단일년도가 있으면 → 단일팀, 단일년도 제외
-  const hasTeamYear = result.some(s => 
-    s.synergy.team_rule === "SAME" && s.synergy.year_rule === "SAME"
+  // 추가 필터링: 일반 시너지(SAME 계열) 간 최적화
+  // 단일팀·단일년도, 단일팀, 단일년도 중 가장 많은 인원을 커버하는 것 선택
+  const generalSynergies = result.filter(s => 
+    (s.synergy.team_rule === "SAME" && s.synergy.year_rule === "SAME") || // 단일팀·단일년도
+    (s.synergy.team_rule === "SAME" && !s.synergy.year_rule) ||           // 단일팀만
+    (s.synergy.year_rule === "SAME" && !s.synergy.team_rule)              // 단일년도만
   );
   
-  if (hasTeamYear) {
+  if (generalSynergies.length > 1) {
+    // matchedCount 많은 순으로 정렬
+    generalSynergies.sort((a, b) => b.matchedCount - a.matchedCount);
+    
+    // 가장 많은 인원을 커버하는 시너지만 유지
+    const bestGeneral = generalSynergies[0];
+    
+    // 일반 시너지가 아닌 것들 + 최고 인원수 일반 시너지만 반환
     return result.filter(s => {
-      // 단일팀·단일년도는 유지
-      if (s.synergy.team_rule === "SAME" && s.synergy.year_rule === "SAME") {
-        return true;
+      const isGeneral = (s.synergy.team_rule === "SAME" && s.synergy.year_rule === "SAME") ||
+                        (s.synergy.team_rule === "SAME" && !s.synergy.year_rule) ||
+                        (s.synergy.year_rule === "SAME" && !s.synergy.team_rule);
+      
+      if (!isGeneral) {
+        return true; // 일반 시너지가 아니면 유지
       }
-      // 단일팀만, 단일년도만은 제외
-      if (s.synergy.team_rule === "SAME" || s.synergy.year_rule === "SAME") {
-        return false;
-      }
-      // 나머지는 유지
-      return true;
+      
+      return s === bestGeneral; // 일반 시너지는 최고만 유지
     });
   }
   
