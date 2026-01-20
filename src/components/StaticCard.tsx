@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { LCKCard, GRADE_COLORS } from "@/types/lck";
-import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { PlayerImage } from "@/components/PlayerImage";
 import { getTeamLogoUrls } from "@/utils/teamLogos";
 
@@ -57,14 +56,6 @@ export function StaticCard({ card, size = "small", upgradeLevel = 0 }: StaticCar
   const gradeColor = GRADE_COLORS[card.grade];
   const displayOVR = card.stats.ovr + (upgradeLevel || 0);
 
-  const radarData = [
-    { stat: "메카닉", value: card.stats.mechanics },
-    { stat: "라인전", value: card.stats.laning },
-    { stat: "한타", value: card.stats.teamfight },
-    { stat: "운영", value: card.stats.macro },
-    { stat: "클러치", value: card.stats.clutch },
-  ];
-
   const getBorderStyle = () => {
     switch (card.grade) {
       case "S":
@@ -88,7 +79,7 @@ export function StaticCard({ card, size = "small", upgradeLevel = 0 }: StaticCar
   return (
     <div className={`${sizeClasses[size]} relative`}>
       <div className="w-full h-full relative">
-        {/* 앞면 */}
+        {/* 앞면만 */}
         <div className="absolute inset-0">
           {/* 카드 본체 */}
           <div 
@@ -136,7 +127,7 @@ export function StaticCard({ card, size = "small", upgradeLevel = 0 }: StaticCar
             </div>
 
             {/* 선수 이미지 */}
-            <div className="absolute inset-x-0 top-[70px] bottom-[160px] flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-x-0 top-[60px] bottom-[100px] flex items-center justify-center pointer-events-none">
               <PlayerImage 
                 playerName={card.name}
                 year={card.year}
@@ -191,25 +182,6 @@ export function StaticCard({ card, size = "small", upgradeLevel = 0 }: StaticCar
                 {upgradeLevel > 0 && (
                   <span className="text-xs text-[#D4AF37] font-display">+{upgradeLevel}</span>
                 )}
-              </div>
-
-              {/* 레이더 차트 */}
-              <div className="h-20 -mx-1">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke={`${gradeColor}44`} />
-                    <PolarAngleAxis 
-                      dataKey="stat" 
-                      tick={{ fill: '#9AA6C3', fontSize: currentFontSize.stats.replace('text-', '').replace('px', ''), fontFamily: 'Teko' }}
-                    />
-                    <Radar
-                      dataKey="value"
-                      stroke={gradeColor}
-                      fill={gradeColor}
-                      fillOpacity={0.3}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
               </div>
             </div>
           </div>

@@ -590,15 +590,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           >
             이용약관 및 면책조항
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleShareSquad}
-            className="text-[#8B95B5] hover:text-white text-xs"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            스쿼드 공유
-          </Button>
         </div>
       </div>
 
