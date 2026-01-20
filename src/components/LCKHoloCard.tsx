@@ -118,7 +118,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
 
   const gradeColor = GRADE_COLORS[card.grade];
   
-  const displayOVR = card.stats.ovr + (upgradeLevel || 0);
+  const displayOVR = card.stats.ovr + (upgradeLevel || 0) + (synergyBonus?.ovr || 0);
 
   // 5각형 레이더 차트 데이터
   const radarData = [
@@ -556,9 +556,11 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
                   >
                     <div className="text-[8px] font-bold tracking-wide leading-none">OVR</div>
                     <div className="text-xl font-display font-bold leading-none flex items-baseline gap-0.5 mt-0.5">
-                      {displayOVR}
-                      {upgradeLevel > 0 && (
-                        <span className="text-xs text-green-300">+{upgradeLevel}</span>
+                      <span style={{ color: synergyBonus && synergyBonus.ovr > 0 ? "#10B981" : undefined }}>
+                        {displayOVR}
+                      </span>
+                      {synergyBonus && synergyBonus.ovr > 0 && (
+                        <span className="text-xs" style={{ color: "#10B981" }}>(+{synergyBonus.ovr})</span>
                       )}
                     </div>
                   </div>
