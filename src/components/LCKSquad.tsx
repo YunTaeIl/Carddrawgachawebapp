@@ -7,21 +7,7 @@ import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { SynergyPanel } from "@/components/SynergyPanelNew";
 import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Position, POSITION_NAMES, UserCard } from "@/types/lck";
-import { calculateActiveSynergies } from "@/utils/synergyCalculatorNew";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/app/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select";
-import { Input } from "@/app/components/ui/input";
+import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculatorNew";
 
 interface LCKSquadProps {
   onBack: () => void;
@@ -41,6 +27,11 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
   const [currentPage, setCurrentPage] = useState(1);
   
   const synergies = calculateActiveSynergies(userData.squad);
+  
+  // 스쿼드 스탯 계산 (시너지 포함)
+  const squadStats = useMemo(() => {
+    return calculateSquadStats(userData.squad, synergies);
+  }, [userData.squad, synergies]);
 
   const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
 
@@ -226,33 +217,33 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-[#9AA6C3]">총 OVR</span>
-                  <span className="text-3xl font-bold text-[#D4AF37]">{userData.squadStats.totalOVR}</span>
+                  <span className="text-3xl font-bold text-[#D4AF37]">{squadStats.totalOVR}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[#9AA6C3]">평균 OVR</span>
-                  <span className="text-2xl font-bold text-[#2B6CFF]">{userData.squadStats.avgOVR}</span>
+                  <span className="text-2xl font-bold text-[#2B6CFF]">{squadStats.avgOVR}</span>
                 </div>
                 
                 <div className="pt-3 border-t border-[#2B6CFF]/30 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">기계 (Mechanics)</span>
-                    <span className="font-bold">{userData.squadStats.totalMechanics}</span>
+                    <span className="font-bold">{squadStats.totalMechanics}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">라인 (Laning)</span>
-                    <span className="font-bold">{userData.squadStats.totalLaning}</span>
+                    <span className="font-bold">{squadStats.totalLaning}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">한타 (Teamfight)</span>
-                    <span className="font-bold">{userData.squadStats.totalTeamfight}</span>
+                    <span className="font-bold">{squadStats.totalTeamfight}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">운영 (Macro)</span>
-                    <span className="font-bold">{userData.squadStats.totalMacro}</span>
+                    <span className="font-bold">{squadStats.totalMacro}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">클러치 (Clutch)</span>
-                    <span className="font-bold">{userData.squadStats.totalClutch}</span>
+                    <span className="font-bold">{squadStats.totalClutch}</span>
                   </div>
                 </div>
               </div>

@@ -9,7 +9,7 @@ import { LCKAuth } from "@/components/LCKAuth";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { GACHA_CONFIG } from "@/types/lck";
 import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut } from "lucide-react";
-import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculator";
+import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculatorNew";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
 
