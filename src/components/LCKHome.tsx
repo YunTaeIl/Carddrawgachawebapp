@@ -126,16 +126,13 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
         useCORS: true,
         allowTaint: true,
         onclone: (clonedDoc) => {
-          // 클론된 문서의 모든 요소에서 문제가 되는 CSS 속성 제거
           const elements = clonedDoc.querySelectorAll('*');
           elements.forEach((el: Element) => {
             if (el instanceof HTMLElement) {
-              // computed style에서 color 값을 가져와서 인라인으로 설정
               const computed = window.getComputedStyle(el);
               const color = computed.color;
               const bgColor = computed.backgroundColor;
               
-              // oklab이 아닌 rgb/rgba 형식으로 변환
               if (color && !color.includes('oklab')) {
                 el.style.color = color;
               }
@@ -143,7 +140,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 el.style.backgroundColor = bgColor;
               }
               
-              // border color도 처리
               const borderColor = computed.borderColor;
               if (borderColor && !borderColor.includes('oklab')) {
                 el.style.borderColor = borderColor;
@@ -153,11 +149,43 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
         }
       });
       
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = 'lck_gacha_squad.png';
-      link.click();
-      toast.success('스쿼드 이미지가 다운로드되었습니다!');
+      // Canvas를 Blob으로 변환
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          toast.error('이미지 생성에 실패했습니다.');
+          return;
+        }
+
+        // Web Share API 지원 확인 (모바일)
+        if (navigator.share && navigator.canShare) {
+          const file = new File([blob], 'lck_gacha_squad.png', { type: 'image/png' });
+          const shareData = {
+            title: 'My LCK Squad',
+            text: `내 LCK 스쿼드 (AVG OVR ${stats.avgOVR})`,
+            files: [file]
+          };
+
+          if (navigator.canShare(shareData)) {
+            try {
+              await navigator.share(shareData);
+              toast.success('스쿼드를 공유했습니다!');
+              return;
+            } catch (err: any) {
+              // 사용자가 취소한 경우 (AbortError)는 무시
+              if (err.name !== 'AbortError') {
+                console.error('공유 실패:', err);
+              }
+            }
+          }
+        }
+
+        // Web Share API 미지원 시 다운로드 (데스크톱)
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'lck_gacha_squad.png';
+        link.click();
+        toast.success('스쿼드 이미지가 다운로드되었습니다!');
+      }, 'image/png');
     } catch (error) {
       console.error('이미지 생성 실패:', error);
       toast.error('이미지 생성에 실패했습니다.');
@@ -590,6 +618,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
             totalMacro: stats.totalMacro,
             totalClutch: stats.totalClutch
           }}
+          cardBonuses={cardBonuses}
         />
       </div>
     </div>

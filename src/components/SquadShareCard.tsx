@@ -22,13 +22,23 @@ interface SquadShareCardProps {
     totalMacro: number;
     totalClutch: number;
   };
+  cardBonuses: { [cardId: string]: { ovr: number; mec: number; lan: number; tf: number; mac: number; clu: number } };
 }
 
 export const SquadShareCard = React.forwardRef<HTMLDivElement, SquadShareCardProps>(
-  ({ squad, synergies, stats }, ref) => {
+  ({ squad, synergies, stats, cardBonuses }, ref) => {
     const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
     const deployedCards = Object.values(squad).filter((card): card is UserCard => card !== null);
     
+    const getPlayerImageUrl = (card: UserCard) => {
+      return `https://nkgymwgozhxzirkhjyzw.supabase.co/storage/v1/object/public/lck_player_images/${card.id}.png`;
+    };
+
+    const getCardOVR = (card: UserCard) => {
+      const bonus = cardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
+      return card.stats.ovr + card.upgradeLevel + bonus.ovr;
+    };
+
     const containerStyle: React.CSSProperties = {
       width: '1200px',
       padding: '48px',
@@ -262,7 +272,7 @@ export const SquadShareCard = React.forwardRef<HTMLDivElement, SquadShareCardPro
                       <div style={playerNameStyle}>{card.name}</div>
                       <div style={teamNameStyle}>{card.team}</div>
                       <div style={teamNameStyle}>{card.year}</div>
-                      <div style={ovrStyle}>OVR {card.stats.ovr + card.upgradeLevel}</div>
+                      <div style={ovrStyle}>OVR {getCardOVR(card)}</div>
                     </div>
                   </div>
                 ) : (
