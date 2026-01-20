@@ -56,6 +56,9 @@ export async function initializeCardPool() {
   cachedGradeMap.set("B", cachedCardPool.filter(c => c.grade === "B"));
   cachedGradeMap.set("C", cachedCardPool.filter(c => c.grade === "C"));
   
+  // 🔥 카드팩별 캐시도 초기화
+  initializePackPools();
+  
   return cachedCardPool;
 }
 
