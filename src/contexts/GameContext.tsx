@@ -393,7 +393,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // 샤드로 카드 제작
   const craftCardWithShards = async (grade: "A" | "S"): Promise<UserCard | null> => {
-    const cost = GACHA_CONFIG.CRAFT_COST[grade];
+    const cost = GACHA_CONFIG.CRAFT_COSTS[grade];
     
     if (userData.shards < cost) {
       toast.error(`샤드가 부족합니다! (필요: ${cost})`);

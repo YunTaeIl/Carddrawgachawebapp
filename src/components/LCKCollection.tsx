@@ -29,6 +29,7 @@ const CARDS_PER_PAGE = 20; // 한 페이지당 카드 수
 export function LCKCollection({ onBack }: LCKCollectionProps) {
   const { userData, upgradeCard, craftCardWithShards } = useGame();
   const [selectedCard, setSelectedCard] = useState<UserCard | null>(null);
+  const [craftedCard, setCraftedCard] = useState<UserCard | null>(null); // 🔥 제작된 카드 모달용
   const [filterGrade, setFilterGrade] = useState<Grade | "all">("all");
   const [filterPosition, setFilterPosition] = useState<Position | "all">("all");
   const [filterTeam, setFilterTeam] = useState<string>("all");
@@ -98,6 +99,14 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
       }
     }
   };
+  
+  // 🔥 샤드로 카드 제작 핸들러
+  const handleCraftCard = async (grade: "A" | "S") => {
+    const crafted = await craftCardWithShards(grade);
+    if (crafted) {
+      setCraftedCard(crafted); // 모달 열기
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-[#EAF0FF] p-6">
@@ -140,7 +149,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                 <div className="text-sm text-[#9AA6C3]">300 샤드</div>
               </div>
               <Button
-                onClick={() => craftCardWithShards("A")}
+                onClick={() => handleCraftCard("A")}
                 disabled={userData.shards < GACHA_CONFIG.CRAFT_COSTS.A}
                 className="w-full bg-[#B7C2D6] hover:bg-[#B7C2D6]/80 text-[#0B0F1A]"
               >
@@ -154,7 +163,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                 <div className="text-sm text-[#9AA6C3]">900 샤드</div>
               </div>
               <Button
-                onClick={() => craftCardWithShards("S")}
+                onClick={() => handleCraftCard("S")}
                 disabled={userData.shards < GACHA_CONFIG.CRAFT_COSTS.S}
                 className="w-full bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-[#0B0F1A]"
               >
@@ -375,6 +384,45 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                       </Button>
                     </div>
                   </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* 🔥 제작된 카드 모달 */}
+        <Dialog open={craftedCard !== null} onOpenChange={() => setCraftedCard(null)}>
+          <DialogContent className="max-w-2xl bg-[#12182A] text-[#EAF0FF] border-2 border-[#D4AF37]/50">
+            {craftedCard && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-2xl text-center text-[#D4AF37] flex items-center justify-center gap-2">
+                    <Sparkles className="w-6 h-6" />
+                    {craftedCard.grade}등급 카드 제작 완료!
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col items-center gap-6 py-4">
+                  {/* 카드 */}
+                  <div className="transform scale-110">
+                    <LCKHoloCard card={craftedCard} size="large" upgradeLevel={0} />
+                  </div>
+
+                  {/* 카드 정보 */}
+                  <div className="text-center space-y-2">
+                    <h3 className="text-2xl font-bold">{craftedCard.name}</h3>
+                    <div className="text-[#9AA6C3]">
+                      {craftedCard.team} ({craftedCard.year}) - {craftedCard.position}
+                    </div>
+                    <div className="text-lg font-bold">OVR {craftedCard.stats.ovr}</div>
+                  </div>
+
+                  {/* 확인 버튼 */}
+                  <Button
+                    onClick={() => setCraftedCard(null)}
+                    className="w-full bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-[#0B0F1A] font-bold"
+                  >
+                    확인
+                  </Button>
                 </div>
               </>
             )}
