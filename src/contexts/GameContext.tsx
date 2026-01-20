@@ -90,8 +90,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const loadData = async () => {
       try {
         // 로그인 상태면 LocalStorage 로드 스킵 (DB에서 불러올 예정)
-        if (isAuthenticated && accessToken) {
+        if (isAuthenticated === true && accessToken) {
           console.log("🔐 로그인 상태 → LocalStorage 로드 스킵, DB에서 불러옵니다");
+          // 기본 데이터만 설정 (DB에서 덮어씌워질 예정)
+          setUserData(getDefaultUserData());
         } else {
           // 비로그인 시 LocalStorage에서 로드
           const saved = loadUserData();
@@ -99,11 +101,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
           console.log("📁 LocalStorage에서 데이터 로드:", saved);
         }
         
-        // 카드 풀 초기화
+        // 카드 풀 초기화 (로그인 여부 상관없이 필수)
+        console.log("🎴 카드 풀 초기화 시작...");
         const pool = await initializeCardPool();
+        console.log(`✅ 카드 풀 로드 완료! ${pool?.length || 0}개 카드`);
         setCardPool(pool);
       } catch (error) {
-        console.error("데이터 로드 실패:", error);
+        console.error("❌ 데이터 로드 실패:", error);
       } finally {
         setIsLoading(false);
       }
