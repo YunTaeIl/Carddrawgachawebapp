@@ -53,27 +53,6 @@ app.get("/make-server-ffd115c0/cards/:id", async (c) => {
 
 // ==================== 유저 API ====================
 
-// 유저 프로필 생성
-app.post("/make-server-ffd115c0/user/profile", async (c) => {
-  try {
-    const user = await userApi.getUserFromToken(c.req.header("Authorization"));
-    if (!user) {
-      return c.json({ success: false, error: "Unauthorized" }, 401);
-    }
-    
-    const { username } = await c.req.json();
-    if (!username || username.length < 2 || username.length > 20) {
-      return c.json({ success: false, error: "Invalid username" }, 400);
-    }
-    
-    const profile = await userApi.createUserProfile(user.id, username);
-    return c.json({ success: true, profile });
-  } catch (error) {
-    console.log(`Error creating profile: ${error}`);
-    return c.json({ success: false, error: String(error) }, 500);
-  }
-});
-
 // 유저 프로필 조회
 app.get("/make-server-ffd115c0/user/profile", async (c) => {
   try {

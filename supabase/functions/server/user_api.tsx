@@ -36,57 +36,6 @@ export async function getUserFromToken(authHeader: string | null) {
   return user;
 }
 
-// 유저 프로필 생성
-export async function createUserProfile(userId: string, username: string) {
-  // 1. 프로필 생성
-  const { data: profile, error: profileError } = await supabase
-    .from("user_profiles")
-    .insert({ id: userId, username })
-    .select()
-    .single();
-  
-  if (profileError) {
-    console.error("Profile creation error:", profileError);
-    throw new Error(`Failed to create profile: ${profileError.message}`);
-  }
-  
-  // 2. 게임 데이터 초기화
-  const { error: gameDataError } = await supabase
-    .from("user_game_data")
-    .insert({
-      user_id: userId,
-      currency: 20000, // 초기 RP (회원가입 보상)
-      shards: 0,
-      s_pity_stack: 0,
-      a_pity_stack: 0,
-      total_pulls: 0
-    });
-  
-  if (gameDataError) {
-    console.error("Game data initialization error:", gameDataError);
-    throw new Error(`Failed to initialize game data: ${gameDataError.message}`);
-  }
-  
-  // 3. 스쿼드 초기화
-  const { error: squadError } = await supabase
-    .from("user_squads")
-    .insert({
-      user_id: userId,
-      top_card_instance_id: null,
-      jgl_card_instance_id: null,
-      mid_card_instance_id: null,
-      adc_card_instance_id: null,
-      sup_card_instance_id: null
-    });
-  
-  if (squadError) {
-    console.error("Squad initialization error:", squadError);
-    throw new Error(`Failed to initialize squad: ${squadError.message}`);
-  }
-  
-  return profile;
-}
-
 // 유저 프로필 조회
 export async function getUserProfile(userId: string) {
   const { data, error } = await supabase
