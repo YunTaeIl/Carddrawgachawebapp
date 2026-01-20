@@ -223,4 +223,20 @@ app.put("/make-server-ffd115c0/user/squad", async (c) => {
   }
 });
 
+// 출석 체크
+app.post("/make-server-ffd115c0/user/check-in", async (c) => {
+  try {
+    const user = await userApi.getUserFromToken(c.req.header("Authorization"));
+    if (!user) {
+      return c.json({ success: false, error: "Unauthorized" }, 401);
+    }
+    
+    const result = await userApi.checkDailyAttendance(user.id);
+    return c.json(result);
+  } catch (error) {
+    console.log(`Error checking in: ${error}`);
+    return c.json({ success: false, error: String(error) }, 500);
+  }
+});
+
 Deno.serve(app.fetch);

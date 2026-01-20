@@ -10,11 +10,12 @@ import { SynergyPanel } from "@/components/SynergyPanelV2";
 import { ShareCard } from "@/components/ShareCard";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { GACHA_CONFIG } from "@/types/lck";
-import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut, Share2 } from "lucide-react";
+import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut, Share2, Calendar } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
 import * as htmlToImage from "html-to-image";
+import { projectId, publicAnonKey } from '/utils/supabase/info';
 
 interface LCKHomeProps {
   onNavigate: (page: "home" | "gacha" | "squad" | "collection" | "test" | "terms") => void;
@@ -112,6 +113,39 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     } catch (error) {
       console.error("로그아웃 실패:", error);
       toast.error("로그아웃에 실패했습니다");
+    }
+  };
+
+  const handleCheckIn = async () => {
+    if (!isAuthenticated || !user) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/user/check-in`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(result.message);
+        // 재화 업데이트 (GameContext를 통해)
+        window.location.reload(); // 간단하게 페이지 새로고침
+      } else {
+        toast.info(result.message || "이미 출석했습니다");
+      }
+    } catch (error) {
+      console.error("출석 체크 실패:", error);
+      toast.error("출석 체크에 실패했습니다");
     }
   };
 
@@ -265,8 +299,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
             <p className="text-xl text-[#8B95B5] font-display tracking-wide">SQUAD BUILDER</p>
           </div>
 
-          {/* 재화 & 천장 게이지 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* 재화 & 천장 게이지 & 출석 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {/* 재화 */}
             <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-xl p-4 border border-[#0047AB]/30">
               <div className="grid grid-cols-2 gap-4">
@@ -291,6 +325,22 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 </div>
               </div>
             </div>
+
+            {/* 출석 체크 */}
+            {isAuthenticated && (
+              <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-xl p-4 border border-[#10B981]/30">
+                <Button
+                  onClick={handleCheckIn}
+                  className="w-full h-full bg-gradient-to-br from-[#10B981]/20 to-transparent hover:from-[#10B981]/30 border border-[#10B981] text-white font-display"
+                >
+                  <Calendar className="w-6 h-6 mr-2" />
+                  <div className="text-left">
+                    <div className="text-xs text-[#9AA6C3]">매일 출석하고</div>
+                    <div className="text-lg font-bold">5,000 RP 받기</div>
+                  </div>
+                </Button>
+              </div>
+            )}
 
             {/* S 천장 게이지 */}
             <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-xl p-4 border border-[#C8102E]/30">
