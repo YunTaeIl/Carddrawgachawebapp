@@ -1,13 +1,16 @@
 // LCK 스쿼드 빌더 화면
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { SynergyPanel } from "@/components/SynergyPanelV2";
-import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { SquadShareCard } from "@/components/SquadShareCard";
+import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight, Share2, Download } from "lucide-react";
 import { Position, POSITION_NAMES, UserCard } from "@/types/lck";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
+import html2canvas from "html2canvas";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -165,6 +168,21 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
     setCurrentPage(1);
   };
 
+  // 스쿼드 공유 이미지 생성
+  const squadRef = useRef<HTMLDivElement>(null);
+  const handleShareSquad = () => {
+    if (squadRef.current) {
+      html2canvas(squadRef.current, { scale: 2 }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = 'lck_squad.png';
+        link.click();
+        toast.success("스쿼드 이미지가 다운로드되었습니다!");
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-[#EAF0FF] p-6">
       <div className="max-w-[1800px] mx-auto">
@@ -302,13 +320,21 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
             {/* 시너지 패널 */}
             <SynergyPanel activeSynergies={synergies} />
             
-            {/* 스쿼드 저장 버튼 */}
-            <div className="mt-6 flex justify-center">
+            {/* 스쿼드 저장 & 공유 버튼 */}
+            <div className="mt-6 flex flex-col gap-3">
               <Button
                 onClick={saveSquadToDB}
-                className="bg-[#2B6CFF] hover:bg-[#1E4FCC] text-white px-8 py-3 text-lg font-bold"
+                className="bg-[#2B6CFF] hover:bg-[#1E4FCC] text-white px-8 py-3 text-lg font-bold w-full"
               >
                 스쿼드 저장 (DB)
+              </Button>
+              <Button
+                onClick={handleShareSquad}
+                variant="outline"
+                className="border-[#9333EA] text-[#9333EA] hover:bg-[#9333EA]/10 px-8 py-3 text-lg font-bold w-full"
+              >
+                <Share2 className="w-5 h-5 mr-2" />
+                스쿼드 공유하기
               </Button>
             </div>
           </div>
@@ -443,6 +469,16 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* 숨겨진 스쿼드 공유 이미지 */}
+        <div className="fixed -left-[9999px] top-0">
+          <SquadShareCard
+            ref={squadRef}
+            squad={userData.squad}
+            synergies={synergies}
+            stats={stats}
+          />
+        </div>
       </div>
     </div>
   );

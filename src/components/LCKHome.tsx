@@ -1,18 +1,20 @@
 // LCK 가챠 메인 홈 화면
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { LCKAuth } from "@/components/LCKAuth";
 import { SynergyPanel } from "@/components/SynergyPanelV2";
+import { SquadShareCard } from "@/components/SquadShareCard";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { GACHA_CONFIG } from "@/types/lck";
-import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut } from "lucide-react";
+import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut, Share2 } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
+import html2canvas from "html2canvas";
 
 interface LCKHomeProps {
   onNavigate: (page: "home" | "gacha" | "squad" | "collection" | "test" | "terms") => void;
@@ -22,6 +24,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
   const { userData } = useGame();
   const { user, isAuthenticated, signOut } = useAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const squadRef = useRef<HTMLDivElement>(null);
 
   const positions = ["TOP", "JGL", "MID", "ADC", "SUP"] as const;
   
@@ -109,6 +112,17 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     } catch (error) {
       console.error("로그아웃 실패:", error);
       toast.error("로그아웃에 실패했습니다");
+    }
+  };
+
+  const handleShareSquad = () => {
+    if (squadRef.current) {
+      html2canvas(squadRef.current).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'lck_gacha_squad.png';
+        link.click();
+      });
     }
   };
 
@@ -221,13 +235,22 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-4xl font-bold font-display tracking-wide">MY SQUAD</h2>
-            <Button
-              onClick={() => onNavigate("squad")}
-              className="bg-[#0047AB] hover:bg-[#0047AB]/80 font-display"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              스쿼드 편집
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => onNavigate("squad")}
+                className="bg-[#0047AB] hover:bg-[#0047AB]/80 font-display"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                스쿼드 편집
+              </Button>
+              <Button
+                onClick={handleShareSquad}
+                className="bg-[#9333EA] hover:bg-[#9333EA]/80 font-display"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                공유
+              </Button>
+            </div>
           </div>
 
           {/* 스쿼드 카드 5장 가로 배치 */}
@@ -496,6 +519,15 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           >
             이용약관 및 면책조항
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleShareSquad}
+            className="text-[#8B95B5] hover:text-white text-xs"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            스쿼드 공유
+          </Button>
         </div>
       </div>
 
@@ -505,6 +537,23 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           <LCKAuth onSuccess={() => setShowAuthDialog(false)} />
         </DialogContent>
       </Dialog>
+
+      {/* 숨겨진 스쿼드 공유 이미지 */}
+      <div className="fixed -left-[9999px] top-0">
+        <SquadShareCard
+          ref={squadRef}
+          squad={userData.squad}
+          synergies={synergies}
+          stats={{
+            avgOVR: stats.avgOVR,
+            totalMechanics: stats.totalMechanics,
+            totalLaning: stats.totalLaning,
+            totalTeamfight: stats.totalTeamfight,
+            totalMacro: stats.totalMacro,
+            totalClutch: stats.totalClutch
+          }}
+        />
+      </div>
     </div>
   );
 }
