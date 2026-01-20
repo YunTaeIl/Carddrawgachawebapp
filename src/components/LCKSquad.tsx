@@ -5,7 +5,7 @@ import { useGame } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { SynergyPanel } from "@/components/SynergyPanelV2";
-import { SquadShareCard } from "@/components/SquadShareCard";
+import { ShareCard } from "@/components/ShareCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 import { Input } from "@/app/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
@@ -531,7 +531,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
 
         {/* 숨겨진 스쿼드 공유 이미지 */}
         <div className="fixed -left-[9999px] top-0">
-          <SquadShareCard
+          <ShareCard
             ref={squadRef}
             squad={userData.squad}
             synergies={synergies}
