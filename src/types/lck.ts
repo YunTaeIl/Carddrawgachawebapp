@@ -58,12 +58,58 @@ export interface GachaResult {
   isPity: boolean; // 천장으로 뽑았는지
 }
 
+export const POSITION_NAMES = {
+  TOP: "탑",
+  JGL: "정글",
+  MID: "미드",
+  ADC: "원딜",
+  SUP: "서포터"
+};
+
+// 시너지 타입
+export type SynergyType = "DUO" | "TRIO" | "ROSTER" | "THEME";
+
+// 연도 규칙
+export type YearRule = "EXACT" | "OPTIONAL" | "SAME" | "ANY";
+
+// 팀 규칙
+export type TeamRule = "EXACT_TEAM" | "SAME_TEAM" | "SAME" | "ANY" | "IN_LIST";
+
+// 시너지 효과 단계별
+export interface SynergyEffect {
+  count: number; // 인원수
+  ovr: number;
+  mechanics: number;
+  laning: number;
+  teamfight: number;
+  macro: number;
+  clutch: number;
+}
+
+// 시너지 정의
 export interface Synergy {
   id: string;
   name: string;
+  type: SynergyType;
+  priority: number;
+  yearRule: YearRule;
+  yearValue?: number;
+  teamRule: TeamRule;
+  teamValues?: string[]; // 팀 이름 배열
+  minCount?: number; // 최소 인원수
+  players?: string[]; // 선수 이름 배열
+  positions?: Position[]; // 포지션 배열
+  effects: SynergyEffect[]; // 단계별 효과
   description: string;
+}
+
+// 시너지 활성화 상태
+export interface ActiveSynergy {
+  synergy: Synergy;
   isActive: boolean;
-  bonus: string;
+  matchedCount: number; // 매칭된 인원수
+  matchedPlayers: string[]; // 매칭된 선수 ID들
+  currentEffect?: SynergyEffect; // 현재 적용 중인 효과
 }
 
 export const GACHA_CONFIG = {
@@ -145,12 +191,4 @@ export const GRADE_COLORS = {
   A: "#E0E0E0", // 밝은 실버 (배경과 대비)
   B: "#CD7F32", // 브론즈
   C: "#808080"  // 다크 그레이
-};
-
-export const POSITION_NAMES = {
-  TOP: "탑",
-  JGL: "정글",
-  MID: "미드",
-  ADC: "원딜",
-  SUP: "서포터"
 };

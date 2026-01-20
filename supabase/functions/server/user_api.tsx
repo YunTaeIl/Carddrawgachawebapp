@@ -48,7 +48,7 @@ export async function createUserProfile(userId: string, username: string) {
     .from("user_game_data")
     .insert({
       user_id: userId,
-      currency: 50000, // 초기 RP (베타 테스트 보상)
+      currency: 200000, // 초기 RP (베타 테스트 보상)
       shards: 0,
       s_pity_stack: 0,
       a_pity_stack: 0,
