@@ -160,44 +160,132 @@ function checkPlayerSynergy(synergy: SynergyDefinition, deployedCards: UserCard[
  */
 function checkThemeSynergy(synergy: SynergyDefinition, deployedCards: UserCard[]): ActiveSynergy {
   const minCount = synergy.min_count || 3;
+  let matchedCards: UserCard[] = [];
+  const missingRequirements: string[] = [];
   
-  // 팀 + 연도 일치하는 카드 찾기
+  // 1. EXACT_TEAM + EXACT 년도 (예: 2020 담원 풀 로스터)
   if (synergy.team_rule === "EXACT_TEAM" && synergy.team_values.length > 0 && synergy.year_value) {
     const targetTeam = synergy.team_values[0];
     const targetYear = synergy.year_value;
     
-    const matchedCards = deployedCards.filter(card =>
+    matchedCards = deployedCards.filter(card =>
       normalizeTeamName(card.team) === normalizeTeamName(targetTeam) &&
       card.year === targetYear
     );
     
-    const isActive = matchedCards.length >= minCount;
-    const matchedPlayers = matchedCards.map(c => c.id);
-    const currentEffect = isActive ? findCurrentEffect(synergy.effects, matchedCards.length) : undefined;
-    
-    const missingRequirements: string[] = [];
-    if (!isActive) {
+    if (matchedCards.length < minCount) {
       missingRequirements.push(`${targetTeam} ${targetYear}년 카드 ${minCount}장 필요 (현재 ${matchedCards.length}장)`);
     }
-    
-    return {
-      synergy,
-      isActive,
-      isPrime: isActive, // THEME + EXACT는 모두 PRIME
-      matchedCount: matchedCards.length,
-      matchedPlayers,
-      currentEffect,
-      missingRequirements
-    };
   }
+  
+  // 2. IN_LIST (예: T1 왕조 - 여러 팀명 중 하나)
+  else if (synergy.team_rule === "IN_LIST" && synergy.team_values.length > 0) {
+    const normalizedTeamList = synergy.team_values.map(t => normalizeTeamName(t));
+    
+    matchedCards = deployedCards.filter(card =>
+      normalizedTeamList.includes(normalizeTeamName(card.team))
+    );
+    
+    if (matchedCards.length < minCount) {
+      missingRequirements.push(`${synergy.team_values.join("/")} 소속 카드 ${minCount}장 필요 (현재 ${matchedCards.length}장)`);
+    }
+  }
+  
+  // 3. SAME 팀 + SAME 연도 (예: 단일팀·단일년도)
+  else if (synergy.team_rule === "SAME" && synergy.year_rule === "SAME") {
+    // 팀별, 연도별로 그룹화
+    const teamYearGroups = new Map<string, UserCard[]>();
+    
+    for (const card of deployedCards) {
+      const key = `${normalizeTeamName(card.team)}_${card.year}`;
+      if (!teamYearGroups.has(key)) {
+        teamYearGroups.set(key, []);
+      }
+      teamYearGroups.get(key)!.push(card);
+    }
+    
+    // 가장 많이 매칭된 그룹 찾기
+    let maxGroup: UserCard[] = [];
+    for (const group of teamYearGroups.values()) {
+      if (group.length > maxGroup.length) {
+        maxGroup = group;
+      }
+    }
+    
+    matchedCards = maxGroup;
+    
+    if (matchedCards.length < minCount) {
+      missingRequirements.push(`같은 팀 + 같은 연도 카드 ${minCount}장 필요 (현재 ${matchedCards.length}장)`);
+    }
+  }
+  
+  // 4. SAME 팀만 (예: 단일팀 - 연도무관)
+  else if (synergy.team_rule === "SAME") {
+    // 팀별로 그룹화
+    const teamGroups = new Map<string, UserCard[]>();
+    
+    for (const card of deployedCards) {
+      const key = normalizeTeamName(card.team);
+      if (!teamGroups.has(key)) {
+        teamGroups.set(key, []);
+      }
+      teamGroups.get(key)!.push(card);
+    }
+    
+    // 가장 많이 매칭된 그룹 찾기
+    let maxGroup: UserCard[] = [];
+    for (const group of teamGroups.values()) {
+      if (group.length > maxGroup.length) {
+        maxGroup = group;
+      }
+    }
+    
+    matchedCards = maxGroup;
+    
+    if (matchedCards.length < minCount) {
+      missingRequirements.push(`같은 팀 카드 ${minCount}장 필요 (현재 ${matchedCards.length}장)`);
+    }
+  }
+  
+  // 5. SAME 연도만 (예: 단일년도 - 팀무관)
+  else if (synergy.year_rule === "SAME") {
+    // 연도별로 그룹화
+    const yearGroups = new Map<number, UserCard[]>();
+    
+    for (const card of deployedCards) {
+      if (!yearGroups.has(card.year)) {
+        yearGroups.set(card.year, []);
+      }
+      yearGroups.get(card.year)!.push(card);
+    }
+    
+    // 가장 많이 매칭된 그룹 찾기
+    let maxGroup: UserCard[] = [];
+    for (const group of yearGroups.values()) {
+      if (group.length > maxGroup.length) {
+        maxGroup = group;
+      }
+    }
+    
+    matchedCards = maxGroup;
+    
+    if (matchedCards.length < minCount) {
+      missingRequirements.push(`같은 연도 카드 ${minCount}장 필요 (현재 ${matchedCards.length}장)`);
+    }
+  }
+  
+  const isActive = matchedCards.length >= minCount;
+  const matchedPlayers = matchedCards.map(c => c.id);
+  const currentEffect = isActive ? findCurrentEffect(synergy.effects, matchedCards.length) : undefined;
   
   return {
     synergy,
-    isActive: false,
-    isPrime: false,
-    matchedCount: 0,
-    matchedPlayers: [],
-    missingRequirements: ["조건 불충분"]
+    isActive,
+    isPrime: isActive,
+    matchedCount: matchedCards.length,
+    matchedPlayers,
+    currentEffect,
+    missingRequirements: isActive ? [] : missingRequirements
   };
 }
 
