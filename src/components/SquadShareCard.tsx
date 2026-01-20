@@ -3,7 +3,7 @@
 import React from "react";
 import { UserCard, Position, POSITION_NAMES } from "@/types/lck";
 import { ActiveSynergy } from "@/types/synergy";
-import { LCKHoloCard } from "@/components/LCKHoloCard";
+import { SimpleCard } from "@/components/SimpleCard";
 import { TrendingUp, Award } from "lucide-react";
 
 interface SquadShareCardProps {
@@ -214,12 +214,10 @@ export const SquadShareCard = React.forwardRef<HTMLDivElement, SquadShareCardPro
                   <div style={positionCodeStyle}>{position}</div>
                 </div>
                 {card ? (
-                  <LCKHoloCard 
+                  <SimpleCard 
                     card={card} 
                     size="small"
                     upgradeLevel={card.upgradeLevel}
-                    disableFlip={true}
-                    forceStatic={true}
                   />
                 ) : (
                   <div style={emptySlotStyle}>

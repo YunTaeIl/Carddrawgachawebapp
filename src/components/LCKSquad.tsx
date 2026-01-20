@@ -160,6 +160,13 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
 
   // 스쿼드 공유 이미지 생성
   const squadRef = useRef<HTMLDivElement>(null);
+  
+  // 모바일 감지
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           (window.innerWidth <= 768);
+  };
+  
   const handleShareSquad = async () => {
     // 먼저 미리보기 모달 띄우기
     setShowSharePreview(true);
@@ -188,17 +195,37 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
         throw new Error('이미지 생성 실패: blob이 null입니다.');
       }
       
-      // Blob을 URL로 변환하여 다운로드
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `lck_squad_${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // 모바일: 네이티브 공유
+      if (isMobile() && navigator.share && navigator.canShare) {
+        const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
+        
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'LCK 스쿼드',
+              text: `내 LCK 스쿼드 (평균 OVR ${stats.avgOVR})`,
+            });
+            toast.success("스쿼드를 공유했습니다!");
+          } catch (shareError: any) {
+            // 사용자가 공유 취소한 경우
+            if (shareError.name === 'AbortError') {
+              console.log('공유 취소됨');
+            } else {
+              console.error('공유 실패:', shareError);
+              // 공유 실패 시 다운로드로 폴백
+              downloadImage(blob);
+            }
+          }
+        } else {
+          // 파일 공유 불가능한 경우 다운로드
+          downloadImage(blob);
+        }
+      } else {
+        // PC: 다운로드
+        downloadImage(blob);
+      }
       
-      toast.success("스쿼드 이미지가 다운로드되었습니다!");
       setShowSharePreview(false);
     } catch (error) {
       console.error('=== 이미지 생성 실패 ===');
@@ -217,6 +244,18 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
       toast.error('이미지 생성에 실패했습니다.');
       setShowSharePreview(false);
     }
+  };
+  
+  const downloadImage = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lck_squad_${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("스쿼드 이미지가 다운로드되었습니다!");
   };
 
   return (
