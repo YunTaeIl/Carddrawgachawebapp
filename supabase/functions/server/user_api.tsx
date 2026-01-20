@@ -6,6 +6,12 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
+// 유저 인증용 클라이언트 (ANON KEY 사용)
+const supabaseAuth = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_ANON_KEY")!,
+);
+
 // 유저 인증 확인
 export async function getUserFromToken(authHeader: string | null) {
   console.log("🔐 getUserFromToken called, authHeader:", authHeader ? `Bearer ${authHeader.substring(7, 20)}...` : "NULL");
@@ -18,7 +24,8 @@ export async function getUserFromToken(authHeader: string | null) {
   const token = authHeader.substring(7);
   console.log("🔑 Extracted token:", token.substring(0, 20) + "...");
   
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  // ANON KEY 클라이언트로 사용자 확인
+  const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
   
   if (error || !user) {
     console.error("❌ Auth error:", error);
