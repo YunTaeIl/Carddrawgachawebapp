@@ -10,7 +10,7 @@ import { SynergyPanel } from "@/components/SynergyPanelV2";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { GACHA_CONFIG } from "@/types/lck";
 import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut } from "lucide-react";
-import { calculateSynergies } from "@/utils/synergyEngine";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
 
@@ -28,22 +28,10 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
   // 스쿼드 스탯 & 시너지 계산
   const synergies = calculateSynergies(userData.squad);
   
-  // 시너지 보너스 계산
-  const synergyBonus = synergies
-    .filter(s => s.isActive)
-    .reduce((total, s) => {
-      if (!s.currentEffect) return total;
-      return {
-        ovr: total.ovr + s.currentEffect.ovr,
-        mec: total.mec + s.currentEffect.mec,
-        lan: total.lan + s.currentEffect.lan,
-        tf: total.tf + s.currentEffect.tf,
-        mac: total.mac + s.currentEffect.mac,
-        clu: total.clu + s.currentEffect.clu
-      };
-    }, { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 });
+  // 각 카드별 시너지 보너스 계산
+  const cardBonuses = calculateCardSynergyBonuses(userData.squad, synergies);
   
-  // 간단한 스탯 계산 (시너지 포함)
+  // 스탯 계산 (각 카드에 시너지 보너스 적용)
   const stats = (() => {
     const deployedCards = Object.values(userData.squad).filter(c => c !== null);
     if (deployedCards.length === 0) {
@@ -56,6 +44,28 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
         baseClutch: 0, totalClutch: 0
       };
     }
+    
+    // 각 카드의 기본 스탯 + 시너지 보너스를 합산
+    let totalOVR = 0;
+    let totalMechanics = 0;
+    let totalLaning = 0;
+    let totalTeamfight = 0;
+    let totalMacro = 0;
+    let totalClutch = 0;
+    
+    for (const card of deployedCards) {
+      if (!card) continue;
+      
+      const bonus = cardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
+      
+      totalOVR += card.stats.ovr + card.upgradeLevel + bonus.ovr;
+      totalMechanics += card.stats.mechanics + bonus.mec;
+      totalLaning += card.stats.laning + bonus.lan;
+      totalTeamfight += card.stats.teamfight + bonus.tf;
+      totalMacro += card.stats.macro + bonus.mac;
+      totalClutch += card.stats.clutch + bonus.clu;
+    }
+    
     const baseOVR = deployedCards.reduce((sum, card) => sum + card!.stats.ovr + card!.upgradeLevel, 0);
     const baseMechanics = deployedCards.reduce((sum, card) => sum + card!.stats.mechanics, 0);
     const baseLaning = deployedCards.reduce((sum, card) => sum + card!.stats.laning, 0);
@@ -65,24 +75,31 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     
     return {
       baseOVR,
-      totalOVR: baseOVR + synergyBonus.ovr,
-      avgOVR: Math.round((baseOVR + synergyBonus.ovr) / deployedCards.length),
+      totalOVR,
+      avgOVR: Math.round(totalOVR / deployedCards.length),
       baseMechanics,
-      totalMechanics: baseMechanics + synergyBonus.mec,
+      totalMechanics,
       baseLaning,
-      totalLaning: baseLaning + synergyBonus.lan,
+      totalLaning,
       baseTeamfight,
-      totalTeamfight: baseTeamfight + synergyBonus.tf,
+      totalTeamfight,
       baseMacro,
-      totalMacro: baseMacro + synergyBonus.mac,
+      totalMacro,
       baseClutch,
-      totalClutch: baseClutch + synergyBonus.clu
+      totalClutch
     };
   })();
   
   // 각 카드가 시너지에 포함되는지 확인
   const isCardInSynergy = (cardId: string) => {
     return synergies.some(s => s.isActive && s.matchedPlayers.includes(cardId));
+  };
+  
+  // 각 카드의 시너지 보너스 합계 계산
+  const getCardTotalBonus = (cardId: string) => {
+    const bonus = cardBonuses[cardId];
+    if (!bonus) return 0;
+    return bonus.ovr + bonus.mec + bonus.lan + bonus.tf + bonus.mac + bonus.clu;
   };
 
   const handleLogout = async () => {
@@ -260,7 +277,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="w-4 h-4 text-[#FFB81C]" />
                 <h3 className="font-bold font-display">스쿼드 스탯</h3>
-                {synergyBonus.ovr > 0 && (
+                {synergies.some(s => s.isActive) && (
                   <span className="ml-auto text-[9px] text-[#10B981] font-bold">시너지 적용 중</span>
                 )}
               </div>
@@ -271,8 +288,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                     <div className="text-xs text-[#8B95B5] mb-1">총 OVR</div>
                     <div className="flex flex-col items-center">
                       <div className="text-2xl font-display font-bold text-[#FFB81C]">{stats.totalOVR}</div>
-                      {synergyBonus.ovr > 0 && (
-                        <div className="text-[10px] text-[#10B981] font-bold">+{synergyBonus.ovr}</div>
+                      {synergies.some(s => s.isActive) && (
+                        <div className="text-[10px] text-[#10B981] font-bold">+{stats.totalOVR - stats.baseOVR}</div>
                       )}
                     </div>
                   </div>
@@ -288,8 +305,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                     <div className="text-xs text-[#8B95B5] mb-1">메카닉</div>
                     <div className="flex flex-col items-center">
                       <div className="text-lg font-display font-bold">{stats.totalMechanics}</div>
-                      {synergyBonus.mec > 0 && (
-                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.mec}</div>
+                      {synergies.some(s => s.isActive) && (
+                        <div className="text-[9px] text-[#10B981]">+{stats.totalMechanics - stats.baseMechanics}</div>
                       )}
                     </div>
                   </div>
@@ -297,8 +314,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                     <div className="text-xs text-[#8B95B5] mb-1">라인전</div>
                     <div className="flex flex-col items-center">
                       <div className="text-lg font-display font-bold">{stats.totalLaning}</div>
-                      {synergyBonus.lan > 0 && (
-                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.lan}</div>
+                      {synergies.some(s => s.isActive) && (
+                        <div className="text-[9px] text-[#10B981]">+{stats.totalLaning - stats.baseLaning}</div>
                       )}
                     </div>
                   </div>
@@ -306,8 +323,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                     <div className="text-xs text-[#8B95B5] mb-1">한타</div>
                     <div className="flex flex-col items-center">
                       <div className="text-lg font-display font-bold">{stats.totalTeamfight}</div>
-                      {synergyBonus.tf > 0 && (
-                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.tf}</div>
+                      {synergies.some(s => s.isActive) && (
+                        <div className="text-[9px] text-[#10B981]">+{stats.totalTeamfight - stats.baseTeamfight}</div>
                       )}
                     </div>
                   </div>
@@ -315,8 +332,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                     <div className="text-xs text-[#8B95B5] mb-1">운영</div>
                     <div className="flex flex-col items-center">
                       <div className="text-lg font-display font-bold">{stats.totalMacro}</div>
-                      {synergyBonus.mac > 0 && (
-                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.mac}</div>
+                      {synergies.some(s => s.isActive) && (
+                        <div className="text-[9px] text-[#10B981]">+{stats.totalMacro - stats.baseMacro}</div>
                       )}
                     </div>
                   </div>
@@ -324,8 +341,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                     <div className="text-xs text-[#8B95B5] mb-1">클러치</div>
                     <div className="flex flex-col items-center">
                       <div className="text-lg font-display font-bold">{stats.totalClutch}</div>
-                      {synergyBonus.clu > 0 && (
-                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.clu}</div>
+                      {synergies.some(s => s.isActive) && (
+                        <div className="text-[9px] text-[#10B981]">+{stats.totalClutch - stats.baseClutch}</div>
                       )}
                     </div>
                   </div>

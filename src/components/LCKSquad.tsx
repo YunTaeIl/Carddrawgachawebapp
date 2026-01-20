@@ -7,7 +7,7 @@ import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { SynergyPanel } from "@/components/SynergyPanelV2";
 import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Position, POSITION_NAMES, UserCard } from "@/types/lck";
-import { calculateSynergies } from "@/utils/synergyEngine";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import {
   Dialog,
   DialogContent,

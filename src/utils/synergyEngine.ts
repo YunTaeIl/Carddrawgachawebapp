@@ -228,3 +228,50 @@ function normalizeTeamName(teamName: string): string {
     .replace(/telecom/g, "")
     .trim();
 }
+
+/**
+ * 각 카드에 적용되는 시너지 보너스 계산
+ * @returns 카드별 시너지 보너스 { [cardId]: { ovr, mec, lan, tf, mac, clu } }
+ */
+export function calculateCardSynergyBonuses(
+  squad: {
+    TOP: UserCard | null;
+    JGL: UserCard | null;
+    MID: UserCard | null;
+    ADC: UserCard | null;
+    SUP: UserCard | null;
+  },
+  synergies: ActiveSynergy[]
+): Record<string, { ovr: number; mec: number; lan: number; tf: number; mac: number; clu: number }> {
+  const cardBonuses: Record<string, { ovr: number; mec: number; lan: number; tf: number; mac: number; clu: number }> = {};
+  
+  // 배치된 모든 카드 초기화
+  Object.values(squad).forEach(card => {
+    if (card) {
+      cardBonuses[card.id] = { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
+    }
+  });
+  
+  // 활성화된 시너지들을 순회하면서 각 시너지에 해당하는 카드에 보너스 적용
+  for (const activeSynergy of synergies) {
+    if (!activeSynergy.isActive || !activeSynergy.currentEffect) {
+      continue;
+    }
+    
+    const effect = activeSynergy.currentEffect;
+    
+    // 이 시너지에 포함된 카드들에게만 보너스 적용
+    for (const cardId of activeSynergy.matchedPlayers) {
+      if (cardBonuses[cardId]) {
+        cardBonuses[cardId].ovr += effect.ovr;
+        cardBonuses[cardId].mec += effect.mec;
+        cardBonuses[cardId].lan += effect.lan;
+        cardBonuses[cardId].tf += effect.tf;
+        cardBonuses[cardId].mac += effect.mac;
+        cardBonuses[cardId].clu += effect.clu;
+      }
+    }
+  }
+  
+  return cardBonuses;
+}
