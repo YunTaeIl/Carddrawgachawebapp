@@ -1,10 +1,9 @@
-// 스쿼드 공유 전용 캡처 컴포넌트 - 메인 화면과 동일한 스타일
+// 스쿼드 공유 전용 캡처 컴포넌트
 
 import React from "react";
-import { UserCard, Position } from "@/types/lck";
+import { UserCard, Position, POSITION_NAMES } from "@/types/lck";
 import { ActiveSynergy } from "@/types/synergy";
 import { StaticCard } from "@/components/StaticCard";
-import { TrendingUp, Sparkles } from "lucide-react";
 
 interface ShareCardProps {
   squad: {
@@ -16,25 +15,17 @@ interface ShareCardProps {
   };
   synergies: ActiveSynergy[];
   stats: {
-    baseOVR: number;
-    totalOVR: number;
     avgOVR: number;
-    baseMechanics: number;
     totalMechanics: number;
-    baseLaning: number;
     totalLaning: number;
-    baseTeamfight: number;
     totalTeamfight: number;
-    baseMacro: number;
     totalMacro: number;
-    baseClutch: number;
     totalClutch: number;
   };
-  cardBonuses: { [cardId: string]: { ovr: number; mec: number; lan: number; tf: number; mac: number; clu: number } };
 }
 
 export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
-  ({ squad, synergies, stats, cardBonuses }, ref) => {
+  ({ squad, synergies, stats }, ref) => {
     const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
     const deployedCards = Object.values(squad).filter((card): card is UserCard => card !== null);
 
@@ -42,362 +33,233 @@ export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
       <div 
         ref={ref} 
         style={{
-          width: '1400px',
-          background: '#0A0E27',
+          width: '1200px',
+          background: 'linear-gradient(135deg, #0B0F1A 0%, #1A1F35 50%, #0B0F1A 100%)',
           fontFamily: 'Teko, system-ui, sans-serif',
           color: '#FFFFFF',
-          padding: '48px',
+          padding: '40px',
         }}
       >
         {/* 헤더 */}
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <div style={{
-            fontSize: '64px',
+            fontSize: '56px',
             fontWeight: 'bold',
-            color: '#FFFFFF',
+            background: 'linear-gradient(90deg, #2B6CFF 0%, #9333EA 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
             marginBottom: '8px',
-            letterSpacing: '4px',
+            letterSpacing: '2px',
           }}>
-            MY SQUAD
+            내 LCK 스쿼드
           </div>
-          <div style={{ fontSize: '24px', color: '#8B95B5' }}>
-            {deployedCards.length}/5 선수 배치 • 평균 OVR <span style={{ color: '#FFB81C', fontWeight: 'bold' }}>{stats.avgOVR}</span>
+          <div style={{ fontSize: '20px', color: '#9AA6C3' }}>
+            {deployedCards.length}/5 선수 • 평균 OVR <span style={{ color: '#FFB81C', fontWeight: 'bold' }}>{stats.avgOVR}</span>
           </div>
         </div>
 
         {/* 카드 5장 */}
         <div style={{
-          background: 'linear-gradient(to bottom right, rgba(20, 27, 61, 0.5) 0%, rgba(20, 27, 61, 0.8) 50%, rgba(20, 27, 61, 0.5) 100%)',
-          borderRadius: '16px',
-          padding: '32px',
-          border: '1px solid rgba(0, 71, 171, 0.3)',
-          marginBottom: '16px',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '20px',
+          marginBottom: '30px',
         }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '24px',
-          }}>
-            {positions.map((position) => {
-              const card = squad[position];
-              return (
-                <div key={position} style={{ flexShrink: 0, position: 'relative' }}>
-                  {/* 포지션 뱃지 */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '-12px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: '#C8102E',
-                    color: 'white',
-                    padding: '4px 12px',
-                    borderRadius: '9999px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    zIndex: 10,
-                  }}>
-                    {position}
-                  </div>
-                  
-                  {card ? (
-                    <StaticCard 
-                      card={card} 
-                      size="small"
-                      upgradeLevel={card.upgradeLevel}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '160px',
-                      height: '293px',
-                      borderRadius: '16px',
-                      border: '2px dashed rgba(0, 71, 171, 0.3)',
-                      background: 'rgba(10, 14, 39, 0.5)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#8B95B5',
-                      fontSize: '14px',
-                    }}>
-                      빈 슬롯
-                    </div>
-                  )}
+          {positions.map((position) => {
+            const card = squad[position];
+            return (
+              <div key={position} style={{ textAlign: 'center' }}>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#9AA6C3',
+                  marginBottom: '4px',
+                }}>
+                  {POSITION_NAMES[position]}
                 </div>
-              );
-            })}
-          </div>
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#2B6CFF',
+                  marginBottom: '8px',
+                }}>
+                  {position}
+                </div>
+                
+                {card ? (
+                  <StaticCard 
+                    card={card} 
+                    size="small"
+                    upgradeLevel={card.upgradeLevel}
+                  />
+                ) : (
+                  <div style={{
+                    width: '160px',
+                    height: '293px',
+                    borderRadius: '12px',
+                    border: '2px dashed #2B6CFF',
+                    background: '#12182A',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#9AA6C3',
+                  }}>
+                    빈 슬롯
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* 스탯 & 시너지 - 메인 화면과 동일한 레이아웃 */}
+        {/* 스탯 & 시너지 */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '16px',
+          gap: '24px',
         }}>
-          {/* 스쿼드 스탯 */}
+          {/* 스탯 */}
           <div style={{
-            background: 'linear-gradient(to bottom right, rgba(200, 16, 46, 0.1) 0%, rgba(20, 27, 61, 0.5) 100%)',
+            background: 'rgba(18, 24, 42, 0.8)',
             borderRadius: '12px',
-            padding: '16px',
-            border: '1px solid rgba(200, 16, 46, 0.3)',
+            padding: '24px',
+            border: '2px solid rgba(43, 108, 255, 0.3)',
           }}>
             <div style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              marginBottom: '16px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              marginBottom: '12px',
             }}>
-              <TrendingUp style={{ width: '16px', height: '16px', color: '#FFB81C' }} />
-              <span style={{ fontWeight: 'bold', fontFamily: 'Teko' }}>스쿼드 스탯</span>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* 총 OVR & 평균 OVR */}
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '16px',
+                width: '4px',
+                height: '24px',
+                background: '#FFB81C',
+                borderRadius: '2px',
+              }} />
+              스쿼드 스탯
+            </div>
+            {[
+              { label: "메카닉", value: stats.totalMechanics, color: "#10B981" },
+              { label: "라이닝", value: stats.totalLaning, color: "#3B82F6" },
+              { label: "한타", value: stats.totalTeamfight, color: "#8B5CF6" },
+              { label: "마크로", value: stats.totalMacro, color: "#F59E0B" },
+              { label: "클러치", value: stats.totalClutch, color: "#EF4444" },
+            ].map((stat) => (
+              <div key={stat.label} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '10px',
+                fontSize: '16px',
               }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '12px', color: '#8B95B5', marginBottom: '4px' }}>총 OVR</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{
-                      fontSize: '32px',
-                      fontFamily: 'Teko',
-                      fontWeight: 'bold',
-                      color: '#FFB81C',
-                    }}>
-                      {stats.totalOVR}
-                    </div>
-                    {synergies.some(s => s.isActive) && (
-                      <div style={{ fontSize: '10px', color: '#10B981', fontWeight: 'bold' }}>
-                        +{stats.totalOVR - stats.baseOVR}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '12px', color: '#8B95B5', marginBottom: '4px' }}>평균 OVR</div>
+                <span style={{ color: '#9AA6C3' }}>{stat.label}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{
-                    fontSize: '32px',
-                    fontFamily: 'Teko',
-                    fontWeight: 'bold',
-                    color: '#0047AB',
+                    width: '100px',
+                    height: '6px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '3px',
                   }}>
-                    {stats.avgOVR}
+                    <div style={{
+                      width: `${Math.min((stat.value / 500) * 100, 100)}%`,
+                      height: '100%',
+                      background: stat.color,
+                      borderRadius: '3px',
+                    }} />
                   </div>
+                  <span style={{ fontWeight: 'bold', minWidth: '40px', textAlign: 'right' }}>{stat.value}</span>
                 </div>
               </div>
-              
-              {/* 5개 스탯 */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: '8px',
-              }}>
-                {[
-                  { label: "메카닉", value: stats.totalMechanics },
-                  { label: "라인전", value: stats.totalLaning },
-                  { label: "한타", value: stats.totalTeamfight },
-                  { label: "운영", value: stats.totalMacro },
-                  { label: "클러치", value: stats.totalClutch },
-                ].map((stat) => (
-                  <div key={stat.label} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '12px', color: '#8B95B5', marginBottom: '4px' }}>
-                      {stat.label}
-                    </div>
-                    <div style={{
-                      fontSize: '24px',
-                      fontFamily: 'Teko',
-                      fontWeight: 'bold',
-                    }}>
-                      {stat.value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* 활성 시너지 */}
+          {/* 시너지 */}
           <div style={{
-            background: 'linear-gradient(to bottom right, rgba(0, 71, 171, 0.1) 0%, rgba(20, 27, 61, 0.5) 100%)',
+            background: 'rgba(18, 24, 42, 0.8)',
             borderRadius: '12px',
-            padding: '16px',
-            border: '1px solid rgba(0, 71, 171, 0.3)',
+            padding: '24px',
+            border: '2px solid rgba(147, 51, 234, 0.3)',
           }}>
             <div style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              marginBottom: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              marginBottom: '12px',
+              justifyContent: 'space-between',
             }}>
-              <Sparkles style={{ width: '16px', height: '16px', color: '#FFB81C' }} />
-              <span style={{ fontWeight: 'bold', fontFamily: 'Teko' }}>활성 시너지</span>
-              {synergies.filter(s => s.isActive).length > 0 && (
-                <span style={{
-                  marginLeft: 'auto',
-                  background: '#FFB81C',
-                  color: '#0B0F1A',
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                }}>
-                  {synergies.filter(s => s.isActive).length}개
-                </span>
-              )}
-            </div>
-            
-            {synergies.filter(s => s.isActive).length > 0 ? (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                maxHeight: '260px',
-                overflowY: 'auto',
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '4px',
+                  height: '24px',
+                  background: '#9333EA',
+                  borderRadius: '2px',
+                }} />
+                활성 시너지
+              </div>
+              <span style={{
+                fontSize: '16px',
+                color: '#9333EA',
+                background: 'rgba(147, 51, 234, 0.2)',
+                padding: '4px 10px',
+                borderRadius: '6px',
               }}>
-                {synergies.filter(s => s.isActive).slice(0, 3).map((synergy) => (
-                  <div 
-                    key={synergy.synergy.synergy_id}
-                    style={{
-                      background: 'rgba(10, 14, 39, 0.5)',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(255, 184, 28, 0.3)',
-                    }}
-                  >
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      marginBottom: '8px',
-                    }}>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        color: '#FFB81C',
-                      }}>
-                        {synergy.synergy.synergy_name}
-                      </div>
-                      {synergy.isPrime && (
+                {synergies.length}개
+              </span>
+            </div>
+            <div style={{
+              maxHeight: '180px',
+              overflowY: 'auto',
+            }}>
+              {synergies.length === 0 ? (
+                <div style={{ color: '#9AA6C3', fontSize: '14px', textAlign: 'center', paddingTop: '30px' }}>
+                  활성화된 시너지 없음
+                </div>
+              ) : (
+                synergies.slice(0, 4).map((syn) => (
+                  <div key={syn.synergy.synergy_id} style={{
+                    background: 'rgba(147, 51, 234, 0.1)',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    marginBottom: '8px',
+                    fontSize: '13px',
+                  }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {syn.synergy.name}
+                      {syn.isPrime && (
                         <span style={{
-                          padding: '2px 8px',
+                          background: '#FFB81C',
+                          color: '#0B0F1A',
+                          padding: '2px 6px',
                           borderRadius: '4px',
                           fontSize: '10px',
                           fontWeight: 'bold',
-                          background: '#C8102E',
-                          color: 'white',
                         }}>
                           PRIME
                         </span>
                       )}
-                      <span style={{
-                        marginLeft: 'auto',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        fontWeight: 'bold',
-                        background: '#0A0E27',
-                        color: '#9AA6C3',
-                      }}>
-                        {synergy.synergy.type}
-                      </span>
                     </div>
-                    <div style={{
-                      fontSize: '10px',
-                      color: '#8B95B5',
-                      marginBottom: '8px',
-                    }}>
-                      {synergy.synergy.description}
-                    </div>
-                    {synergy.currentEffect && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        flexWrap: 'wrap',
-                      }}>
-                        <span style={{
-                          background: '#0B0F1A',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          color: '#10B981',
-                          fontSize: '9px',
-                          fontWeight: 'bold',
-                        }}>
-                          OVR +{synergy.currentEffect.ovr}
-                        </span>
-                        {synergy.currentEffect.mec > 0 && (
-                          <span style={{
-                            background: '#0B0F1A',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            color: '#9AA6C3',
-                            fontSize: '9px',
-                          }}>
-                            메카닉 +{synergy.currentEffect.mec}
-                          </span>
-                        )}
-                        {synergy.currentEffect.lan > 0 && (
-                          <span style={{
-                            background: '#0B0F1A',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            color: '#9AA6C3',
-                            fontSize: '9px',
-                          }}>
-                            라인 +{synergy.currentEffect.lan}
-                          </span>
-                        )}
-                        {synergy.currentEffect.tf > 0 && (
-                          <span style={{
-                            background: '#0B0F1A',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            color: '#9AA6C3',
-                            fontSize: '9px',
-                          }}>
-                            한타 +{synergy.currentEffect.tf}
-                          </span>
-                        )}
-                        {synergy.currentEffect.mac > 0 && (
-                          <span style={{
-                            background: '#0B0F1A',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            color: '#9AA6C3',
-                            fontSize: '9px',
-                          }}>
-                            운영 +{synergy.currentEffect.mac}
-                          </span>
-                        )}
-                        {synergy.currentEffect.clu > 0 && (
-                          <span style={{
-                            background: '#0B0F1A',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            color: '#9AA6C3',
-                            fontSize: '9px',
-                          }}>
-                            클러치 +{synergy.currentEffect.clu}
-                          </span>
-                        )}
+                    {syn.currentEffect && (
+                      <div style={{ color: '#9AA6C3', fontSize: '11px' }}>
+                        {Object.entries({
+                          OVR: syn.currentEffect.ovr,
+                          메카닉: syn.currentEffect.mec,
+                          라이닝: syn.currentEffect.lan,
+                          한타: syn.currentEffect.tf,
+                          마크로: syn.currentEffect.mac,
+                          클러치: syn.currentEffect.clu,
+                        })
+                          .filter(([_, v]) => v > 0)
+                          .map(([k, v]) => `${k} +${v}`)
+                          .join(", ")}
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{
-                textAlign: 'center',
-                padding: '60px 0',
-                color: '#8B95B5',
-                fontSize: '14px',
-              }}>
-                시너지 없음<br />
-                <span style={{ fontSize: '12px' }}>같은 팀/연도로 구성하세요</span>
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
 
@@ -405,10 +267,10 @@ export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
         <div style={{
           textAlign: 'center',
           marginTop: '24px',
-          fontSize: '14px',
-          color: '#8B95B5',
+          fontSize: '13px',
+          color: '#9AA6C3',
         }}>
-          LCK GACHA SQUAD BUILDER
+          LCK 가챠 스쿼드 빌더
         </div>
       </div>
     );

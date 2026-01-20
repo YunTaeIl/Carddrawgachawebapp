@@ -387,6 +387,14 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
               >
                 스쿼드 저장 (DB)
               </Button>
+              <Button
+                onClick={handleShareSquad}
+                variant="outline"
+                className="border-[#9333EA] text-[#9333EA] hover:bg-[#9333EA]/10 px-8 py-3 text-lg font-bold w-full"
+              >
+                <Share2 className="w-5 h-5 mr-2" />
+                스쿼드 공유하기
+              </Button>
             </div>
           </div>
         </div>
