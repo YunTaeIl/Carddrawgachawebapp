@@ -632,6 +632,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           squad={userData.squad}
           synergies={synergies}
           stats={stats}
+          cardBonuses={cardBonuses}
         />
       </div>
     </div>

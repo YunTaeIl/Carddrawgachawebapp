@@ -16,18 +16,25 @@ interface ShareCardProps {
   };
   synergies: ActiveSynergy[];
   stats: {
-    avgOVR: number;
+    baseOVR: number;
     totalOVR: number;
+    avgOVR: number;
+    baseMechanics: number;
     totalMechanics: number;
+    baseLaning: number;
     totalLaning: number;
+    baseTeamfight: number;
     totalTeamfight: number;
+    baseMacro: number;
     totalMacro: number;
+    baseClutch: number;
     totalClutch: number;
   };
+  cardBonuses: { [cardId: string]: { ovr: number; mec: number; lan: number; tf: number; mac: number; clu: number } };
 }
 
 export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
-  ({ squad, synergies, stats }, ref) => {
+  ({ squad, synergies, stats, cardBonuses }, ref) => {
     const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
     const deployedCards = Object.values(squad).filter((card): card is UserCard => card !== null);
 
@@ -152,13 +159,20 @@ export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: '#8B95B5', marginBottom: '4px' }}>총 OVR</div>
-                  <div style={{
-                    fontSize: '32px',
-                    fontFamily: 'Teko',
-                    fontWeight: 'bold',
-                    color: '#FFB81C',
-                  }}>
-                    {stats.totalOVR}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{
+                      fontSize: '32px',
+                      fontFamily: 'Teko',
+                      fontWeight: 'bold',
+                      color: '#FFB81C',
+                    }}>
+                      {stats.totalOVR}
+                    </div>
+                    {synergies.some(s => s.isActive) && (
+                      <div style={{ fontSize: '10px', color: '#10B981', fontWeight: 'bold' }}>
+                        +{stats.totalOVR - stats.baseOVR}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
