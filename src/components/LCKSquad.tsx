@@ -4,10 +4,9 @@ import React, { useState, useMemo } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { SynergyPanel } from "@/components/SynergyPanel";
 import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Position, POSITION_NAMES, UserCard } from "@/types/lck";
-import { calculateActiveSynergies } from "@/utils/synergyCalculator";
+import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculator";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +40,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
   const [currentPage, setCurrentPage] = useState(1);
   
   const synergies = calculateActiveSynergies(userData.squad);
+  const stats = calculateSquadStats(userData.squad, synergies);
 
   const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
 
@@ -226,40 +226,66 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-[#9AA6C3]">총 OVR</span>
-                  <span className="text-3xl font-bold text-[#D4AF37]">{userData.squad.reduce((total, card) => total + (card ? card.stats.ovr + card.upgradeLevel : 0), 0)}</span>
+                  <span className="text-3xl font-bold text-[#D4AF37]">{stats.totalOVR}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[#9AA6C3]">평균 OVR</span>
-                  <span className="text-2xl font-bold text-[#2B6CFF]">{userData.squad.reduce((total, card) => total + (card ? card.stats.ovr + card.upgradeLevel : 0), 0) / userData.squad.filter(card => card !== null).length}</span>
+                  <span className="text-2xl font-bold text-[#2B6CFF]">{stats.avgOVR}</span>
                 </div>
                 
                 <div className="pt-3 border-t border-[#2B6CFF]/30 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">기계 (Mechanics)</span>
-                    <span className="font-bold">{userData.squad.reduce((total, card) => total + (card ? card.stats.mechanics : 0), 0)}</span>
+                    <span className="font-bold">{stats.totalMechanics}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">라인 (Laning)</span>
-                    <span className="font-bold">{userData.squad.reduce((total, card) => total + (card ? card.stats.laning : 0), 0)}</span>
+                    <span className="font-bold">{stats.totalLaning}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">한타 (Teamfight)</span>
-                    <span className="font-bold">{userData.squad.reduce((total, card) => total + (card ? card.stats.teamfight : 0), 0)}</span>
+                    <span className="font-bold">{stats.totalTeamfight}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">운영 (Macro)</span>
-                    <span className="font-bold">{userData.squad.reduce((total, card) => total + (card ? card.stats.macro : 0), 0)}</span>
+                    <span className="font-bold">{stats.totalMacro}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#9AA6C3]">클러치 (Clutch)</span>
-                    <span className="font-bold">{userData.squad.reduce((total, card) => total + (card ? card.stats.clutch : 0), 0)}</span>
+                    <span className="font-bold">{stats.totalClutch}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 시너지 패널 */}
-            <SynergyPanel activeSynergies={synergies} />
+            {/* 시너지 */}
+            <div className="bg-[#12182A] rounded-xl p-6 border border-[#D4AF37]/30">
+              <h3 className="text-lg font-bold mb-4">활성 시너지</h3>
+              {synergies.length > 0 ? (
+                <div className="space-y-3">
+                  {synergies.map((synergy) => (
+                    <div
+                      key={synergy.id}
+                      className="bg-[#0B0F1A] p-3 rounded-lg border border-[#D4AF37]/50"
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="flex-shrink-0 w-2 h-2 rounded-full bg-[#D4AF37] mt-1.5" />
+                        <div className="flex-1">
+                          <div className="font-bold text-[#D4AF37]">{synergy.name}</div>
+                          <div className="text-xs text-[#9AA6C3] mt-1">{synergy.description}</div>
+                          <div className="text-xs text-[#2B6CFF] mt-1">{synergy.bonus}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-[#9AA6C3] py-8">
+                  시너지 없음<br />
+                  <span className="text-xs">같은 팀/연도 카드를 배치하세요</span>
+                </div>
+              )}
+            </div>
             
             {/* 스쿼드 저장 버튼 */}
             <div className="mt-6 flex justify-center">

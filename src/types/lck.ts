@@ -58,42 +58,12 @@ export interface GachaResult {
   isPity: boolean; // 천장으로 뽑았는지
 }
 
-export const POSITION_NAMES = {
-  TOP: "탑",
-  JGL: "정글",
-  MID: "미드",
-  ADC: "원딜",
-  SUP: "서포터"
-};
-
-// 시너지 타입
-export type SynergyType = "DUO" | "TRIO" | "ROSTER" | "THEME";
-
-// 연도 규칙
-export type YearRule = "EXACT" | "OPTIONAL";
-
-// 시너지 정의
 export interface Synergy {
   id: string;
   name: string;
-  type: SynergyType;
-  yearRule: YearRule;
-  year?: number; // EXACT일 때 필수
-  priority: number; // 우선순위 (높을수록 우선)
   description: string;
-  
-  // 요구 조건
-  requiredPlayers?: string[]; // 선수 ID 배열 (정확한 선수)
-  requiredPositions?: Position[]; // 포지션 조건 (선수 무관)
-  requiredTeam?: string; // 팀 조건
-}
-
-// 시너지 활성화 상태
-export interface ActiveSynergy {
-  synergy: Synergy;
   isActive: boolean;
-  isEnhanced: boolean; // 연도 일치로 강화됨
-  matchedPlayers: string[]; // 매칭된 선수 ID들
+  bonus: string;
 }
 
 export const GACHA_CONFIG = {
@@ -175,4 +145,12 @@ export const GRADE_COLORS = {
   A: "#E0E0E0", // 밝은 실버 (배경과 대비)
   B: "#CD7F32", // 브론즈
   C: "#808080"  // 다크 그레이
+};
+
+export const POSITION_NAMES = {
+  TOP: "탑",
+  JGL: "정글",
+  MID: "미드",
+  ADC: "원딜",
+  SUP: "서포터"
 };
