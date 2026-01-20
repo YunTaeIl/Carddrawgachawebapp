@@ -85,9 +85,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // LocalStorage에서 로드
-        const saved = loadUserData();
-        setUserData(saved);
+        // 로그인 상태면 LocalStorage 로드 스킵 (DB에서 불러올 예정)
+        if (isAuthenticated && accessToken) {
+          console.log("🔐 로그인 상태 → LocalStorage 로드 스킵, DB에서 불러옵니다");
+        } else {
+          // 비로그인 시 LocalStorage에서 로드
+          const saved = loadUserData();
+          setUserData(saved);
+          console.log("📁 LocalStorage에서 데이터 로드:", saved);
+        }
         
         // 카드 풀 초기화
         const pool = await initializeCardPool();
@@ -213,11 +219,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // 데이터 변경 시 저장
   useEffect(() => {
     if (!isLoading) {
+      console.log("💾 데이터 변경 감지 → 저장 중...", {
+        currency: userData.currency,
+        shards: userData.shards,
+        cards: userData.ownedCards.length,
+        isAuthenticated
+      });
+      
       // LocalStorage 저장
       saveUserData(userData);
+      console.log("✅ LocalStorage 저장 완료");
       
       // DB 저장 (로그인 시)
-      saveGameDataToDB(userData);
+      if (isAuthenticated && accessToken) {
+        console.log("🔄 DB 저장 예약 중... (1초 디바운스)");
+        saveGameDataToDB(userData);
+      } else {
+        console.log("⏭️ DB 저장 스킵 (비로그인)");
+      }
     }
   }, [userData, isLoading]);
 

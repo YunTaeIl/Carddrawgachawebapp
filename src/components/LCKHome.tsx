@@ -18,7 +18,7 @@ interface LCKHomeProps {
 }
 
 export function LCKHome({ onNavigate }: LCKHomeProps) {
-  const { userData, addCurrency } = useGame();
+  const { userData } = useGame();
   const { user, isAuthenticated, signOut } = useAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
@@ -314,14 +314,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
 
         {/* 하단 버튼들 */}
         <div className="flex items-center justify-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => addCurrency(1000)}
-            className="font-display"
-          >
-            + 1000 RP
-          </Button>
           <Button
             variant="ghost"
             size="sm"
