@@ -16,6 +16,12 @@ import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
 import * as htmlToImage from "html-to-image";
 import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  `https://${projectId}.supabase.co`,
+  publicAnonKey
+);
 
 interface LCKHomeProps {
   onNavigate: (page: "home" | "gacha" | "squad" | "collection" | "test" | "terms") => void;
@@ -23,7 +29,7 @@ interface LCKHomeProps {
 
 export function LCKHome({ onNavigate }: LCKHomeProps) {
   const { userData } = useGame();
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, isAuthenticated, signOut, accessToken } = useAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const squadRef = useRef<HTMLDivElement>(null);
 
@@ -122,19 +128,43 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       return;
     }
 
+    console.log("✅ 출석 체크 시작");
+
     try {
+      // 최신 세션에서 토큰 가져오기
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error("❌ 세션 가져오기 실패:", sessionError);
+        toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+        return;
+      }
+
+      const freshToken = session.access_token;
+      console.log("User:", user.id);
+      console.log("Fresh Token:", freshToken.substring(0, 20) + "...");
+
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/user/check-in`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`,
+            'Authorization': `Bearer ${freshToken}`,
           },
         }
       );
 
+      console.log("Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Response error:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
       const result = await response.json();
+      console.log("Result:", result);
 
       if (result.success) {
         toast.success(result.message);
