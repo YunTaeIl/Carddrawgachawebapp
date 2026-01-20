@@ -214,11 +214,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         isAuthenticated
       });
       
-      // LocalStorage 저장
+      // LocalStorage 저장 (항상)
       saveUserData(userData);
       console.log("✅ LocalStorage 저장 완료");
       
-      // DB 저장 (로그인 시)
+      // DB 저장 (로그인 시) - 재화만 저장
+      // 스쿼드 변경은 명시적 저장 버튼으로만 저장되므로 여기서는 스킵
       if (isAuthenticated && accessToken) {
         console.log("🔄 DB 저장 예약 중... (1초 디바운스)");
         saveGameDataToDB(userData);
@@ -226,7 +227,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         console.log("⏭️ DB 저장 스킵 (비로그인)");
       }
     }
-  }, [userData, isLoading]);
+  }, [
+    userData.currency, 
+    userData.shards, 
+    userData.ownedCards.length,
+    userData.gachaState.s_pity_stack,
+    userData.gachaState.a_pity_stack,
+    userData.gachaState.total_pulls,
+    isLoading
+  ]); // 스쿼드는 의존성에서 제외 → 스쿼드 변경 시 DB 저장 안 함
 
   // 가챠 1회 뽑기
   const pullSingleGacha = async (packType?: CardPackType): Promise<GachaResult | null> => {
