@@ -195,22 +195,29 @@ export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
                 gap: '8px',
               }}>
                 {[
-                  { label: "메카닉", value: stats.totalMechanics },
-                  { label: "라인전", value: stats.totalLaning },
-                  { label: "한타", value: stats.totalTeamfight },
-                  { label: "운영", value: stats.totalMacro },
-                  { label: "클러치", value: stats.totalClutch },
+                  { label: "메카닉", total: stats.totalMechanics, base: stats.baseMechanics },
+                  { label: "라인전", total: stats.totalLaning, base: stats.baseLaning },
+                  { label: "한타", total: stats.totalTeamfight, base: stats.baseTeamfight },
+                  { label: "운영", total: stats.totalMacro, base: stats.baseMacro },
+                  { label: "클러치", total: stats.totalClutch, base: stats.baseClutch },
                 ].map((stat) => (
                   <div key={stat.label} style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '12px', color: '#8B95B5', marginBottom: '4px' }}>
                       {stat.label}
                     </div>
-                    <div style={{
-                      fontSize: '24px',
-                      fontFamily: 'Teko',
-                      fontWeight: 'bold',
-                    }}>
-                      {stat.value}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{
+                        fontSize: '24px',
+                        fontFamily: 'Teko',
+                        fontWeight: 'bold',
+                      }}>
+                        {stat.total}
+                      </div>
+                      {synergies.some(s => s.isActive) && (
+                        <div style={{ fontSize: '9px', color: '#10B981' }}>
+                          +{stat.total - stat.base}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
