@@ -603,6 +603,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       {/* 숨겨진 스쿼드 공유 이미지 */}
       <div className="fixed -left-[9999px] top-0">
         <ShareCard
+          ref={squadRef}
           squad={userData.squad}
           synergies={synergies}
           stats={stats}
