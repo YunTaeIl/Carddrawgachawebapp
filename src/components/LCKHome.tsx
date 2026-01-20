@@ -115,27 +115,43 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     }
   };
 
-  // 모바일 감지
-  const isMobile = () => {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-           (window.innerWidth <= 768);
-  };
-
   const handleShareSquad = async () => {
+    console.log('=== 공유 시작 ===');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('HTTPS:', window.location.protocol === 'https:');
+    console.log('navigator.share 존재:', !!navigator.share);
+    console.log('navigator.canShare 존재:', !!navigator.canShare);
+    
     if (!squadRef.current) {
       toast.error("스쿼드 정보를 찾을 수 없습니다.");
       return;
     }
     
     try {
+      // 먼저 Web Share API 지원 확인
+      if (!navigator.share) {
+        console.log('navigator.share 없음 - PC 다운로드');
+        toast.info("이미지 생성 중...");
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const blob = await htmlToImage.toBlob(squadRef.current, {
+          quality: 0.95,
+          pixelRatio: 1.5,
+          backgroundColor: '#0A0E27',
+          cacheBust: true,
+        });
+        if (blob) downloadImage(blob);
+        return;
+      }
+      
       toast.info("이미지 생성 중...");
       
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 이미지 생성 시간 최소화
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const blob = await htmlToImage.toBlob(squadRef.current, {
         quality: 0.95,
         pixelRatio: 1.5,
-        backgroundColor: '#0B0F1A',
+        backgroundColor: '#0A0E27',
         cacheBust: true,
       });
       
@@ -143,45 +159,70 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
         throw new Error('이미지 생성 실패');
       }
       
-      // 모바일 감지
-      const mobile = isMobile();
-      console.log('모바일 여부:', mobile);
-      console.log('navigator.share 존재:', !!navigator.share);
+      console.log('✅ Blob 생성 완료:', blob.size, 'bytes');
       
-      // 모바일에서 네이티브 공유 시도
-      if (mobile && navigator.share) {
-        try {
-          const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
-          
-          // canShare 체크
-          const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
-          console.log('파일 공유 가능:', canShareFiles);
-          
-          if (canShareFiles) {
-            await navigator.share({
-              files: [file],
-              title: 'LCK 스쿼드',
-              text: `내 LCK 스쿼드 (평균 OVR ${stats.avgOVR})`,
-            });
-            toast.success("공유 완료!");
-            return;
-          }
-        } catch (shareError: any) {
-          console.error('네이티브 공유 실패:', shareError);
-          if (shareError.name !== 'AbortError') {
-            // 취소가 아닌 실패인 경우만 다운로드로 폴백
-            downloadImage(blob);
-          }
+      const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
+      console.log('✅ File 생성 완료:', file.name);
+      
+      // canShare 체크
+      if (navigator.canShare) {
+        const canShare = navigator.canShare({ files: [file] });
+        console.log('canShare({ files }) 결과:', canShare);
+        
+        if (!canShare) {
+          console.log('❌ 파일 공유 불가 - 다운로드로 폴백');
+          toast.info('이 브라우저는 파일 공유를 지원하지 않습니다.');
+          downloadImage(blob);
           return;
         }
       }
       
-      // PC 또는 공유 불가능한 경우 다운로드
-      downloadImage(blob);
+      // 네이티브 공유 시도
+      console.log('🚀 navigator.share 호출...');
+      await navigator.share({
+        files: [file],
+        title: 'LCK 스쿼드',
+        text: `내 LCK 스쿼드 (평균 OVR ${stats.avgOVR})`,
+      });
       
-    } catch (error) {
-      console.error('이미지 생성 실패:', error);
-      toast.error('이미지 생성에 실패했습니다.');
+      console.log('✅ 공유 성공!');
+      toast.success("공유 완료!");
+      
+    } catch (error: any) {
+      console.error('❌ 에러 발생:', error);
+      console.error('에러 이름:', error.name);
+      console.error('에러 메시지:', error.message);
+      
+      // AbortError는 사용자가 취소한 것
+      if (error.name === 'AbortError') {
+        console.log('ℹ️ 사용자가 공유 취소');
+        return;
+      }
+      
+      // NotAllowedError: user gesture 끊김 또는 권한 문제
+      if (error.name === 'NotAllowedError') {
+        console.log('❌ NotAllowedError - user gesture 끊김');
+        toast.error('공유 실패: 다시 시도해주세요');
+        return;
+      }
+      
+      // 기타 에러
+      console.log('기타 에러 - 다운로드로 폴백');
+      toast.error('공유에 실패했습니다. 이미지를 다운로드합니다.');
+      
+      // 이미지 다시 생성해서 다운로드
+      try {
+        const blob = await htmlToImage.toBlob(squadRef.current!, {
+          quality: 0.95,
+          pixelRatio: 1.5,
+          backgroundColor: '#0A0E27',
+          cacheBust: true,
+        });
+        if (blob) downloadImage(blob);
+      } catch (e) {
+        console.error('다운로드도 실패:', e);
+        toast.error('이미지 생성에 실패했습니다.');
+      }
     }
   };
   
