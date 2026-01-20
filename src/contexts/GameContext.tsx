@@ -11,7 +11,8 @@ import {
   upgradeUserCardDirect,
   getGameDataDirect,
   getUserCardsDirect,
-  saveUserSquadDirect
+  saveUserSquadDirect,
+  getUserSquadDirect
 } from "@/utils/supabaseDirect";
 import { toast } from "sonner";
 
@@ -188,16 +189,44 @@ export function GameProvider({ children }: { children: ReactNode }) {
           })
         ).then(cards => cards.filter(c => c !== null) as UserCard[]);
         
-        // 카드 데이터 업데이트
+        console.log(`🔄 변환된 카드: ${userCards.length}개`);
+        
+        // 스쿼드도 DB에서 로드
+        console.log("👥 DB에서 스쿼드 로드 중...");
+        const squadData = await getUserSquadDirect(accessToken);
+        console.log("✅ 스쿼드 로드 성공:", squadData);
+        
+        // 스쿼드 카드 매칭
+        const squad = {
+          TOP: userCards.find(c => c.instanceId === squadData.top_card_instance_id) || null,
+          JGL: userCards.find(c => c.instanceId === squadData.jgl_card_instance_id) || null,
+          MID: userCards.find(c => c.instanceId === squadData.mid_card_instance_id) || null,
+          ADC: userCards.find(c => c.instanceId === squadData.adc_card_instance_id) || null,
+          SUP: userCards.find(c => c.instanceId === squadData.sup_card_instance_id) || null
+        };
+        
+        console.log("👥 스쿼드 매칭 완료:", squad);
+        
+        // 카드 + 스쿼드 데이터 업데이트
         setUserData(prevData => ({
           ...prevData,
-          ownedCards: userCards
+          ownedCards: userCards,
+          squad: squad
         }));
         
-        console.log(`🎉 카드 ${userCards.length}개 로드 완료!`);
-        toast.success(`DB에서 ${userCards.length}개 카드 로드 완료!`);
+        // LocalStorage도 업데이트
+        const updatedData = {
+          ...userData,
+          ownedCards: userCards,
+          squad: squad
+        };
+        saveUserData(updatedData);
+        
+        console.log(`🎉 DB 동기화 완료! 카드 ${userCards.length}개 + 스쿼드`);
+        toast.success(`DB에서 ${userCards.length}개 카드 + 스쿼드 로드 완료!`);
       } catch (error) {
-        console.error("❌ 카드 데이터 로드 실패:", error);
+        console.error("❌ DB 데이터 로드 실패:", error);
+        toast.error("DB 데이터 로드 실패. LocalStorage 데이터를 사용합니다.");
       }
     };
 
@@ -224,7 +253,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         console.log("🔄 DB 저장 예약 중... (1초 디바운스)");
         saveGameDataToDB(userData);
       } else {
-        console.log("⏭️ DB 저장 스킵 (비로그인)");
+        console.log("⏭️ DB 저장 스킵 (비���그인)");
       }
     }
   }, [
