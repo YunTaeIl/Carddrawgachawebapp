@@ -7,7 +7,7 @@ import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { LCKAuth } from "@/components/LCKAuth";
 import { SynergyPanel } from "@/components/SynergyPanelV2";
-import { SquadShareCard } from "@/components/SquadShareCard";
+import { ShareCard } from "@/components/ShareCard";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { GACHA_CONFIG } from "@/types/lck";
 import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut, Share2 } from "lucide-react";
@@ -115,54 +115,86 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     }
   };
 
+  // 모바일 감지
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           (window.innerWidth <= 768);
+  };
+
   const handleShareSquad = async () => {
-    if (!squadRef.current) return;
+    if (!squadRef.current) {
+      toast.error("스쿼드 정보를 찾을 수 없습니다.");
+      return;
+    }
     
     try {
-      const dataUrl = await htmlToImage.toPng(squadRef.current, {
-        quality: 1.0,
-        pixelRatio: 2,
+      toast.info("이미지 생성 중...");
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const blob = await htmlToImage.toBlob(squadRef.current, {
+        quality: 0.95,
+        pixelRatio: 1.5,
         backgroundColor: '#0B0F1A',
         cacheBust: true,
       });
       
-      // DataURL을 Blob으로 변환
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-
-      // Web Share API 지원 확인 (모바일)
-      if (navigator.share && navigator.canShare) {
-        const file = new File([blob], 'lck_gacha_squad.png', { type: 'image/png' });
-        const shareData = {
-          title: 'My LCK Squad',
-          text: `내 LCK 스쿼드 (AVG OVR ${stats.avgOVR})`,
-          files: [file]
-        };
-
-        if (navigator.canShare(shareData)) {
-          try {
-            await navigator.share(shareData);
-            toast.success('스쿼드를 공유했습니다!');
+      if (!blob) {
+        throw new Error('이미지 생성 실패');
+      }
+      
+      // 모바일 감지
+      const mobile = isMobile();
+      console.log('모바일 여부:', mobile);
+      console.log('navigator.share 존재:', !!navigator.share);
+      
+      // 모바일에서 네이티브 공유 시도
+      if (mobile && navigator.share) {
+        try {
+          const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
+          
+          // canShare 체크
+          const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+          console.log('파일 공유 가능:', canShareFiles);
+          
+          if (canShareFiles) {
+            await navigator.share({
+              files: [file],
+              title: 'LCK 스쿼드',
+              text: `내 LCK 스쿼드 (평균 OVR ${stats.avgOVR})`,
+            });
+            toast.success("공유 완료!");
             return;
-          } catch (err: any) {
-            // 사용자가 취소한 경우 (AbortError)는 무시
-            if (err.name !== 'AbortError') {
-              console.error('공유 실패:', err);
-            }
           }
+        } catch (shareError: any) {
+          console.error('네이티브 공유 실패:', shareError);
+          if (shareError.name !== 'AbortError') {
+            // 취소가 아닌 실패인 경우만 다운로드로 폴백
+            downloadImage(blob);
+          }
+          return;
         }
       }
-
-      // Web Share API 미지원 시 다운로드 (데스크톱)
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'lck_gacha_squad.png';
-      link.click();
-      toast.success('스쿼드 이미지가 다운로드되었습니다!');
+      
+      // PC 또는 공유 불가능한 경우 다운로드
+      downloadImage(blob);
+      
     } catch (error) {
       console.error('이미지 생성 실패:', error);
       toast.error('이미지 생성에 실패했습니다.');
     }
+  };
+  
+  const downloadImage = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lck_squad_${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("스쿼드 이미지가 다운로드되었습니다!");
   };
 
   return (
@@ -576,6 +608,15 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           <LCKAuth onSuccess={() => setShowAuthDialog(false)} />
         </DialogContent>
       </Dialog>
+      
+      {/* 숨겨진 스쿼드 공유 이미지 */}
+      <div className="fixed -left-[9999px] top-0">
+        <ShareCard
+          squad={userData.squad}
+          synergies={synergies}
+          stats={stats}
+        />
+      </div>
     </div>
   );
 }
