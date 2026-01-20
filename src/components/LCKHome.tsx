@@ -28,23 +28,62 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
   // 스쿼드 스탯 & 시너지 계산
   const synergies = calculateSynergies(userData.squad);
   
-  // 간단한 스탯 계산
+  // 시너지 보너스 계산
+  const synergyBonus = synergies
+    .filter(s => s.isActive)
+    .reduce((total, s) => {
+      if (!s.currentEffect) return total;
+      return {
+        ovr: total.ovr + s.currentEffect.ovr,
+        mec: total.mec + s.currentEffect.mec,
+        lan: total.lan + s.currentEffect.lan,
+        tf: total.tf + s.currentEffect.tf,
+        mac: total.mac + s.currentEffect.mac,
+        clu: total.clu + s.currentEffect.clu
+      };
+    }, { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 });
+  
+  // 간단한 스탯 계산 (시너지 포함)
   const stats = (() => {
     const deployedCards = Object.values(userData.squad).filter(c => c !== null);
     if (deployedCards.length === 0) {
-      return { totalOVR: 0, avgOVR: 0, totalMechanics: 0, totalLaning: 0, totalTeamfight: 0, totalMacro: 0, totalClutch: 0 };
+      return { 
+        baseOVR: 0, totalOVR: 0, avgOVR: 0,
+        baseMechanics: 0, totalMechanics: 0,
+        baseLaning: 0, totalLaning: 0,
+        baseTeamfight: 0, totalTeamfight: 0,
+        baseMacro: 0, totalMacro: 0,
+        baseClutch: 0, totalClutch: 0
+      };
     }
-    const totalOVR = deployedCards.reduce((sum, card) => sum + card!.stats.ovr + card!.upgradeLevel, 0);
+    const baseOVR = deployedCards.reduce((sum, card) => sum + card!.stats.ovr + card!.upgradeLevel, 0);
+    const baseMechanics = deployedCards.reduce((sum, card) => sum + card!.stats.mechanics, 0);
+    const baseLaning = deployedCards.reduce((sum, card) => sum + card!.stats.laning, 0);
+    const baseTeamfight = deployedCards.reduce((sum, card) => sum + card!.stats.teamfight, 0);
+    const baseMacro = deployedCards.reduce((sum, card) => sum + card!.stats.macro, 0);
+    const baseClutch = deployedCards.reduce((sum, card) => sum + card!.stats.clutch, 0);
+    
     return {
-      totalOVR,
-      avgOVR: Math.round(totalOVR / deployedCards.length),
-      totalMechanics: deployedCards.reduce((sum, card) => sum + card!.stats.mechanics, 0),
-      totalLaning: deployedCards.reduce((sum, card) => sum + card!.stats.laning, 0),
-      totalTeamfight: deployedCards.reduce((sum, card) => sum + card!.stats.teamfight, 0),
-      totalMacro: deployedCards.reduce((sum, card) => sum + card!.stats.macro, 0),
-      totalClutch: deployedCards.reduce((sum, card) => sum + card!.stats.clutch, 0)
+      baseOVR,
+      totalOVR: baseOVR + synergyBonus.ovr,
+      avgOVR: Math.round((baseOVR + synergyBonus.ovr) / deployedCards.length),
+      baseMechanics,
+      totalMechanics: baseMechanics + synergyBonus.mec,
+      baseLaning,
+      totalLaning: baseLaning + synergyBonus.lan,
+      baseTeamfight,
+      totalTeamfight: baseTeamfight + synergyBonus.tf,
+      baseMacro,
+      totalMacro: baseMacro + synergyBonus.mac,
+      baseClutch,
+      totalClutch: baseClutch + synergyBonus.clu
     };
   })();
+  
+  // 각 카드가 시너지에 포함되는지 확인
+  const isCardInSynergy = (cardId: string) => {
+    return synergies.some(s => s.isActive && s.matchedPlayers.includes(cardId));
+  };
 
   const handleLogout = async () => {
     try {
@@ -179,6 +218,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
             <div className="flex flex-col lg:flex-row items-center justify-center gap-6 pb-2">
               {positions.map((position) => {
                 const card = userData.squad[position];
+                const hasSynergy = card && isCardInSynergy(card.id);
+                
                 return (
                   <div key={position} className="flex-shrink-0">
                     {card ? (
@@ -186,6 +227,16 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#C8102E] text-white px-3 py-1 rounded-full text-xs font-bold z-10">
                           {position}
                         </div>
+                        {/* 시너지 글로우 효과 */}
+                        {hasSynergy && (
+                          <>
+                            <div className="absolute inset-0 rounded-2xl bg-[#FFB81C]/20 blur-xl animate-pulse z-0" />
+                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#FFB81C] text-[#0B0F1A] px-2 py-0.5 rounded-full text-[9px] font-bold z-10 flex items-center gap-1">
+                              <Sparkles className="w-2.5 h-2.5" />
+                              시너지
+                            </div>
+                          </>
+                        )}
                         <LCKHoloCard card={card} size="medium" upgradeLevel={card.upgradeLevel} />
                       </div>
                     ) : (
@@ -209,13 +260,21 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="w-4 h-4 text-[#FFB81C]" />
                 <h3 className="font-bold font-display">스쿼드 스탯</h3>
+                {synergyBonus.ovr > 0 && (
+                  <span className="ml-auto text-[9px] text-[#10B981] font-bold">시너지 적용 중</span>
+                )}
               </div>
               <div className="space-y-3">
                 {/* 총 OVR & 평균 OVR */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <div className="text-xs text-[#8B95B5] mb-1">총 OVR</div>
-                    <div className="text-2xl font-display font-bold text-[#FFB81C]">{stats.totalOVR}</div>
+                    <div className="flex flex-col items-center">
+                      <div className="text-2xl font-display font-bold text-[#FFB81C]">{stats.totalOVR}</div>
+                      {synergyBonus.ovr > 0 && (
+                        <div className="text-[10px] text-[#10B981] font-bold">+{synergyBonus.ovr}</div>
+                      )}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-[#8B95B5] mb-1">평균 OVR</div>
@@ -227,23 +286,48 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 <div className="grid grid-cols-5 gap-2">
                   <div className="text-center">
                     <div className="text-xs text-[#8B95B5] mb-1">메카닉</div>
-                    <div className="text-lg font-display font-bold">{stats.totalMechanics}</div>
+                    <div className="flex flex-col items-center">
+                      <div className="text-lg font-display font-bold">{stats.totalMechanics}</div>
+                      {synergyBonus.mec > 0 && (
+                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.mec}</div>
+                      )}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-[#8B95B5] mb-1">라인전</div>
-                    <div className="text-lg font-display font-bold">{stats.totalLaning}</div>
+                    <div className="flex flex-col items-center">
+                      <div className="text-lg font-display font-bold">{stats.totalLaning}</div>
+                      {synergyBonus.lan > 0 && (
+                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.lan}</div>
+                      )}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-[#8B95B5] mb-1">한타</div>
-                    <div className="text-lg font-display font-bold">{stats.totalTeamfight}</div>
+                    <div className="flex flex-col items-center">
+                      <div className="text-lg font-display font-bold">{stats.totalTeamfight}</div>
+                      {synergyBonus.tf > 0 && (
+                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.tf}</div>
+                      )}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-[#8B95B5] mb-1">운영</div>
-                    <div className="text-lg font-display font-bold">{stats.totalMacro}</div>
+                    <div className="flex flex-col items-center">
+                      <div className="text-lg font-display font-bold">{stats.totalMacro}</div>
+                      {synergyBonus.mac > 0 && (
+                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.mac}</div>
+                      )}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-[#8B95B5] mb-1">클러치</div>
-                    <div className="text-lg font-display font-bold">{stats.totalClutch}</div>
+                    <div className="flex flex-col items-center">
+                      <div className="text-lg font-display font-bold">{stats.totalClutch}</div>
+                      {synergyBonus.clu > 0 && (
+                        <div className="text-[9px] text-[#10B981]">+{synergyBonus.clu}</div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -254,22 +338,60 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-4 h-4 text-[#FFB81C]" />
                 <h3 className="font-bold font-display">활성 시너지</h3>
+                {synergies.filter(s => s.isActive).length > 0 && (
+                  <span className="ml-auto bg-[#FFB81C] text-[#0B0F1A] px-2 py-0.5 rounded-full text-xs font-bold">
+                    {synergies.filter(s => s.isActive).length}개
+                  </span>
+                )}
               </div>
               {synergies.filter(s => s.isActive).length > 0 ? (
-                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
                   {synergies.filter(s => s.isActive).map((synergy) => (
-                    <div key={synergy.synergy.synergy_id} className="bg-[#0A0E27]/50 p-2 rounded border border-[#FFB81C]/30">
-                      <div className="flex items-center gap-2">
-                        <div className="text-xs font-bold text-[#FFB81C]">{synergy.synergy.synergy_name}</div>
+                    <div key={synergy.synergy.synergy_id} className="bg-[#0A0E27]/50 p-3 rounded-lg border border-[#FFB81C]/30">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="text-sm font-bold text-[#FFB81C]">{synergy.synergy.synergy_name}</div>
                         {synergy.isPrime && (
-                          <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#C8102E] text-white">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#C8102E] text-white">
                             PRIME
                           </span>
                         )}
+                        <span className="ml-auto px-2 py-0.5 rounded text-[9px] font-bold bg-[#0A0E27] text-[#9AA6C3]">
+                          {synergy.synergy.type}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-[#8B95B5] mb-2">
+                        {synergy.synergy.description}
                       </div>
                       {synergy.currentEffect && (
-                        <div className="text-[10px] text-[#8B95B5]">
-                          OVR +{synergy.currentEffect.ovr}
+                        <div className="flex items-center gap-1 flex-wrap text-[9px]">
+                          <div className="bg-[#0B0F1A] px-2 py-1 rounded text-[#10B981] font-bold">
+                            OVR +{synergy.currentEffect.ovr}
+                          </div>
+                          {synergy.currentEffect.mec > 0 && (
+                            <span className="bg-[#0B0F1A] px-2 py-1 rounded text-[#9AA6C3]">
+                              메카닉 +{synergy.currentEffect.mec}
+                            </span>
+                          )}
+                          {synergy.currentEffect.lan > 0 && (
+                            <span className="bg-[#0B0F1A] px-2 py-1 rounded text-[#9AA6C3]">
+                              라인 +{synergy.currentEffect.lan}
+                            </span>
+                          )}
+                          {synergy.currentEffect.tf > 0 && (
+                            <span className="bg-[#0B0F1A] px-2 py-1 rounded text-[#9AA6C3]">
+                              한타 +{synergy.currentEffect.tf}
+                            </span>
+                          )}
+                          {synergy.currentEffect.mac > 0 && (
+                            <span className="bg-[#0B0F1A] px-2 py-1 rounded text-[#9AA6C3]">
+                              운영 +{synergy.currentEffect.mac}
+                            </span>
+                          )}
+                          {synergy.currentEffect.clu > 0 && (
+                            <span className="bg-[#0B0F1A] px-2 py-1 rounded text-[#9AA6C3]">
+                              클러치 +{synergy.currentEffect.clu}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
