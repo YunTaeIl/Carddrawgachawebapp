@@ -4,9 +4,10 @@ import React, { useState, useMemo } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
+import { SynergyPanel } from "@/components/SynergyPanelV2";
 import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Position, POSITION_NAMES, UserCard } from "@/types/lck";
-import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculator";
+import { calculateSynergies } from "@/utils/synergyEngine";
 import {
   Dialog,
   DialogContent,
@@ -39,8 +40,33 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   
-  const synergies = calculateActiveSynergies(userData.squad);
-  const stats = calculateSquadStats(userData.squad, synergies);
+  const synergies = calculateSynergies(userData.squad);
+  
+  // 스쿼드 스탯 계산
+  const stats = useMemo(() => {
+    const deployedCards = Object.values(userData.squad).filter((card): card is UserCard => card !== null);
+    
+    if (deployedCards.length === 0) {
+      return { totalOVR: 0, avgOVR: 0, totalMechanics: 0, totalLaning: 0, totalTeamfight: 0, totalMacro: 0, totalClutch: 0 };
+    }
+    
+    const totalOVR = deployedCards.reduce((sum, card) => sum + card.stats.ovr + card.upgradeLevel, 0);
+    const totalMechanics = deployedCards.reduce((sum, card) => sum + card.stats.mechanics, 0);
+    const totalLaning = deployedCards.reduce((sum, card) => sum + card.stats.laning, 0);
+    const totalTeamfight = deployedCards.reduce((sum, card) => sum + card.stats.teamfight, 0);
+    const totalMacro = deployedCards.reduce((sum, card) => sum + card.stats.macro, 0);
+    const totalClutch = deployedCards.reduce((sum, card) => sum + card.stats.clutch, 0);
+    
+    return {
+      totalOVR,
+      avgOVR: Math.round(totalOVR / deployedCards.length),
+      totalMechanics,
+      totalLaning,
+      totalTeamfight,
+      totalMacro,
+      totalClutch
+    };
+  }, [userData.squad]);
 
   const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
 
@@ -258,34 +284,8 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
               </div>
             </div>
 
-            {/* 시너지 */}
-            <div className="bg-[#12182A] rounded-xl p-6 border border-[#D4AF37]/30">
-              <h3 className="text-lg font-bold mb-4">활성 시너지</h3>
-              {synergies.length > 0 ? (
-                <div className="space-y-3">
-                  {synergies.map((synergy) => (
-                    <div
-                      key={synergy.id}
-                      className="bg-[#0B0F1A] p-3 rounded-lg border border-[#D4AF37]/50"
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="flex-shrink-0 w-2 h-2 rounded-full bg-[#D4AF37] mt-1.5" />
-                        <div className="flex-1">
-                          <div className="font-bold text-[#D4AF37]">{synergy.name}</div>
-                          <div className="text-xs text-[#9AA6C3] mt-1">{synergy.description}</div>
-                          <div className="text-xs text-[#2B6CFF] mt-1">{synergy.bonus}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-[#9AA6C3] py-8">
-                  시너지 없음<br />
-                  <span className="text-xs">같은 팀/연도 카드를 배치하세요</span>
-                </div>
-              )}
-            </div>
+            {/* 시너지 패널 */}
+            <SynergyPanel activeSynergies={synergies} />
             
             {/* 스쿼드 저장 버튼 */}
             <div className="mt-6 flex justify-center">
