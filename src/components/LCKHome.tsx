@@ -124,7 +124,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     try {
       toast.info("이미지 생성 중...");
       
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // 이미지 로딩을 위한 충분한 대기 시간
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       const blob = await htmlToImage.toBlob(squadRef.current, {
         quality: 0.95,
@@ -138,19 +139,31 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       }
       
       console.log('=== 공유 디버깅 ===');
-      console.log('Blob 생성 완료:', blob.size, 'bytes');
+      console.log('Blob 크기:', blob.size, 'bytes');
+      console.log('Blob 타입:', blob.type);
       console.log('User Agent:', navigator.userAgent);
-      console.log('navigator.share 존재:', !!navigator.share);
       console.log('HTTPS:', window.location.protocol === 'https:');
+      console.log('navigator.share 존재:', !!navigator.share);
       
-      // Web Share API 지원 확인 (HTTPS에서만 작동)
+      // Web Share API 시도
       if (navigator.share) {
         try {
           const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
-          console.log('File 생성:', file.name);
+          console.log('File 생성:', file.name, file.size, 'bytes');
           
-          // navigator.share 시도
-          console.log('navigator.share 호출...');
+          // canShare 체크
+          if (navigator.canShare) {
+            const canShare = navigator.canShare({ files: [file] });
+            console.log('canShare({ files }) 결과:', canShare);
+            
+            if (!canShare) {
+              console.log('파일 공유 불가, 다운로드로 폴백');
+              downloadImage(blob);
+              return;
+            }
+          }
+          
+          console.log('navigator.share 호출 중...');
           await navigator.share({
             files: [file],
             title: 'LCK 스쿼드',
@@ -161,17 +174,26 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           toast.success("공유 완료!");
           return;
         } catch (shareError: any) {
-          console.error('공유 에러:', shareError);
+          console.error('=== navigator.share 에러 ===');
+          console.error('에러:', shareError);
           console.error('에러 이름:', shareError.name);
+          console.error('에러 메시지:', shareError.message);
           
-          // AbortError는 사용자가 취소한 것
+          // AbortError는 사용자 취소
           if (shareError.name === 'AbortError') {
             console.log('사용자가 공유 취소');
             return;
           }
           
-          // 다른 에러는 다운로드로 폴백
-          console.log('공유 실패, 다운로드');
+          // NotAllowedError: 권한 없음
+          if (shareError.name === 'NotAllowedError') {
+            console.log('공유 권한 없음, 다운로드');
+            downloadImage(blob);
+            return;
+          }
+          
+          // 기타 에러는 다운로드
+          console.log('공유 실패, 다운로드로 폴백');
           downloadImage(blob);
           return;
         }
