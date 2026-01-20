@@ -12,6 +12,7 @@ interface LCKHoloCardProps {
   onClick?: () => void;
   upgradeLevel?: number;
   disableFlip?: boolean;
+  forceStatic?: boolean; // 캡처용 정적 렌더링
   synergyBonus?: {
     ovr: number;
     mec: number;
@@ -22,7 +23,7 @@ interface LCKHoloCardProps {
   };
 }
 
-export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, disableFlip = false, synergyBonus }: LCKHoloCardProps) {
+export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, disableFlip = false, forceStatic = false, synergyBonus }: LCKHoloCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
@@ -43,7 +44,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
   };
   
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || forceStatic) return;
     
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -63,6 +64,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
   };
 
   const handleMouseLeave = () => {
+    if (forceStatic) return;
     requestAnimationFrame(() => {
       setRotation({ x: 0, y: 0 });
       setGlarePosition({ x: 50, y: 50 });
@@ -71,7 +73,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!disableFlip) {
+    if (!disableFlip && !forceStatic) {
       setIsFlipped(!isFlipped);
     }
     if (onClick) onClick();

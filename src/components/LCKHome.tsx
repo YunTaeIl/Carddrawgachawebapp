@@ -14,7 +14,7 @@ import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut, Share2
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
+import * as htmlToImage from "html-to-image";
 
 interface LCKHomeProps {
   onNavigate: (page: "home" | "gacha" | "squad" | "collection" | "test" | "terms") => void;
@@ -119,73 +119,46 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     if (!squadRef.current) return;
     
     try {
-      const canvas = await html2canvas(squadRef.current, {
-        scale: 2,
+      const dataUrl = await htmlToImage.toPng(squadRef.current, {
+        quality: 1.0,
+        pixelRatio: 2,
         backgroundColor: '#0B0F1A',
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        onclone: (clonedDoc) => {
-          const elements = clonedDoc.querySelectorAll('*');
-          elements.forEach((el: Element) => {
-            if (el instanceof HTMLElement) {
-              const computed = window.getComputedStyle(el);
-              const color = computed.color;
-              const bgColor = computed.backgroundColor;
-              
-              if (color && !color.includes('oklab')) {
-                el.style.color = color;
-              }
-              if (bgColor && !bgColor.includes('oklab')) {
-                el.style.backgroundColor = bgColor;
-              }
-              
-              const borderColor = computed.borderColor;
-              if (borderColor && !borderColor.includes('oklab')) {
-                el.style.borderColor = borderColor;
-              }
-            }
-          });
-        }
+        cacheBust: true,
       });
       
-      // Canvas를 Blob으로 변환
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          toast.error('이미지 생성에 실패했습니다.');
-          return;
-        }
+      // DataURL을 Blob으로 변환
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
 
-        // Web Share API 지원 확인 (모바일)
-        if (navigator.share && navigator.canShare) {
-          const file = new File([blob], 'lck_gacha_squad.png', { type: 'image/png' });
-          const shareData = {
-            title: 'My LCK Squad',
-            text: `내 LCK 스쿼드 (AVG OVR ${stats.avgOVR})`,
-            files: [file]
-          };
+      // Web Share API 지원 확인 (모바일)
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], 'lck_gacha_squad.png', { type: 'image/png' });
+        const shareData = {
+          title: 'My LCK Squad',
+          text: `내 LCK 스쿼드 (AVG OVR ${stats.avgOVR})`,
+          files: [file]
+        };
 
-          if (navigator.canShare(shareData)) {
-            try {
-              await navigator.share(shareData);
-              toast.success('스쿼드를 공유했습니다!');
-              return;
-            } catch (err: any) {
-              // 사용자가 취소한 경우 (AbortError)는 무시
-              if (err.name !== 'AbortError') {
-                console.error('공유 실패:', err);
-              }
+        if (navigator.canShare(shareData)) {
+          try {
+            await navigator.share(shareData);
+            toast.success('스쿼드를 공유했습니다!');
+            return;
+          } catch (err: any) {
+            // 사용자가 취소한 경우 (AbortError)는 무시
+            if (err.name !== 'AbortError') {
+              console.error('공유 실패:', err);
             }
           }
         }
+      }
 
-        // Web Share API 미지원 시 다운로드 (데스크톱)
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        link.download = 'lck_gacha_squad.png';
-        link.click();
-        toast.success('스쿼드 이미지가 다운로드되었습니다!');
-      }, 'image/png');
+      // Web Share API 미지원 시 다운로드 (데스크톱)
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'lck_gacha_squad.png';
+      link.click();
+      toast.success('스쿼드 이미지가 다운로드되었습니다!');
     } catch (error) {
       console.error('이미지 생성 실패:', error);
       toast.error('이미지 생성에 실패했습니다.');

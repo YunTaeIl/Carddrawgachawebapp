@@ -6,25 +6,14 @@ import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { SynergyPanel } from "@/components/SynergyPanelV2";
 import { SquadShareCard } from "@/components/SquadShareCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
+import { Input } from "@/app/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight, Share2, Download } from "lucide-react";
 import { Position, POSITION_NAMES, UserCard } from "@/types/lck";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
-import html2canvas from "html2canvas";
+import * as htmlToImage from "html-to-image";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/app/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select";
-import { Input } from "@/app/components/ui/input";
 
 interface LCKSquadProps {
   onBack: () => void;
@@ -35,6 +24,7 @@ const CARDS_PER_PAGE = 15; // 한 페이지당 카드 수
 export function LCKSquad({ onBack }: LCKSquadProps) {
   const { userData, setSquadCard, saveSquadToDB } = useGame();
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [showSharePreview, setShowSharePreview] = useState(false);
   
   // 검색 & 필터 상태
   const [searchQuery, setSearchQuery] = useState("");
@@ -171,52 +161,61 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
   // 스쿼드 공유 이미지 생성
   const squadRef = useRef<HTMLDivElement>(null);
   const handleShareSquad = async () => {
-    if (!squadRef.current) return;
+    // 먼저 미리보기 모달 띄우기
+    setShowSharePreview(true);
+    
+    // DOM 렌더링 대기
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (!squadRef.current) {
+      toast.error("스쿼드 정보를 찾을 수 없습니다.");
+      setShowSharePreview(false);
+      return;
+    }
     
     try {
-      const canvas = await html2canvas(squadRef.current, {
-        scale: 2,
+      toast.info("이미지 생성 중...");
+      
+      // toBlob 사용 (더 안정적)
+      const blob = await htmlToImage.toBlob(squadRef.current, {
+        quality: 1.0,
+        pixelRatio: 2,
         backgroundColor: '#0B0F1A',
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        onclone: (clonedDoc) => {
-          // 클론된 문서의 모든 요소에서 문제가 되는 CSS 속성 제거
-          const elements = clonedDoc.querySelectorAll('*');
-          elements.forEach((el: Element) => {
-            if (el instanceof HTMLElement) {
-              // computed style에서 color 값을 가져와서 인라인으로 설정
-              const computed = window.getComputedStyle(el);
-              const color = computed.color;
-              const bgColor = computed.backgroundColor;
-              
-              // oklab이 아닌 rgb/rgba 형식으로 변환
-              if (color && !color.includes('oklab')) {
-                el.style.color = color;
-              }
-              if (bgColor && !bgColor.includes('oklab')) {
-                el.style.backgroundColor = bgColor;
-              }
-              
-              // border color도 처리
-              const borderColor = computed.borderColor;
-              if (borderColor && !borderColor.includes('oklab')) {
-                el.style.borderColor = borderColor;
-              }
-            }
-          });
-        }
+        cacheBust: true,
       });
       
-      const imgData = canvas.toDataURL('image/png');
+      if (!blob) {
+        throw new Error('이미지 생성 실패: blob이 null입니다.');
+      }
+      
+      // Blob을 URL로 변환하여 다운로드
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = imgData;
-      link.download = 'lck_squad.png';
+      link.href = url;
+      link.download = `lck_squad_${Date.now()}.png`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
       toast.success("스쿼드 이미지가 다운로드되었습니다!");
+      setShowSharePreview(false);
     } catch (error) {
-      console.error('이미지 생성 실패:', error);
+      console.error('=== 이미지 생성 실패 ===');
+      console.error('Error object:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error constructor:', error?.constructor?.name);
+      
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      } else if (error && typeof error === 'object') {
+        console.error('Error keys:', Object.keys(error));
+        console.error('Error values:', Object.values(error));
+      }
+      
       toast.error('이미지 생성에 실패했습니다.');
+      setShowSharePreview(false);
     }
   };
 
@@ -516,6 +515,20 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
             stats={stats}
           />
         </div>
+        
+        {/* 스쿼드 공유 미리보기 모달 */}
+        <Dialog open={showSharePreview} onOpenChange={setShowSharePreview}>
+          <DialogContent className="!max-w-none bg-transparent border-none shadow-none p-0">
+            <div className="flex items-center justify-center">
+              <SquadShareCard
+                ref={squadRef}
+                squad={userData.squad}
+                synergies={synergies}
+                stats={stats}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

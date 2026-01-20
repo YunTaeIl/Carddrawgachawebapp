@@ -23,11 +23,10 @@ interface SquadShareCardProps {
     totalMacro: number;
     totalClutch: number;
   };
-  cardBonuses: { [cardId: string]: { ovr: number; mec: number; lan: number; tf: number; mac: number; clu: number } };
 }
 
 export const SquadShareCard = React.forwardRef<HTMLDivElement, SquadShareCardProps>(
-  ({ squad, synergies, stats, cardBonuses }, ref) => {
+  ({ squad, synergies, stats }, ref) => {
     const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
     const deployedCards = Object.values(squad).filter((card): card is UserCard => card !== null);
 
@@ -215,7 +214,13 @@ export const SquadShareCard = React.forwardRef<HTMLDivElement, SquadShareCardPro
                   <div style={positionCodeStyle}>{position}</div>
                 </div>
                 {card ? (
-                  <LCKHoloCard card={card} cardBonuses={cardBonuses} />
+                  <LCKHoloCard 
+                    card={card} 
+                    size="small"
+                    upgradeLevel={card.upgradeLevel}
+                    disableFlip={true}
+                    forceStatic={true}
+                  />
                 ) : (
                   <div style={emptySlotStyle}>
                     <div style={{ fontSize: '14px', color: '#9AA6C3' }}>Empty</div>
