@@ -35,7 +35,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
   };
   
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current || isFlipped) return;
+    if (!cardRef.current) return;
     
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -52,10 +52,8 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
   };
 
   const handleMouseLeave = () => {
-    if (!isFlipped) {
-      setRotation({ x: 0, y: 0 });
-      setGlarePosition({ x: 50, y: 50 });
-    }
+    setRotation({ x: 0, y: 0 });
+    setGlarePosition({ x: 50, y: 50 });
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
