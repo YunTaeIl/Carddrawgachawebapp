@@ -122,11 +122,11 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
 
   // 5각형 레이더 차트 데이터
   const radarData = [
-    { stat: "메카닉", value: card.stats.mechanics },
-    { stat: "라인전", value: card.stats.laning },
-    { stat: "한타", value: card.stats.teamfight },
-    { stat: "운영", value: card.stats.macro },
-    { stat: "클러치", value: card.stats.clutch },
+    { stat: "메카닉", value: card.stats.mechanics + (synergyBonus?.mec || 0), base: card.stats.mechanics },
+    { stat: "라인전", value: card.stats.laning + (synergyBonus?.lan || 0), base: card.stats.laning },
+    { stat: "한타", value: card.stats.teamfight + (synergyBonus?.tf || 0), base: card.stats.teamfight },
+    { stat: "운영", value: card.stats.macro + (synergyBonus?.mac || 0), base: card.stats.macro },
+    { stat: "클러치", value: card.stats.clutch + (synergyBonus?.clu || 0), base: card.stats.clutch },
   ];
 
   // 등급별 테두리 스타일
@@ -715,10 +715,10 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
               {/* OVR 표시 */}
               <div className="text-center mb-2">
                 <div className="text-sm text-[#9AA6C3]">OVERALL</div>
-                <div className="text-4xl font-display font-bold" style={{ color: gradeColor }}>
-                  {displayOVR}
-                  {upgradeLevel > 0 && (
-                    <span className="text-xl text-green-400 ml-1">+{upgradeLevel}</span>
+                <div className="text-4xl font-display font-bold flex items-baseline justify-center gap-1" style={{ color: synergyBonus && synergyBonus.ovr > 0 ? "#9333EA" : gradeColor }}>
+                  <span>{displayOVR}</span>
+                  {synergyBonus && synergyBonus.ovr > 0 && (
+                    <span className="text-2xl font-black">(+{synergyBonus.ovr})</span>
                   )}
                 </div>
               </div>
@@ -746,12 +746,20 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
 
               {/* 하단: 스탯 숫자 */}
               <div className="grid grid-cols-5 gap-1 text-xs mt-2">
-                {radarData.map((stat, idx) => (
-                  <div key={idx} className="text-center bg-black/40 rounded p-1.5">
-                    <div className="text-[#9AA6C3] text-[10px] mb-0.5 whitespace-nowrap">{stat.stat}</div>
-                    <div className="font-bold text-sm" style={{ color: gradeColor }}>{stat.value}</div>
-                  </div>
-                ))}
+                {radarData.map((stat, idx) => {
+                  const bonus = stat.value - stat.base;
+                  return (
+                    <div key={idx} className="text-center bg-black/40 rounded p-1.5">
+                      <div className="text-[#9AA6C3] text-[10px] mb-0.5 whitespace-nowrap">{stat.stat}</div>
+                      <div className="font-bold text-sm flex flex-col items-center" style={{ color: bonus > 0 ? "#9333EA" : gradeColor }}>
+                        <span>{stat.value}</span>
+                        {bonus > 0 && (
+                          <span className="text-[10px] font-black">(+{bonus})</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
