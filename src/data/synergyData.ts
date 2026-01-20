@@ -201,5 +201,118 @@ export const SYNERGIES: SynergyDefinition[] = [
     positions: "",
     effect_text: "3인: OVR+6 / Mec+4 / Lan+3 / TF+8 / Mac+6 / Clu+8 | 4인: OVR+8 / Mec+5 / Lan+4 / TF+10 / Mac+7 / Clu+10 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
     description: "2016 월드 챔피언십 우승 팀 로스터 카드 3장 이상"
+  }),
+  
+  parseCsvRow({
+    synergy_id: "WORLDS_CHAMP_2017_SamsungGalaxy",
+    synergy_name: "월즈 우승 로스터(2017 Samsung Galaxy)",
+    type: "THEME",
+    priority: "120",
+    year_rule: "EXACT",
+    year_value: "2017",
+    team_rule: "EXACT_TEAM",
+    team_values: "Samsung Galaxy",
+    min_count: "3",
+    players: "",
+    positions: "",
+    effect_text: "3인: OVR+6 / Mec+4 / Lan+3 / TF+8 / Mac+6 / Clu+8 | 4인: OVR+8 / Mec+5 / Lan+4 / TF+10 / Mac+7 / Clu+10 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
+    description: "2017 월드 챔피언십 우승 팀 로스터 카드 3장 이상"
+  }),
+  
+  parseCsvRow({
+    synergy_id: "WORLDS_CHAMP_2020_DAMWONGaming",
+    synergy_name: "월즈 우승 로스터(2020 DAMWON Gaming)",
+    type: "THEME",
+    priority: "120",
+    year_rule: "EXACT",
+    year_value: "2020",
+    team_rule: "EXACT_TEAM",
+    team_values: "DAMWON Gaming",
+    min_count: "3",
+    players: "",
+    positions: "",
+    effect_text: "3인: OVR+6 / Mec+4 / Lan+3 / TF+8 / Mac+6 / Clu+8 | 4인: OVR+8 / Mec+5 / Lan+4 / TF+10 / Mac+7 / Clu+10 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
+    description: "2020 월드 챔피언십 우승 팀 로스터 카드 3장 이상"
+  }),
+  
+  parseCsvRow({
+    synergy_id: "WORLDS_CHAMP_2022_DRX",
+    synergy_name: "월즈 우승 로스터(2022 DRX)",
+    type: "THEME",
+    priority: "120",
+    year_rule: "EXACT",
+    year_value: "2022",
+    team_rule: "EXACT_TEAM",
+    team_values: "DRX",
+    min_count: "3",
+    players: "",
+    positions: "",
+    effect_text: "3인: OVR+6 / Mec+4 / Lan+3 / TF+8 / Mac+6 / Clu+8 | 4인: OVR+8 / Mec+5 / Lan+4 / TF+10 / Mac+7 / Clu+10 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
+    description: "2022 월드 챔피언십 우승 팀 로스터 카드 3장 이상"
+  }),
+  
+  parseCsvRow({
+    synergy_id: "WORLDS_CHAMP_2023_T1",
+    synergy_name: "월즈 우승 로스터(2023 T1)",
+    type: "THEME",
+    priority: "120",
+    year_rule: "EXACT",
+    year_value: "2023",
+    team_rule: "EXACT_TEAM",
+    team_values: "T1",
+    min_count: "3",
+    players: "",
+    positions: "",
+    effect_text: "3인: OVR+6 / Mec+4 / Lan+3 / TF+8 / Mac+6 / Clu+8 | 4인: OVR+8 / Mec+5 / Lan+4 / TF+10 / Mac+7 / Clu+10 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
+    description: "2023 월드 챔피언십 우승 팀 로스터 카드 3장 이상"
+  }),
+  
+  parseCsvRow({
+    synergy_id: "WORLDS_CHAMP_2024_T1",
+    synergy_name: "월즈 우승 로스터(2024 T1)",
+    type: "THEME",
+    priority: "120",
+    year_rule: "EXACT",
+    year_value: "2024",
+    team_rule: "EXACT_TEAM",
+    team_values: "T1",
+    min_count: "3",
+    players: "",
+    positions: "",
+    effect_text: "3인: OVR+6 / Mec+4 / Lan+3 / TF+8 / Mac+6 / Clu+8 | 4인: OVR+8 / Mec+5 / Lan+4 / TF+10 / Mac+7 / Clu+10 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
+    description: "2024 월드 챔피언십 우승 팀 로스터 카드 3장 이상"
+  }),
+  
+  parseCsvRow({
+    synergy_id: "WORLDS_CHAMP_2025_T1",
+    synergy_name: "월즈 우승 로스터(2025 T1)",
+    type: "THEME",
+    priority: "120",
+    year_rule: "EXACT",
+    year_value: "2025",
+    team_rule: "EXACT_TEAM",
+    team_values: "T1",
+    min_count: "3",
+    players: "",
+    positions: "",
+    effect_text: "3인: OVR+6 / Mec+4 / Lan+3 / TF+8 / Mac+6 / Clu+8 | 4인: OVR+8 / Mec+5 / Lan+4 / TF+10 / Mac+7 / Clu+10 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
+    description: "2025 월드 챔피언십 우승 팀 로스터 카드 3장 이상"
+  }),
+  
+  // TRIO 시너지
+  parseCsvRow({
+    synergy_id: "TRIO_TOP_SKT",
+    synergy_name: "마벵페",
+    type: "TRIO",
+    priority: "112",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "SAME_TEAM",
+    team_values: "",
+    min_count: "",
+    players: "MaRin|Bengi|Faker",
+    positions: "TOP|JGL|MID",
+    effect_text: "3인: OVR+6 / Mec+6 / Lan+4 / TF+6 / Mac+6 / Clu+4",
+    description: "SKT 왕조 상체"
   })
 ];
