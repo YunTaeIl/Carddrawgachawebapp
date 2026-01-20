@@ -51,8 +51,12 @@ function getTeamFileName(teamName: string): string {
     
     // SK Telecom T1 (구단명)
     "SK Telecom T1": "SKT",
-    "SK Telecom T1 K": "SKT_T1_K",  // 🔥 2013-2014 K팀
-    "SK Telecom T1 S": "SKT_T1_S",  // 🔥 2013-2014 S팀
+    "SK Telecom T1 K": "SKT_T1_K",  // 🔥 2013-2014 K팀 (풀네임)
+    "SK Telecom T1 S": "SKT_T1_S",  // 🔥 2013-2014 S팀 (풀네임)
+    "SKT T1 K": "SKT_T1_K",          // 🔥 2013-2014 K팀 (약칭)
+    "SKT T1 S": "SKT_T1_S",          // 🔥 2013-2014 S팀 (약칭)
+    "SKT T1": "SKT",                 // 🔥 일반 SKT T1
+    "SKT": "SKT",                    // 🔥 SKT만 있는 경우
     
     // KT Rolster (초기)
     "KT Rolster Arrows": "KT_Rolster_Arrows",
