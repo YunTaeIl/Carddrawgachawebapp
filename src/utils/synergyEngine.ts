@@ -407,6 +407,40 @@ function removeDuplicateSynergies(synergies: ActiveSynergy[]): ActiveSynergy[] {
     }
   }
   
+  // 추가: 선수 기반 시너지 중복 제거
+  // A 시너지의 모든 선수가 B 시너지에 포함되면 B만 유지 (상위 포함 관계)
+  const playerSynergies = result.filter(s => s.synergy.players.length > 0);
+  const otherSynergies = result.filter(s => s.synergy.players.length === 0);
+  
+  if (playerSynergies.length > 1) {
+    const toRemove = new Set<ActiveSynergy>();
+    
+    // 모든 선수 시너지 쌍을 비교
+    for (let i = 0; i < playerSynergies.length; i++) {
+      for (let j = 0; j < playerSynergies.length; j++) {
+        if (i === j) continue;
+        
+        const synergyA = playerSynergies[i];
+        const synergyB = playerSynergies[j];
+        
+        // A의 모든 선수가 B에 포함되는지 확인
+        const aPlayers = new Set(synergyA.matchedPlayers);
+        const bPlayers = new Set(synergyB.matchedPlayers);
+        
+        const allAinB = Array.from(aPlayers).every(player => bPlayers.has(player));
+        
+        if (allAinB && aPlayers.size < bPlayers.size) {
+          // A가 B의 부분집합이고 크기가 작으면 A 제거
+          toRemove.add(synergyA);
+        }
+      }
+    }
+    
+    // 제거 대상이 아닌 시너지만 유지
+    const filteredPlayerSynergies = playerSynergies.filter(s => !toRemove.has(s));
+    return [...filteredPlayerSynergies, ...otherSynergies];
+  }
+  
   return result;
 }
 
