@@ -373,75 +373,101 @@ export function calculateCardSynergyBonuses(
  * 중복 시너지 제거: 같은 카테고리의 시너지는 가장 높은 priority만 적용
  */
 function removeDuplicateSynergies(synergies: ActiveSynergy[]): ActiveSynergy[] {
-  // 시너지를 카테고리별로 그룹화
-  const categoryMap = new Map<string, ActiveSynergy[]>();
+  // 1단계: 선수 기반 시너지와 THEME 시너지 분리
+  const playerSynergies = synergies.filter(s => s.synergy.players.length > 0);
+  const themeSynergies = synergies.filter(s => s.synergy.players.length === 0);
   
-  for (const synergy of synergies) {
+  // 2단계: 선수 기반 시너지 카테고리별 그룹화
+  const playerCategoryMap = new Map<string, ActiveSynergy[]>();
+  
+  for (const synergy of playerSynergies) {
     const category = getSynergyCategory(synergy.synergy);
     
-    if (!categoryMap.has(category)) {
-      categoryMap.set(category, []);
+    if (!playerCategoryMap.has(category)) {
+      playerCategoryMap.set(category, []);
     }
-    categoryMap.get(category)!.push(synergy);
+    playerCategoryMap.get(category)!.push(synergy);
   }
   
-  // 각 카테고리에서 최적의 시너지 선택
-  const result: ActiveSynergy[] = [];
+  // 3단계: 각 선수 시너지 카테고리에서 최고 priority 선택
+  const selectedPlayerSynergies: ActiveSynergy[] = [];
   
-  for (const [category, categoryGroup] of categoryMap.entries()) {
-    // GEN_SAME 카테고리는 matchedCount 우선, 동일하면 priority 우선
-    if (category === "GEN_SAME") {
-      const sorted = categoryGroup.sort((a, b) => {
-        // 1순위: matchedCount (더 많은 인원 커버)
-        if (b.matchedCount !== a.matchedCount) {
-          return b.matchedCount - a.matchedCount;
-        }
-        // 2순위: priority (동일 인원수면 단일팀·단일년도 > 단일팀 > 단일년도)
-        return b.synergy.priority - a.synergy.priority;
-      });
-      result.push(sorted[0]);
-    } else {
-      // 다른 카테고리는 priority 높은 순으로 정렬 후 첫 번째만 선택
-      const sorted = categoryGroup.sort((a, b) => b.synergy.priority - a.synergy.priority);
-      result.push(sorted[0]);
-    }
+  for (const categoryGroup of playerCategoryMap.values()) {
+    const sorted = categoryGroup.sort((a, b) => b.synergy.priority - a.synergy.priority);
+    selectedPlayerSynergies.push(sorted[0]);
   }
   
-  // 추가: 선수 기반 시너지 중복 제거
-  // A 시너지의 모든 선수가 B 시너지에 포함되면 B만 유지 (상위 포함 관계)
-  const playerSynergies = result.filter(s => s.synergy.players.length > 0);
-  const otherSynergies = result.filter(s => s.synergy.players.length === 0);
+  // 4단계: 선수 기반 시너지 부분집합 제거
+  const filteredPlayerSynergies = removePlayerSubsets(selectedPlayerSynergies);
   
-  if (playerSynergies.length > 1) {
-    const toRemove = new Set<ActiveSynergy>();
+  // 5단계: THEME 시너지 중 가장 점수 높은 것 하나만 선택
+  let selectedThemeSynergy: ActiveSynergy | null = null;
+  
+  if (themeSynergies.length > 0) {
+    // 총 스탯 보너스 계산
+    const themesWithScore = themeSynergies.map(s => {
+      const effect = s.currentEffect;
+      const totalScore = effect 
+        ? effect.ovr + effect.mec + effect.lan + effect.tf + effect.mac + effect.clu
+        : 0;
+      return { synergy: s, score: totalScore };
+    });
     
-    // 모든 선수 시너지 쌍을 비교
-    for (let i = 0; i < playerSynergies.length; i++) {
-      for (let j = 0; j < playerSynergies.length; j++) {
-        if (i === j) continue;
-        
-        const synergyA = playerSynergies[i];
-        const synergyB = playerSynergies[j];
-        
-        // A의 모든 선수가 B에 포함되는지 확인
-        const aPlayers = new Set(synergyA.matchedPlayers);
-        const bPlayers = new Set(synergyB.matchedPlayers);
-        
-        const allAinB = Array.from(aPlayers).every(player => bPlayers.has(player));
-        
-        if (allAinB && aPlayers.size < bPlayers.size) {
-          // A가 B의 부분집합이고 크기가 작으면 A 제거
-          toRemove.add(synergyA);
-        }
+    // 점수 높은 순으로 정렬
+    themesWithScore.sort((a, b) => {
+      // 1순위: 총 스탯 보너스
+      if (b.score !== a.score) {
+        return b.score - a.score;
       }
-    }
+      // 2순위: priority (동점이면 우선순위 높은 것)
+      return b.synergy.synergy.priority - a.synergy.synergy.priority;
+    });
     
-    // 제거 대상이 아닌 시너지만 유지
-    const filteredPlayerSynergies = playerSynergies.filter(s => !toRemove.has(s));
-    return [...filteredPlayerSynergies, ...otherSynergies];
+    selectedThemeSynergy = themesWithScore[0].synergy;
+  }
+  
+  // 최종 결과
+  const result = [...filteredPlayerSynergies];
+  if (selectedThemeSynergy) {
+    result.push(selectedThemeSynergy);
   }
   
   return result;
+}
+
+/**
+ * 선수 기반 시너지 부분집합 제거
+ */
+function removePlayerSubsets(playerSynergies: ActiveSynergy[]): ActiveSynergy[] {
+  if (playerSynergies.length <= 1) {
+    return playerSynergies;
+  }
+  
+  const toRemove = new Set<ActiveSynergy>();
+  
+  // 모든 선수 시너지 쌍을 비교
+  for (let i = 0; i < playerSynergies.length; i++) {
+    for (let j = 0; j < playerSynergies.length; j++) {
+      if (i === j) continue;
+      
+      const synergyA = playerSynergies[i];
+      const synergyB = playerSynergies[j];
+      
+      // A의 모든 선수가 B에 포함되는지 확인
+      const aPlayers = new Set(synergyA.matchedPlayers);
+      const bPlayers = new Set(synergyB.matchedPlayers);
+      
+      const allAinB = Array.from(aPlayers).every(player => bPlayers.has(player));
+      
+      if (allAinB && aPlayers.size < bPlayers.size) {
+        // A가 B의 부분집합이고 크기가 작으면 A 제거
+        toRemove.add(synergyA);
+      }
+    }
+  }
+  
+  // 제거 대상이 아닌 시너지만 유지
+  return playerSynergies.filter(s => !toRemove.has(s));
 }
 
 /**
