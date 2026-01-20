@@ -6,10 +6,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { LCKAuth } from "@/components/LCKAuth";
+import { SynergyPanel } from "@/components/SynergyPanelV2";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { GACHA_CONFIG } from "@/types/lck";
 import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut } from "lucide-react";
-import { calculateActiveSynergies, calculateSquadStats } from "@/utils/synergyCalculator";
+import { calculateSynergies } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
 
@@ -25,8 +26,25 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
   const positions = ["TOP", "JGL", "MID", "ADC", "SUP"] as const;
   
   // 스쿼드 스탯 & 시너지 계산
-  const synergies = calculateActiveSynergies(userData.squad);
-  const stats = calculateSquadStats(userData.squad, synergies);
+  const synergies = calculateSynergies(userData.squad);
+  
+  // 간단한 스탯 계산
+  const stats = (() => {
+    const deployedCards = Object.values(userData.squad).filter(c => c !== null);
+    if (deployedCards.length === 0) {
+      return { totalOVR: 0, avgOVR: 0, totalMechanics: 0, totalLaning: 0, totalTeamfight: 0, totalMacro: 0, totalClutch: 0 };
+    }
+    const totalOVR = deployedCards.reduce((sum, card) => sum + card!.stats.ovr + card!.upgradeLevel, 0);
+    return {
+      totalOVR,
+      avgOVR: Math.round(totalOVR / deployedCards.length),
+      totalMechanics: deployedCards.reduce((sum, card) => sum + card!.stats.mechanics, 0),
+      totalLaning: deployedCards.reduce((sum, card) => sum + card!.stats.laning, 0),
+      totalTeamfight: deployedCards.reduce((sum, card) => sum + card!.stats.teamfight, 0),
+      totalMacro: deployedCards.reduce((sum, card) => sum + card!.stats.macro, 0),
+      totalClutch: deployedCards.reduce((sum, card) => sum + card!.stats.clutch, 0)
+    };
+  })();
 
   const handleLogout = async () => {
     try {
@@ -237,12 +255,23 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 <Sparkles className="w-4 h-4 text-[#FFB81C]" />
                 <h3 className="font-bold font-display">활성 시너지</h3>
               </div>
-              {synergies.length > 0 ? (
+              {synergies.filter(s => s.isActive).length > 0 ? (
                 <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-                  {synergies.map((synergy) => (
-                    <div key={synergy.id} className="bg-[#0A0E27]/50 p-2 rounded border border-[#FFB81C]/30">
-                      <div className="text-xs font-bold text-[#FFB81C]">{synergy.name}</div>
-                      <div className="text-[10px] text-[#8B95B5]">{synergy.bonus}</div>
+                  {synergies.filter(s => s.isActive).map((synergy) => (
+                    <div key={synergy.synergy.synergy_id} className="bg-[#0A0E27]/50 p-2 rounded border border-[#FFB81C]/30">
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs font-bold text-[#FFB81C]">{synergy.synergy.synergy_name}</div>
+                        {synergy.isPrime && (
+                          <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#C8102E] text-white">
+                            PRIME
+                          </span>
+                        )}
+                      </div>
+                      {synergy.currentEffect && (
+                        <div className="text-[10px] text-[#8B95B5]">
+                          OVR +{synergy.currentEffect.ovr}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
