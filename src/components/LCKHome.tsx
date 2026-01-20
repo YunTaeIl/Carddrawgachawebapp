@@ -298,7 +298,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       {/* 메인 컨텐츠 */}
       <div className="max-w-[1500px] mx-auto px-6 py-8">{/* 카드 5장 + 간격에 맞춘 최적 너비 */}
         {/* MY SQUAD 섹션 */}
-        <div className="mb-12">
+        <div className="mb-12" ref={squadRef}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-4xl font-bold font-display tracking-wide">MY SQUAD</h2>
             <div className="flex items-center gap-3">
@@ -603,24 +603,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           <LCKAuth onSuccess={() => setShowAuthDialog(false)} />
         </DialogContent>
       </Dialog>
-
-      {/* 숨겨진 스쿼드 공유 이미지 */}
-      <div className="fixed -left-[9999px] top-0">
-        <SquadShareCard
-          ref={squadRef}
-          squad={userData.squad}
-          synergies={synergies}
-          stats={{
-            avgOVR: stats.avgOVR,
-            totalMechanics: stats.totalMechanics,
-            totalLaning: stats.totalLaning,
-            totalTeamfight: stats.totalTeamfight,
-            totalMacro: stats.totalMacro,
-            totalClutch: stats.totalClutch
-          }}
-          cardBonuses={cardBonuses}
-        />
-      </div>
     </div>
   );
 }

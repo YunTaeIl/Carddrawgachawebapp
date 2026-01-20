@@ -3,6 +3,7 @@
 import React from "react";
 import { UserCard, Position, POSITION_NAMES } from "@/types/lck";
 import { ActiveSynergy } from "@/types/synergy";
+import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { TrendingUp, Award } from "lucide-react";
 
 interface SquadShareCardProps {
@@ -29,15 +30,6 @@ export const SquadShareCard = React.forwardRef<HTMLDivElement, SquadShareCardPro
   ({ squad, synergies, stats, cardBonuses }, ref) => {
     const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
     const deployedCards = Object.values(squad).filter((card): card is UserCard => card !== null);
-    
-    const getPlayerImageUrl = (card: UserCard) => {
-      return `https://nkgymwgozhxzirkhjyzw.supabase.co/storage/v1/object/public/lck_player_images/${card.id}.png`;
-    };
-
-    const getCardOVR = (card: UserCard) => {
-      const bonus = cardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
-      return card.stats.ovr + card.upgradeLevel + bonus.ovr;
-    };
 
     const containerStyle: React.CSSProperties = {
       width: '1200px',
@@ -93,58 +85,15 @@ export const SquadShareCard = React.forwardRef<HTMLDivElement, SquadShareCardPro
       color: '#2B6CFF'
     };
 
-    const cardBoxStyle: React.CSSProperties = {
+    const emptySlotStyle: React.CSSProperties = {
       width: '160px',
       height: '240px',
       borderRadius: '12px',
-      background: 'rgba(18, 24, 42, 0.8)',
-      border: '2px solid rgba(43, 108, 255, 0.5)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      gap: '8px'
-    };
-
-    const emptySlotStyle: React.CSSProperties = {
-      ...cardBoxStyle,
       border: '2px dashed rgba(43, 108, 255, 0.3)',
-      background: 'rgba(18, 24, 42, 0.5)'
-    };
-
-    const cardInfoStyle: React.CSSProperties = {
-      textAlign: 'center',
-      width: '100%'
-    };
-
-    const gradeStyle = (grade: string): React.CSSProperties => ({
-      fontSize: '32px',
-      fontWeight: 'bold',
-      color: grade === 'S' ? '#FFB81C' : grade === 'A' ? '#C084FC' : '#60A5FA',
-      marginBottom: '8px'
-    });
-
-    const playerNameStyle: React.CSSProperties = {
-      fontSize: '16px',
-      fontWeight: 'bold',
-      color: '#FFFFFF',
-      marginBottom: '4px',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap'
-    };
-
-    const teamNameStyle: React.CSSProperties = {
-      fontSize: '12px',
-      color: '#9AA6C3',
-      marginBottom: '8px'
-    };
-
-    const ovrStyle: React.CSSProperties = {
-      fontSize: '20px',
-      fontWeight: 'bold',
-      color: '#FFB81C'
+      background: 'rgba(18, 24, 42, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     };
 
     const gridStyle: React.CSSProperties = {
@@ -266,15 +215,7 @@ export const SquadShareCard = React.forwardRef<HTMLDivElement, SquadShareCardPro
                   <div style={positionCodeStyle}>{position}</div>
                 </div>
                 {card ? (
-                  <div style={cardBoxStyle}>
-                    <div style={cardInfoStyle}>
-                      <div style={gradeStyle(card.grade)}>{card.grade}</div>
-                      <div style={playerNameStyle}>{card.name}</div>
-                      <div style={teamNameStyle}>{card.team}</div>
-                      <div style={teamNameStyle}>{card.year}</div>
-                      <div style={ovrStyle}>OVR {getCardOVR(card)}</div>
-                    </div>
-                  </div>
+                  <LCKHoloCard card={card} cardBonuses={cardBonuses} />
                 ) : (
                   <div style={emptySlotStyle}>
                     <div style={{ fontSize: '14px', color: '#9AA6C3' }}>Empty</div>
