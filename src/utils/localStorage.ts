@@ -6,7 +6,7 @@ const STORAGE_KEY = "lck_gacha_user_data";
 
 export function getDefaultUserData(): UserData {
   return {
-    currency: 5000, // 초기 재화
+    currency: 50000, // 초기 재화 (베타 테스트 보상)
     shards: 0,
     ownedCards: [],
     gachaState: {
