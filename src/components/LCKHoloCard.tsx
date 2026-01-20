@@ -732,13 +732,36 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
                       dataKey="stat" 
                       tick={{ fill: "#9AA6C3", fontSize: 11, fontWeight: "bold" }}
                     />
+                    {/* 최대값 100으로 고정 - 넘치는 값은 밖으로 표시 */}
+                    <defs>
+                      <linearGradient id={`radarGradient-${card.id}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={gradeColor} stopOpacity={0.8} />
+                        <stop offset="100%" stopColor={gradeColor} stopOpacity={0.3} />
+                      </linearGradient>
+                    </defs>
                     <Radar
                       name="Stats"
                       dataKey="value"
                       stroke={gradeColor}
-                      fill={gradeColor}
-                      fillOpacity={0.5}
+                      fill={`url(#radarGradient-${card.id})`}
+                      fillOpacity={0.6}
+                      strokeWidth={3}
+                      dot={{ 
+                        fill: gradeColor, 
+                        strokeWidth: 2, 
+                        stroke: "#FFFFFF",
+                        r: 4 
+                      }}
+                    />
+                    {/* 기준선 100 표시 */}
+                    <Radar
+                      dataKey={() => 100}
+                      stroke="#FFB81C"
+                      fill="transparent"
                       strokeWidth={2}
+                      strokeDasharray="5 5"
+                      strokeOpacity={0.3}
+                      dot={false}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
