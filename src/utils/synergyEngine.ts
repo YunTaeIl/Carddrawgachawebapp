@@ -394,6 +394,27 @@ function removeDuplicateSynergies(synergies: ActiveSynergy[]): ActiveSynergy[] {
     result.push(sorted[0]);
   }
   
+  // 추가 필터링: 일반 시너지 간 우선순위 처리
+  // 단일팀·단일년도가 있으면 → 단일팀, 단일년도 제외
+  const hasTeamYear = result.some(s => 
+    s.synergy.team_rule === "SAME" && s.synergy.year_rule === "SAME"
+  );
+  
+  if (hasTeamYear) {
+    return result.filter(s => {
+      // 단일팀·단일년도는 유지
+      if (s.synergy.team_rule === "SAME" && s.synergy.year_rule === "SAME") {
+        return true;
+      }
+      // 단일팀만, 단일년도만은 제외
+      if (s.synergy.team_rule === "SAME" || s.synergy.year_rule === "SAME") {
+        return false;
+      }
+      // 나머지는 유지
+      return true;
+    });
+  }
+  
   return result;
 }
 
