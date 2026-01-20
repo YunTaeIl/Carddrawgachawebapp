@@ -42,7 +42,10 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
   
   const synergies = calculateSynergies(userData.squad);
   
-  // 스쿼드 스탯 계산
+  // 각 카드별 시너지 보너스 계산
+  const cardBonuses = calculateCardSynergyBonuses(userData.squad, synergies);
+  
+  // 스쿼드 스탯 계산 (시너지 포함)
   const stats = useMemo(() => {
     const deployedCards = Object.values(userData.squad).filter((card): card is UserCard => card !== null);
     
@@ -50,12 +53,24 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
       return { totalOVR: 0, avgOVR: 0, totalMechanics: 0, totalLaning: 0, totalTeamfight: 0, totalMacro: 0, totalClutch: 0 };
     }
     
-    const totalOVR = deployedCards.reduce((sum, card) => sum + card.stats.ovr + card.upgradeLevel, 0);
-    const totalMechanics = deployedCards.reduce((sum, card) => sum + card.stats.mechanics, 0);
-    const totalLaning = deployedCards.reduce((sum, card) => sum + card.stats.laning, 0);
-    const totalTeamfight = deployedCards.reduce((sum, card) => sum + card.stats.teamfight, 0);
-    const totalMacro = deployedCards.reduce((sum, card) => sum + card.stats.macro, 0);
-    const totalClutch = deployedCards.reduce((sum, card) => sum + card.stats.clutch, 0);
+    // 각 카드의 기본 스탯 + 시너지 보너스를 합산
+    let totalOVR = 0;
+    let totalMechanics = 0;
+    let totalLaning = 0;
+    let totalTeamfight = 0;
+    let totalMacro = 0;
+    let totalClutch = 0;
+    
+    for (const card of deployedCards) {
+      const bonus = cardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
+      
+      totalOVR += card.stats.ovr + card.upgradeLevel + bonus.ovr;
+      totalMechanics += card.stats.mechanics + bonus.mec;
+      totalLaning += card.stats.laning + bonus.lan;
+      totalTeamfight += card.stats.teamfight + bonus.tf;
+      totalMacro += card.stats.macro + bonus.mac;
+      totalClutch += card.stats.clutch + bonus.clu;
+    }
     
     return {
       totalOVR,
@@ -66,7 +81,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
       totalMacro,
       totalClutch
     };
-  }, [userData.squad]);
+  }, [userData.squad, cardBonuses]);
 
   const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
 
