@@ -27,10 +27,14 @@ export function calculateSynergies(squad: {
     activeSynergies.push(result);
   }
   
-  // 활성화된 것만 필터링 + 우선순위 정렬
-  return activeSynergies
-    .filter(s => s.isActive)
-    .sort((a, b) => b.synergy.priority - a.synergy.priority);
+  // 활성화된 것만 필터링
+  const activeOnly = activeSynergies.filter(s => s.isActive);
+  
+  // 중복 시너지 제거
+  const deduplicated = removeDuplicateSynergies(activeOnly);
+  
+  // 우선순위 정렬
+  return deduplicated.sort((a, b) => b.synergy.priority - a.synergy.priority);
 }
 
 /**
@@ -340,11 +344,9 @@ export function calculateCardSynergyBonuses(
     }
   });
   
-  // 중복 시너지 제거: 같은 카테고리의 시너지는 가장 높은 priority만 적용
-  const deduplicatedSynergies = removeDuplicateSynergies(synergies);
-  
+  // calculateSynergies에서 이미 중복 제거됨
   // 활성화된 시너지들을 순회하면서 각 시너지에 해당하는 카드에 보너스 적용
-  for (const activeSynergy of deduplicatedSynergies) {
+  for (const activeSynergy of synergies) {
     if (!activeSynergy.isActive || !activeSynergy.currentEffect) {
       continue;
     }
