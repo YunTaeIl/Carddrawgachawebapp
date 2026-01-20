@@ -127,7 +127,7 @@ export function StaticCard({ card, size = "small", upgradeLevel = 0 }: StaticCar
             </div>
 
             {/* 선수 이미지 */}
-            <div className="absolute inset-x-0 top-[60px] bottom-[100px] flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-x-0 top-[50px] bottom-[90px] flex items-center justify-center pointer-events-none">
               <PlayerImage 
                 playerName={card.name}
                 year={card.year}

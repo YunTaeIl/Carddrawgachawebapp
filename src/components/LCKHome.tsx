@@ -130,12 +130,12 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     try {
       toast.info("이미지 생성 중...");
       
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       const blob = await htmlToImage.toBlob(squadRef.current, {
         quality: 0.95,
         pixelRatio: 1.5,
-        backgroundColor: '#0B0F1A',
+        backgroundColor: '#0A0E27',
         cacheBust: true,
       });
       
@@ -143,44 +143,71 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
         throw new Error('이미지 생성 실패');
       }
       
+      console.log('=== 공유 디버깅 ===');
+      console.log('Blob 생성 완료:', blob.size, 'bytes');
+      
       // 모바일 감지
       const mobile = isMobile();
       console.log('모바일 여부:', mobile);
+      console.log('User Agent:', navigator.userAgent);
+      console.log('Window Width:', window.innerWidth);
       console.log('navigator.share 존재:', !!navigator.share);
+      console.log('navigator.canShare 존재:', !!navigator.canShare);
       
       // 모바일에서 네이티브 공유 시도
       if (mobile && navigator.share) {
-        try {
-          const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
-          
-          // canShare 체크
-          const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+        const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
+        console.log('File 생성 완료:', file.name, file.size, 'bytes');
+        
+        // canShare 체크
+        let canShareFiles = false;
+        if (navigator.canShare) {
+          canShareFiles = navigator.canShare({ files: [file] });
           console.log('파일 공유 가능:', canShareFiles);
-          
-          if (canShareFiles) {
+        } else {
+          console.log('navigator.canShare 없음, 그냥 시도');
+          canShareFiles = true; // canShare가 없으면 그냥 시도
+        }
+        
+        if (canShareFiles) {
+          try {
+            console.log('navigator.share 호출 시작...');
             await navigator.share({
               files: [file],
               title: 'LCK 스쿼드',
               text: `내 LCK 스쿼드 (평균 OVR ${stats.avgOVR})`,
             });
+            console.log('공유 성공!');
             toast.success("공유 완료!");
             return;
+          } catch (shareError: any) {
+            console.error('navigator.share 에러:', shareError);
+            console.error('에러 이름:', shareError.name);
+            console.error('에러 메시지:', shareError.message);
+            
+            if (shareError.name === 'AbortError') {
+              console.log('사용자가 공유 취소');
+              return; // 취소는 에러 아님
+            } else {
+              console.error('공유 실패, 다운로드로 폴백');
+              downloadImage(blob);
+              return;
+            }
           }
-        } catch (shareError: any) {
-          console.error('네이티브 공유 실패:', shareError);
-          if (shareError.name !== 'AbortError') {
-            // 취소가 아닌 실패인 경우만 다운로드로 폴백
-            downloadImage(blob);
-          }
+        } else {
+          console.log('파일 공유 불가, 다운로드');
+          downloadImage(blob);
           return;
         }
       }
       
       // PC 또는 공유 불가능한 경우 다운로드
+      console.log('PC 다운로드');
       downloadImage(blob);
       
     } catch (error) {
-      console.error('이미지 생성 실패:', error);
+      console.error('=== 이미지 생성 실패 ===');
+      console.error('Error:', error);
       toast.error('이미지 생성에 실패했습니다.');
     }
   };
