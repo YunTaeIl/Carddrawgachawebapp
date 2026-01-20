@@ -170,16 +170,53 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
 
   // 스쿼드 공유 이미지 생성
   const squadRef = useRef<HTMLDivElement>(null);
-  const handleShareSquad = () => {
-    if (squadRef.current) {
-      html2canvas(squadRef.current, { scale: 2 }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = imgData;
-        link.download = 'lck_squad.png';
-        link.click();
-        toast.success("스쿼드 이미지가 다운로드되었습니다!");
+  const handleShareSquad = async () => {
+    if (!squadRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(squadRef.current, {
+        scale: 2,
+        backgroundColor: '#0B0F1A',
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        onclone: (clonedDoc) => {
+          // 클론된 문서의 모든 요소에서 문제가 되는 CSS 속성 제거
+          const elements = clonedDoc.querySelectorAll('*');
+          elements.forEach((el: Element) => {
+            if (el instanceof HTMLElement) {
+              // computed style에서 color 값을 가져와서 인라인으로 설정
+              const computed = window.getComputedStyle(el);
+              const color = computed.color;
+              const bgColor = computed.backgroundColor;
+              
+              // oklab이 아닌 rgb/rgba 형식으로 변환
+              if (color && !color.includes('oklab')) {
+                el.style.color = color;
+              }
+              if (bgColor && !bgColor.includes('oklab')) {
+                el.style.backgroundColor = bgColor;
+              }
+              
+              // border color도 처리
+              const borderColor = computed.borderColor;
+              if (borderColor && !borderColor.includes('oklab')) {
+                el.style.borderColor = borderColor;
+              }
+            }
+          });
+        }
       });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = 'lck_squad.png';
+      link.click();
+      toast.success("스쿼드 이미지가 다운로드되었습니다!");
+    } catch (error) {
+      console.error('이미지 생성 실패:', error);
+      toast.error('이미지 생성에 실패했습니다.');
     }
   };
 
