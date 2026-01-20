@@ -81,13 +81,49 @@ export function LCKTerms({ onBack }: LCKTermsProps) {
             <h2 className="text-xl font-bold text-[#FFB81C] mb-4">데이터 및 개인정보</h2>
             <div className="space-y-3 text-[#9AA6C3]">
               <p>
-                • 사용자의 게임 데이터는 <strong className="text-white">브라우저의 로컬 스토리지에 저장</strong>되며,
-                서버로 전송되지 않습니다.
+                • 로그인 시 사용자의 게임 데이터는 <strong className="text-white">데이터베이스(Supabase)에 저장</strong>되며,
+                서버로 전송되어 관리됩니다.
+              </p>
+              <p>
+                • 비로그인 사용자의 데이터는 <strong className="text-white">브라우저의 로컬 스토리지에만 저장</strong>되며,
+                서버에 전송되지 않습니다.
               </p>
               <p>
                 • 선수 카드 데이터는 <strong className="text-white">공개 데이터베이스(Supabase)</strong>에서 불러오며,
                 개인 식별 정보는 포함되지 않습니다.
               </p>
+            </div>
+          </section>
+
+          {/* 🚨 베타 테스트 경고 (추가) */}
+          <section className="bg-[#FFB81C]/10 border-2 border-[#FFB81C]/50 rounded-lg p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-[#FFB81C] flex-shrink-0 mt-1" />
+              <div>
+                <h2 className="text-xl font-bold text-[#FFB81C] mb-2">🚧 베타 테스트 진행 중</h2>
+                <div className="space-y-3 text-[#9AA6C3] text-sm">
+                  <p>
+                    <strong className="text-white">현재 서비스는 베타 테스트 단계</strong>입니다.
+                    지속적인 업데이트 및 시스템 개선 과정에서 <strong className="text-[#FFB81C]">사용자 데이터가 삭제될 가능성</strong>이 있습니다.
+                  </p>
+                  <p>
+                    다음과 같은 경우 데이터가 초기화될 수 있습니다:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>데이터베이스 구조 변경 및 마이그레이션</li>
+                    <li>주요 시스템 업데이트 및 버그 수정</li>
+                    <li>서버 점검 및 유지보수</li>
+                    <li>베타 테스트 종료 후 정식 출시 전환</li>
+                  </ul>
+                  <p className="font-bold mt-4 text-white">
+                    💎 베타 테스트 기간 중 데이터 손실이 발생한 사용자에게는
+                    <strong className="text-[#FFB81C]"> 정식 출시 후 보상 포인트</strong>를 지급할 예정입니다.
+                  </p>
+                  <p className="text-xs mt-2 text-[#8B95B5]">
+                    * 보상 지급 시기 및 방법은 추후 공지 예정입니다.
+                  </p>
+                </div>
+              </div>
             </div>
           </section>
 
