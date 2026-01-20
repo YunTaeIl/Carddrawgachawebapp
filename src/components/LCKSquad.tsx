@@ -24,7 +24,6 @@ const CARDS_PER_PAGE = 15; // 한 페이지당 카드 수
 export function LCKSquad({ onBack }: LCKSquadProps) {
   const { userData, setSquadCard, saveSquadToDB } = useGame();
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
-  const [showSharePreview, setShowSharePreview] = useState(false);
   
   // 검색 & 필터 상태
   const [searchQuery, setSearchQuery] = useState("");
@@ -168,25 +167,21 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
   };
   
   const handleShareSquad = async () => {
-    // 먼저 미리보기 모달 띄우기
-    setShowSharePreview(true);
-    
-    // DOM 렌더링 대기
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
     if (!squadRef.current) {
       toast.error("스쿼드 정보를 찾을 수 없습니다.");
-      setShowSharePreview(false);
       return;
     }
     
     try {
       toast.info("이미지 생성 중...");
       
-      // toBlob 사용 (더 안정적)
+      // 짧은 대기 시간만 두고 바로 캡처
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // toBlob 사용 - pixelRatio 낮춰서 속도 개선
       const blob = await htmlToImage.toBlob(squadRef.current, {
-        quality: 1.0,
-        pixelRatio: 2,
+        quality: 0.95,
+        pixelRatio: 1.5, // 2에서 1.5로 낮춤
         backgroundColor: '#0B0F1A',
         cacheBust: true,
       });
@@ -225,8 +220,6 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
         // PC: 다운로드
         downloadImage(blob);
       }
-      
-      setShowSharePreview(false);
     } catch (error) {
       console.error('=== 이미지 생성 실패 ===');
       console.error('Error object:', error);
@@ -242,7 +235,6 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
       }
       
       toast.error('이미지 생성에 실패했습니다.');
-      setShowSharePreview(false);
     }
   };
   
@@ -554,20 +546,6 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
             stats={stats}
           />
         </div>
-        
-        {/* 스쿼드 공유 미리보기 모달 */}
-        <Dialog open={showSharePreview} onOpenChange={setShowSharePreview}>
-          <DialogContent className="!max-w-none bg-transparent border-none shadow-none p-0">
-            <div className="flex items-center justify-center">
-              <SquadShareCard
-                ref={squadRef}
-                squad={userData.squad}
-                synergies={synergies}
-                stats={stats}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
