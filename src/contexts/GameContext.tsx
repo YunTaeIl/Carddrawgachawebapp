@@ -10,7 +10,8 @@ import {
   addUserCardDirect, 
   upgradeUserCardDirect,
   getGameDataDirect,
-  getUserCardsDirect
+  getUserCardsDirect,
+  saveUserSquadDirect
 } from "@/utils/supabaseDirect";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ interface GameContextType {
   
   // 스쿼드
   setSquadCard: (position: Position, card: UserCard | null) => void;
+  saveSquadToDB: () => Promise<boolean>;
   
   // 유틸
   resetGame: () => void;
@@ -447,6 +449,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
   };
+  
+  // 스쿼드 DB 저장
+  const saveSquadToDB = async () => {
+    if (!isAuthenticated || !accessToken) {
+      toast.error("로그인이 필요합니다!");
+      return false;
+    }
+    
+    try {
+      await saveUserSquadDirect(accessToken, {
+        top_card_instance_id: userData.squad.TOP?.instanceId || null,
+        jgl_card_instance_id: userData.squad.JGL?.instanceId || null,
+        mid_card_instance_id: userData.squad.MID?.instanceId || null,
+        adc_card_instance_id: userData.squad.ADC?.instanceId || null,
+        sup_card_instance_id: userData.squad.SUP?.instanceId || null
+      });
+      toast.success("스쿼드가 저장되었습니다!");
+      return true;
+    } catch (error) {
+      console.error("스쿼드 DB 저장 실패:", error);
+      toast.error("스쿼드 저장에 실패했습니다.");
+      return false;
+    }
+  };
 
   // 게임 리셋
   const resetGame = () => {
@@ -473,6 +499,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     upgradeCard,
     craftCardWithShards,
     setSquadCard,
+    saveSquadToDB,
     resetGame,
     addCurrency
   };

@@ -29,7 +29,7 @@ interface LCKSquadProps {
 const CARDS_PER_PAGE = 15; // 한 페이지당 카드 수
 
 export function LCKSquad({ onBack }: LCKSquadProps) {
-  const { userData, setSquadCard } = useGame();
+  const { userData, setSquadCard, saveSquadToDB } = useGame();
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   
   // 검색 & 필터 상태
@@ -285,6 +285,16 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
                   <span className="text-xs">같은 팀/연도 카드를 배치하세요</span>
                 </div>
               )}
+            </div>
+            
+            {/* 스쿼드 저장 버튼 */}
+            <div className="mt-6 flex justify-center">
+              <Button
+                onClick={saveSquadToDB}
+                className="bg-[#2B6CFF] hover:bg-[#1E4FCC] text-white px-8 py-3 text-lg font-bold"
+              >
+                스쿼드 저장 (DB)
+              </Button>
             </div>
           </div>
         </div>

@@ -207,3 +207,91 @@ export async function upgradeUserCardDirect(
   
   return data;
 }
+
+// 스쿼드 저장
+export async function saveUserSquadDirect(
+  accessToken: string,
+  squad: {
+    top_card_instance_id?: string | null;
+    jgl_card_instance_id?: string | null;
+    mid_card_instance_id?: string | null;
+    adc_card_instance_id?: string | null;
+    sup_card_instance_id?: string | null;
+  }
+) {
+  console.log("💾 스쿼드 저장 시작...", squad);
+  
+  const supabase = createClient(
+    `https://${projectId}.supabase.co`,
+    publicAnonKey,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    }
+  );
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
+    console.error("❌ 인증 실패:", authError);
+    throw new Error("인증되지 않은 사용자입니다.");
+  }
+  
+  console.log("✅ 인증된 사용자 ID:", user.id);
+  
+  const { data, error } = await supabase
+    .from("user_squads")
+    .upsert({
+      user_id: user.id,
+      ...squad,
+      updated_at: new Date().toISOString()
+    })
+    .eq("user_id", user.id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("❌ 스쿼드 저장 실패:", error);
+    throw error;
+  }
+  
+  console.log("✅ 스쿼드 저장 성공:", data);
+  return data;
+}
+
+// 스쿼드 불러오기
+export async function getUserSquadDirect(accessToken: string) {
+  const supabase = createClient(
+    `https://${projectId}.supabase.co`,
+    publicAnonKey,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    }
+  );
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
+    throw new Error("인증되지 않은 사용자입니다.");
+  }
+  
+  const { data, error } = await supabase
+    .from("user_squads")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+  
+  if (error) {
+    console.error("스쿼드 조회 실패:", error);
+    throw error;
+  }
+  
+  return data;
+}
