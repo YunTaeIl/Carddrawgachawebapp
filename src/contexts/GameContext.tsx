@@ -53,11 +53,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // DB 저장 함수 (디바운스)
   const saveGameDataToDB = async (data: UserData) => {
     if (!isAuthenticated || !accessToken) {
-      console.log("⏭️ DB 저장 스킵 (비로그인)");
       return;
     }
-    
-    console.log("💾 DB 저장 시작... accessToken:", accessToken.substring(0, 20) + "...");
     
     // 디바운스: 1초 후 저장
     if (saveTimeoutRef.current) {
@@ -73,14 +70,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           a_pity_stack: data.gachaState.a_pity_stack,
           total_pulls: data.gachaState.total_pulls
         });
-        console.log("✅ DB 저장 성공");
       } catch (error: any) {
-        // 401 에러는 조용히 무시 (서버 배포 대기 중)
-        if (error.message?.includes("401")) {
-          console.warn("⚠️ DB 저장 실패 (서버 인증 문제, LocalStorage에는 저장됨)");
-        } else {
-          console.error("❌ DB 저장 실패:", error);
-        }
+        // 에러 무시
       }
     }, 1000);
   };
@@ -91,23 +82,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
       try {
         // 로그인 상태면 LocalStorage 로드 스킵 (DB에서 불러올 예정)
         if (isAuthenticated === true && accessToken) {
-          console.log("🔐 로그인 상태 → LocalStorage 로드 스킵, DB에서 불러옵니다");
           // 기본 데이터만 설정 (DB에서 덮어씌워질 예정)
           setUserData(getDefaultUserData());
         } else {
           // 비로그인 시 LocalStorage에서 로드
           const saved = loadUserData();
           setUserData(saved);
-          console.log("📁 LocalStorage에서 데이터 로드:", saved);
         }
         
         // 카드 풀 초기화 (로그인 여부 상관없이 필수)
-        console.log("🎴 카드 풀 초기화 시작...");
         const pool = await initializeCardPool();
-        console.log(`✅ 카드 풀 로드 완료! ${pool?.length || 0}개 카드`);
         setCardPool(pool);
       } catch (error) {
-        console.error("❌ 데이터 로드 실패:", error);
+        // 에러 무시
       } finally {
         setIsLoading(false);
       }
@@ -122,12 +109,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!isAuthenticated || !accessToken || dbLoaded) {
         return;
       }
-
-      console.log("💰 DB에서 재화 데이터 먼저 로드 중...");
       
       try {
         const gameData = await getGameDataDirect(accessToken);
-        console.log("✅ 재화 데이터 로드 성공:", gameData);
         
         // 재화 데이터만 먼저 업데이트
         setUserData(prevData => ({
@@ -142,9 +126,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }));
         
         setDbLoaded(true);
-        console.log("🎉 재화 데이터 적용 완료!");
       } catch (error) {
-        console.error("❌ 재화 데이터 로드 실패:", error);
+        // 에러 무시
       }
     };
 
@@ -159,22 +142,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
 
       if (!cardPool || cardPool.length === 0) {
-        console.log("⏳ 카드 데이터 로드 대기 중 (카드 풀 준비 필요)...");
         return;
       }
-
-      console.log("📦 DB에서 보유 카드 로드 중...");
       
       try {
         const dbCards = await getUserCardsDirect(accessToken);
-        console.log(`✅ 보유 카드 ${dbCards.length}개 로드 성공:`, dbCards);
         
         // DB 카드 데이터를 UserCard 형식으로 변환
         const userCards: UserCard[] = await Promise.all(
           dbCards.map(async (dbCard) => {
             const cardInfo = cardPool.find(c => c.id === dbCard.card_id);
             if (!cardInfo) {
-              console.warn(`⚠️ 카드 정보를 찾을 수 없음: ${dbCard.card_id}`);
               return null;
             }
             
@@ -187,8 +165,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
           })
         ).then(cards => cards.filter(c => c !== null) as UserCard[]);
         
-        console.log(`🔄 변환된 카드: ${userCards.length}개`);
-        
         // 스쿼드 로드 (실패해도 카드는 로드)
         let squad = {
           TOP: null,
@@ -199,9 +175,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
         
         try {
-          console.log("👥 DB에서 스쿼드 로드 중...");
           const squadData = await getUserSquadDirect(accessToken);
-          console.log("✅ 스쿼드 로드 성공:", squadData);
           
           // 스쿼드 카드 매칭
           squad = {
@@ -211,10 +185,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ADC: userCards.find(c => c.instanceId === squadData.adc_card_instance_id) || null,
             SUP: userCards.find(c => c.instanceId === squadData.sup_card_instance_id) || null
           };
-          
-          console.log("👥 스쿼드 매칭 완료:", squad);
         } catch (squadError) {
-          console.error("❌ 스쿼드 로드 실패 (빈 스쿼드 사용):", squadError);
           // 스쿼드 없어도 계속 진행
         }
         
@@ -225,15 +196,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
           squad: squad
         }));
         
-        console.log(`🎉 DB 동기화 완료! 카드 ${userCards.length}개 + 스쿼드`);
-        
         if (dbCards.length === 0) {
           toast.info("DB에 저장된 카드가 없습니다. 가챠를 뽑아보세요!");
         } else {
           toast.success(`DB에서 ${userCards.length}개 카드 로드 완료!`);
         }
       } catch (error) {
-        console.error("❌ 카드 데이터 로드 실패:", error);
         toast.error("DB 데이터 로드 실패. LocalStorage 데이터를 사용합니다.");
       }
     };
@@ -244,24 +212,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // 데이터 변경 시 저장
   useEffect(() => {
     if (!isLoading) {
-      console.log("💾 데이터 변경 감지 → 저장 중...", {
-        currency: userData.currency,
-        shards: userData.shards,
-        cards: userData.ownedCards.length,
-        isAuthenticated
-      });
-      
       // LocalStorage 저장 (항상)
       saveUserData(userData);
-      console.log("✅ LocalStorage 저장 완료");
       
       // DB 저장 (로그인 시) - 재화만 저장
-      // 스쿼드 변경은 명시적 저장 버튼으로만 저장되므로 여기서는 스킵
       if (isAuthenticated && accessToken) {
-        console.log("🔄 DB 저장 예약 중... (1초 디바운스)");
         saveGameDataToDB(userData);
-      } else {
-        console.log("⏭️ DB 저장 스킵 (비로그인)");
       }
     }
   }, [
@@ -316,8 +272,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
     if (isAuthenticated && accessToken && !result.isDupe) {
-      addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel)
-        .catch(error => console.error("카드 DB 저장 실패:", error));
+      addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
     }
 
     return { ...result, card: newCard, updatedGachaState };
@@ -332,19 +287,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    console.log("🎰 10연차 시작...");
-    
     // 보유 카드 ID 목록
     const ownedCardIds = userData.ownedCards.map(c => c.id);
-    console.log("📦 보유 카드 개수:", ownedCardIds.length);
     
     // 10연차 실행
-    console.log("🎲 pullTen 호출 중...", { gachaState: userData.gachaState, packType });
     const results = pullTen(userData.gachaState, ownedCardIds, packType || "standard");
-    console.log("✅ pullTen 결과:", results);
     
     if (!results || !Array.isArray(results)) {
-      console.error("❌ pullTen이 올바른 결과를 반환하지 않음:", results);
       toast.error("가챠 시스템 오류!");
       return null;
     }
@@ -383,18 +332,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
     if (isAuthenticated && accessToken && newUserCards.length > 0) {
-      console.log(`💾 ${newUserCards.length}개 카드를 DB에 저장 중...`);
       Promise.all(
-        newUserCards.map((card, idx) => 
-          addUserCardDirect(accessToken, card.id, card.instanceId, card.upgradeLevel)
-            .then(() => console.log(`✅ 카드 ${idx + 1}/${newUserCards.length} 저장 성공:`, card.name))
-            .catch(error => console.error(`❌ 카드 ${idx + 1}/${newUserCards.length} 저장 실패:`, card.name, error))
+        newUserCards.map(card => 
+          addUserCardDirect(accessToken, card.id, card.instanceId, card.upgradeLevel).catch(() => {})
         )
-      ).then(() => {
-        console.log("🎉 모든 카드 DB 저장 완료!");
-      }).catch(() => {
-        console.error("❌ 일부 카드 저장 실패");
-      });
+      ).catch(() => {});
     }
 
     // 결과에 UserCard 반영
@@ -442,11 +384,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken) {
-      try {
-        await upgradeUserCardDirect(accessToken, cardInstanceId, newCards[cardIndex].upgradeLevel);
-      } catch (error) {
-        console.error("강화 DB 저장 실패:", error);
-      }
+      upgradeUserCardDirect(accessToken, cardInstanceId, newCards[cardIndex].upgradeLevel).catch(() => {});
     }
 
     toast.success(`강화 성공! Lv.${currentLevel + 1}`);
@@ -462,7 +400,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    const newCard = craftCard(cardPool, grade);
+    const craftedCard = craftCard(grade);
+    
+    const newCard: UserCard = {
+      ...craftedCard,
+      instanceId: `${craftedCard.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      upgradeLevel: 0,
+      obtainedAt: Date.now()
+    };
     
     const newData: UserData = {
       ...userData,
@@ -474,11 +419,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken) {
-      try {
-        await addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel);
-      } catch (error) {
-        console.error("제작 카드 DB 저장 실패:", error);
-      }
+      addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
     }
 
     toast.success(`${grade}등급 카드 제작 완료!`);
@@ -514,7 +455,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       toast.success("스쿼드가 저장되었습니다!");
       return true;
     } catch (error) {
-      console.error("스쿼드 DB 저장 실패:", error);
       toast.error("스쿼드 저장에 실패했습니다.");
       return false;
     }

@@ -35,7 +35,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
   };
   
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current || isFlipped) return;
+    if (!cardRef.current) return;
     
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -47,15 +47,18 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
     const rotateY = ((x - centerX) / centerX) * 20;
     const rotateX = ((centerY - y) / centerY) * 20;
     
-    setRotation({ x: rotateX, y: rotateY });
-    setGlarePosition({ x: (x / rect.width) * 100, y: (y / rect.height) * 100 });
+    // requestAnimationFrame으로 부드럽게
+    requestAnimationFrame(() => {
+      setRotation({ x: rotateX, y: rotateY });
+      setGlarePosition({ x: (x / rect.width) * 100, y: (y / rect.height) * 100 });
+    });
   };
 
   const handleMouseLeave = () => {
-    if (!isFlipped) {
+    requestAnimationFrame(() => {
       setRotation({ x: 0, y: 0 });
       setGlarePosition({ x: 50, y: 50 });
-    }
+    });
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -162,7 +165,8 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
           transform: isFlipped 
             ? "rotateY(180deg)" 
             : `perspective(1200px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-          transition: isFlipped ? "transform 0.6s" : "transform 0.15s ease-out"
+          transition: isFlipped ? "transform 0.6s" : "none",
+          willChange: "transform"
         }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
