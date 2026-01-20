@@ -340,8 +340,11 @@ export function calculateCardSynergyBonuses(
     }
   });
   
+  // 중복 시너지 제거: 같은 카테고리의 시너지는 가장 높은 priority만 적용
+  const deduplicatedSynergies = removeDuplicateSynergies(synergies);
+  
   // 활성화된 시너지들을 순회하면서 각 시너지에 해당하는 카드에 보너스 적용
-  for (const activeSynergy of synergies) {
+  for (const activeSynergy of deduplicatedSynergies) {
     if (!activeSynergy.isActive || !activeSynergy.currentEffect) {
       continue;
     }
@@ -362,4 +365,75 @@ export function calculateCardSynergyBonuses(
   }
   
   return cardBonuses;
+}
+
+/**
+ * 중복 시너지 제거: 같은 카테고리의 시너지는 가장 높은 priority만 적용
+ */
+function removeDuplicateSynergies(synergies: ActiveSynergy[]): ActiveSynergy[] {
+  // 시너지를 카테고리별로 그룹화
+  const categoryMap = new Map<string, ActiveSynergy[]>();
+  
+  for (const synergy of synergies) {
+    const category = getSynergyCategory(synergy.synergy);
+    
+    if (!categoryMap.has(category)) {
+      categoryMap.set(category, []);
+    }
+    categoryMap.get(category)!.push(synergy);
+  }
+  
+  // 각 카테고리에서 가장 높은 priority만 선택
+  const result: ActiveSynergy[] = [];
+  
+  for (const categoryGroup of categoryMap.values()) {
+    // priority 높은 순으로 정렬 후 첫 번째만 선택
+    const sorted = categoryGroup.sort((a, b) => b.synergy.priority - a.synergy.priority);
+    result.push(sorted[0]);
+  }
+  
+  return result;
+}
+
+/**
+ * 시너지 카테고리 결정
+ * 같은 조건의 시너지는 같은 카테고리로 묶임
+ */
+function getSynergyCategory(synergy: SynergyDefinition): string {
+  // 1. 선수 기반 시너지 (ROSTER, TRIO, DUO)
+  if (synergy.players.length > 0) {
+    // 각 선수 시너지는 고유 카테고리 (중복 불가)
+    return `PLAYER_${synergy.synergy_id}`;
+  }
+  
+  // 2. 특정 팀+연도 시너지 (월즈 우승, MSI 우승, LCK 우승 등)
+  if (synergy.team_rule === "EXACT_TEAM" && synergy.year_value) {
+    // 각 우승 시너지는 고유 카테고리
+    return `EXACT_${synergy.synergy_id}`;
+  }
+  
+  // 3. IN_LIST (팀 계보 시너지)
+  if (synergy.team_rule === "IN_LIST") {
+    // 팀 계보별로 그룹화 (예: T1 왕조 3인/5인은 하나만)
+    const baseId = synergy.synergy_id.replace(/_3$|_5$/, "");
+    return `LINEAGE_${baseId}`;
+  }
+  
+  // 4. SAME 팀 + SAME 연도
+  if (synergy.team_rule === "SAME" && synergy.year_rule === "SAME") {
+    return "GEN_SAME_TEAM_YEAR";
+  }
+  
+  // 5. SAME 팀만
+  if (synergy.team_rule === "SAME") {
+    return "GEN_SAME_TEAM";
+  }
+  
+  // 6. SAME 연도만
+  if (synergy.year_rule === "SAME") {
+    return "GEN_SAME_YEAR";
+  }
+  
+  // 기타
+  return `OTHER_${synergy.synergy_id}`;
 }
