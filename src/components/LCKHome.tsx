@@ -131,70 +131,63 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     console.log("✅ 출석 체크 시작");
 
     try {
-      // 최신 세션에서 토큰 가져오기
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        console.error("❌ 세션 가져오기 실패:", sessionError);
-        toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+      // 1. 현재 게임 데이터 조회
+      const { data: gameData, error: fetchError } = await supabase
+        .from('user_game_data')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError || !gameData) {
+        console.error("게임 데이터 조회 실패:", fetchError);
+        toast.error("데이터를 불러올 수 없습니다");
         return;
       }
 
-      const freshToken = session.access_token;
-      console.log("User:", user.id);
-      console.log("Fresh Token:", freshToken.substring(0, 20) + "...");
+      // 2. 오늘 이미 출석했는지 확인
+      const now = new Date();
+      const lastCheckIn = gameData.last_check_in ? new Date(gameData.last_check_in) : null;
 
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/user/check-in`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${freshToken}`,
-          },
+      if (lastCheckIn) {
+        // 한국 시간 기준으로 날짜 비교
+        const koreaOffset = 9 * 60 * 60 * 1000;
+        const nowKorea = new Date(now.getTime() + koreaOffset);
+        const lastCheckInKorea = new Date(lastCheckIn.getTime() + koreaOffset);
+
+        const todayDate = nowKorea.toISOString().split('T')[0];
+        const lastCheckDate = lastCheckInKorea.toISOString().split('T')[0];
+
+        if (todayDate === lastCheckDate) {
+          toast.info("이미 오늘 출석했습니다!");
+          return;
         }
-      );
-
-      console.log("Response status:", response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Response error:", errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      const result = await response.json();
-      console.log("Result:", result);
+      // 3. 출석 보상 지급 (5000 RP)
+      const newCurrency = gameData.currency + 5000;
 
-      if (result.success) {
-        toast.success(result.message);
-        // 재화 업데이트 (GameContext를 통해)
-        window.location.reload(); // 간단하게 페이지 새로고침
-      } else {
-        toast.info(result.message || "이미 출석했습니다");
+      const { error: updateError } = await supabase
+        .from('user_game_data')
+        .update({
+          currency: newCurrency,
+          last_check_in: now.toISOString(),
+          updated_at: now.toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error("업데이트 실패:", updateError);
+        toast.error("출석 체크에 실패했습니다");
+        return;
       }
+
+      toast.success("출석 완료! 5,000 RP를 받았습니다!");
+      window.location.reload();
+
     } catch (error) {
       console.error("출석 체크 실패:", error);
       toast.error("출석 체크에 실패했습니다");
     }
-  };
-
-  // 오늘 출석했는지 확인
-  const hasCheckedInToday = () => {
-    if (!userData.lastCheckIn) return false;
-    
-    const lastCheckIn = new Date(userData.lastCheckIn);
-    const now = new Date();
-    
-    // 한국 시간 기준 계산
-    const koreaOffset = 9 * 60 * 60 * 1000; // 9시간을 밀리초로
-    const lastCheckInKorea = new Date(lastCheckIn.getTime() + koreaOffset);
-    const nowKorea = new Date(now.getTime() + koreaOffset);
-    
-    const lastCheckInDate = new Date(lastCheckInKorea.getFullYear(), lastCheckInKorea.getMonth(), lastCheckInKorea.getDate());
-    const todayDate = new Date(nowKorea.getFullYear(), nowKorea.getMonth(), nowKorea.getDate());
-    
-    return lastCheckInDate.getTime() === todayDate.getTime();
   };
 
   const handleShareSquad = async () => {
