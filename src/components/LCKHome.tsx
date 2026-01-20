@@ -237,9 +237,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 const card = userData.squad[position];
                 const hasSynergy = card && isCardInSynergy(card.id);
                 const cardBonus = card ? cardBonuses[card.id] : null;
-                const totalBonus = cardBonus 
-                  ? cardBonus.ovr + cardBonus.mec + cardBonus.lan + cardBonus.tf + cardBonus.mac + cardBonus.clu 
-                  : 0;
                 
                 return (
                   <div key={position} className="flex-shrink-0">
@@ -258,51 +255,12 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                             </div>
                           </>
                         )}
-                        <LCKHoloCard card={card} size="medium" upgradeLevel={card.upgradeLevel} />
-                        
-                        {/* 시너지 스탯 보너스 표시 */}
-                        {hasSynergy && cardBonus && totalBonus > 0 && (
-                          <div className="absolute -bottom-12 left-0 right-0 bg-gradient-to-r from-[#10B981]/90 to-[#059669]/90 backdrop-blur-sm rounded-lg p-2 text-[10px] font-bold text-white border border-[#10B981]/50 shadow-lg">
-                            <div className="grid grid-cols-3 gap-1 text-center">
-                              {cardBonus.ovr > 0 && (
-                                <div>
-                                  <div className="text-[8px] text-white/70">OVR</div>
-                                  <div className="text-[#FFB81C]">+{cardBonus.ovr}</div>
-                                </div>
-                              )}
-                              {cardBonus.mec > 0 && (
-                                <div>
-                                  <div className="text-[8px] text-white/70">Mec</div>
-                                  <div>+{cardBonus.mec}</div>
-                                </div>
-                              )}
-                              {cardBonus.lan > 0 && (
-                                <div>
-                                  <div className="text-[8px] text-white/70">Lan</div>
-                                  <div>+{cardBonus.lan}</div>
-                                </div>
-                              )}
-                              {cardBonus.tf > 0 && (
-                                <div>
-                                  <div className="text-[8px] text-white/70">TF</div>
-                                  <div>+{cardBonus.tf}</div>
-                                </div>
-                              )}
-                              {cardBonus.mac > 0 && (
-                                <div>
-                                  <div className="text-[8px] text-white/70">Mac</div>
-                                  <div>+{cardBonus.mac}</div>
-                                </div>
-                              )}
-                              {cardBonus.clu > 0 && (
-                                <div>
-                                  <div className="text-[8px] text-white/70">Clu</div>
-                                  <div>+{cardBonus.clu}</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                        <LCKHoloCard 
+                          card={card} 
+                          size="medium" 
+                          upgradeLevel={card.upgradeLevel}
+                          synergyBonus={cardBonus || undefined}
+                        />
                       </div>
                     ) : (
                       <div className="w-60 h-[440px] bg-[#0A0E27]/50 rounded-2xl border-2 border-dashed border-[#0047AB]/30 flex flex-col items-center justify-center gap-3 hover:border-[#0047AB] transition-all cursor-pointer"

@@ -12,9 +12,17 @@ interface LCKHoloCardProps {
   onClick?: () => void;
   upgradeLevel?: number;
   disableFlip?: boolean;
+  synergyBonus?: {
+    ovr: number;
+    mec: number;
+    lan: number;
+    tf: number;
+    mac: number;
+    clu: number;
+  };
 }
 
-export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, disableFlip = false }: LCKHoloCardProps) {
+export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, disableFlip = false, synergyBonus }: LCKHoloCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
@@ -593,40 +601,49 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
                   <div className="text-center overflow-hidden">
                     <div className="text-[8px] text-[#8B95B5] font-bold mb-0.5 truncate">메카닉</div>
                     <div 
-                      className="text-xs font-display font-bold px-1 py-0.5 rounded"
+                      className="text-xs font-display font-bold px-1 py-0.5 rounded flex items-center justify-center gap-0.5"
                       style={{
                         background: `linear-gradient(135deg, ${gradeColor}33 0%, ${gradeColor}11 100%)`,
-                        color: gradeColor,
+                        color: synergyBonus && synergyBonus.mec > 0 ? "#10B981" : gradeColor,
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
-                      {card.stats.mechanics}
+                      <span>{card.stats.mechanics + (synergyBonus?.mec || 0)}</span>
+                      {synergyBonus && synergyBonus.mec > 0 && (
+                        <span className="text-[9px]">(+{synergyBonus.mec})</span>
+                      )}
                     </div>
                   </div>
                   <div className="text-center overflow-hidden">
                     <div className="text-[8px] text-[#8B95B5] font-bold mb-0.5 truncate">한타</div>
                     <div 
-                      className="text-xs font-display font-bold px-1 py-0.5 rounded"
+                      className="text-xs font-display font-bold px-1 py-0.5 rounded flex items-center justify-center gap-0.5"
                       style={{
                         background: `linear-gradient(135deg, ${gradeColor}33 0%, ${gradeColor}11 100%)`,
-                        color: gradeColor,
+                        color: synergyBonus && synergyBonus.tf > 0 ? "#10B981" : gradeColor,
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
-                      {card.stats.teamfight}
+                      <span>{card.stats.teamfight + (synergyBonus?.tf || 0)}</span>
+                      {synergyBonus && synergyBonus.tf > 0 && (
+                        <span className="text-[9px]">(+{synergyBonus.tf})</span>
+                      )}
                     </div>
                   </div>
                   <div className="text-center overflow-hidden">
                     <div className="text-[8px] text-[#8B95B5] font-bold mb-0.5 truncate">클러치</div>
                     <div 
-                      className="text-xs font-display font-bold px-1 py-0.5 rounded"
+                      className="text-xs font-display font-bold px-1 py-0.5 rounded flex items-center justify-center gap-0.5"
                       style={{
                         background: `linear-gradient(135deg, ${gradeColor}33 0%, ${gradeColor}11 100%)`,
-                        color: gradeColor,
+                        color: synergyBonus && synergyBonus.clu > 0 ? "#10B981" : gradeColor,
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
-                      {card.stats.clutch}
+                      <span>{card.stats.clutch + (synergyBonus?.clu || 0)}</span>
+                      {synergyBonus && synergyBonus.clu > 0 && (
+                        <span className="text-[9px]">(+{synergyBonus.clu})</span>
+                      )}
                     </div>
                   </div>
                 </div>
