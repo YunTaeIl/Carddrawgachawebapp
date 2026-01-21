@@ -44,7 +44,7 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
       
       <div className="text-center mb-6">
         <h2 className="text-3xl font-display font-bold text-[#C8102E] mb-2">
-          LCK 계정
+          Legends Manager
         </h2>
         <p className="text-sm text-[#9AA6C3]">
           로그인하여 데이터를 안전하게 보관하세요

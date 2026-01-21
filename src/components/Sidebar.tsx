@@ -46,24 +46,45 @@ const menuItems: MenuItem[] = [
 export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onShowAuth }: SidebarProps) {
   const { isAuthenticated } = useAuth();
   const [showDevDialog, setShowDevDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const handleMenuClick = (pageId: Page) => {
     // 개발중인 페이지인지 확인
     const menuItem = menuItems.find(item => item.id === pageId);
     
     if (menuItem?.inDevelopment) {
-      if (isAdmin) {
-        // Admin은 개발중인 페이지로 이동
-        onNavigate(pageId);
-        onClose();
-      } else {
-        // 일반 유저는 개발중 다이얼로그 표시
-        setShowDevDialog(true);
-      }
+      // 리그진행 페이지는 비밀번호 입력 필요
+      setShowPasswordDialog(true);
+      setPassword("");
+      setPasswordError("");
     } else {
       // 일반 페이지는 바로 이동
       onNavigate(pageId);
       onClose();
+    }
+  };
+
+  const handlePasswordSubmit = () => {
+    const correctPassword = "legends123!";
+    
+    if (password === correctPassword) {
+      // 비밀번호 맞음 -> Admin 페이지로 이동
+      setShowPasswordDialog(false);
+      onNavigate("league-progress");
+      onClose();
+      setPassword("");
+      setPasswordError("");
+    } else {
+      // 비밀번호 틀림 -> 에러 표시
+      setPasswordError("비밀번호가 올바르지 않습니다");
+    }
+  };
+
+  const handlePasswordKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handlePasswordSubmit();
     }
   };
 
@@ -226,6 +247,63 @@ export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onS
                            font-medium transition-all duration-150 shadow-lg"
                 >
                   알겠어요!
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 비밀번호 입력 다이얼로그 */}
+      {showPasswordDialog && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/70 z-[60] transition-opacity duration-200"
+            onClick={() => setShowPasswordDialog(false)}
+          />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-md p-6">
+            <div className="bg-gradient-to-br from-[#141B3D] to-[#0A0E27] border-2 border-[#FFB81C]/50 rounded-2xl p-8 shadow-2xl">
+              <div className="text-center space-y-6">
+                {/* 아이콘 */}
+                <div className="flex justify-center">
+                  <div className="w-20 h-20 rounded-full bg-[#FFB81C]/20 flex items-center justify-center">
+                    <Code2 size={40} className="text-[#FFB81C]" />
+                  </div>
+                </div>
+
+                {/* 제목 */}
+                <div>
+                  <h3 className="text-2xl font-display text-white mb-2">
+                    🔐 비밀번호 입력
+                  </h3>
+                  <p className="text-[#8B95B5] text-sm">
+                    리그진행 페이지에 접근하려면 비밀번호를 입력하세요
+                  </p>
+                </div>
+
+                {/* 비밀번호 입력 필드 */}
+                <div className="bg-[#0B0F1A]/50 rounded-lg p-4 border border-[#0047AB]/30">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={handlePasswordKeyPress}
+                    className="w-full bg-transparent text-[#9AA6C3] text-sm leading-relaxed
+                               focus:outline-none focus:ring-0"
+                    placeholder="비밀번호 입력"
+                  />
+                  {passwordError && (
+                    <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+                  )}
+                </div>
+
+                {/* 버튼 */}
+                <button
+                  onClick={handlePasswordSubmit}
+                  className="w-full py-3 bg-[#C8102E] hover:bg-[#C8102E]/80 text-white rounded-lg
+                           font-medium transition-all duration-150 shadow-lg"
+                >
+                  확인
                 </button>
               </div>
             </div>
