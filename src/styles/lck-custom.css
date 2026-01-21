@@ -1,5 +1,25 @@
 /* LCK 가챠 커스텀 스타일 */
 
+/* 모바일 주소창 숨김 설정 */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  overscroll-behavior: none;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* 폰트 패밀리 적용 */
 body {
   font-family: var(--font-family-body);
