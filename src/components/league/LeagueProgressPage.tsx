@@ -4,7 +4,7 @@ import { useLeague } from "@/contexts/LeagueContext";
 import { useGame } from "@/contexts/GameContext";
 import { LEAGUE_CONFIGS } from "@/types/league";
 import { ArrowLeft, ChevronRight, Sparkles } from "lucide-react";
-import { calculateSynergies } from "@/utils/synergyEngine";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 
 interface LeagueProgressPageProps {
@@ -47,6 +47,14 @@ export function LeagueProgressPage({
 
   const synergies = playerTeam ? calculateSynergies(playerTeam.squad) : [];
   const activeSynergies = synergies.filter(s => s.isActive);
+
+  // 각 카드별 시너지 보너스 계산
+  const cardBonuses = playerTeam ? calculateCardSynergyBonuses(playerTeam.squad, synergies) : {};
+
+  // 각 카드가 시너지에 포함되는지 확인
+  const isCardInSynergy = (cardId: string) => {
+    return activeSynergies.some(s => s.cardIds.includes(cardId));
+  };
 
   return (
     <div className="min-h-screen bg-[#0A0E27] text-white">
@@ -104,6 +112,8 @@ export function LeagueProgressPage({
               <div className="flex flex-col lg:flex-row items-center justify-center gap-6 pb-2">
                 {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map((pos) => {
                   const card = playerTeam.squad[pos];
+                  const hasSynergy = card && isCardInSynergy(card.id);
+                  const cardBonus = card ? cardBonuses[card.id] : null;
                   
                   return (
                     <div key={pos} className="flex-shrink-0">
@@ -112,10 +122,21 @@ export function LeagueProgressPage({
                           <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#C8102E] text-white px-3 py-1 rounded-full text-xs font-bold z-10">
                             {pos}
                           </div>
+                          {/* 시너지 글로우 효과 */}
+                          {hasSynergy && (
+                            <>
+                              <div className="absolute inset-0 rounded-2xl bg-[#FFB81C]/20 blur-xl animate-pulse z-0" />
+                              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#FFB81C] text-[#0B0F1A] px-2 py-0.5 rounded-full text-[9px] font-bold z-10 flex items-center gap-1">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                시너지
+                              </div>
+                            </>
+                          )}
                           <LCKHoloCard 
                             card={card} 
                             size="medium" 
                             upgradeLevel={card.upgradeLevel}
+                            synergyBonus={cardBonus || undefined}
                           />
                         </div>
                       ) : (
