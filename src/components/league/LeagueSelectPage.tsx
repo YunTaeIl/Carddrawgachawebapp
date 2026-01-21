@@ -1,10 +1,9 @@
-// 리그 선택 페이지 /league
-
 import React from "react";
 import { Button } from "@/app/components/ui/button";
 import { LeagueType, LEAGUE_CONFIGS } from "@/types/league";
 import { useLeague } from "@/contexts/LeagueContext";
-import { ArrowLeft } from "lucide-react";
+import { useGame } from "@/contexts/GameContext";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 interface LeagueSelectPageProps {
   onBack: () => void;
@@ -13,8 +12,22 @@ interface LeagueSelectPageProps {
 
 export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProps) {
   const { startNewLeague } = useLeague();
+  const { userData } = useGame();
+
+  // 스쿼드 검증 - 5개 포지션 모두 채워져 있는지 확인
+  const isSquadComplete = () => {
+    const { squad } = userData;
+    return squad.TOP !== null && 
+           squad.JGL !== null && 
+           squad.MID !== null && 
+           squad.ADC !== null && 
+           squad.SUP !== null;
+  };
 
   const handleStartLeague = (leagueType: LeagueType) => {
+    if (!isSquadComplete()) {
+      return; // 버튼이 이미 비활성화되어 있으므로 여기까지 오지 않음
+    }
     startNewLeague(leagueType);
     onLeagueStart();
   };
@@ -62,19 +75,45 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
 
       {/* 리그 카드 그리드 */}
       <div className="max-w-6xl mx-auto px-6 py-12">
+        {/* 스쿼드 미완성 경고 */}
+        {!isSquadComplete() && (
+          <div className="mb-8 bg-red-500/10 border border-red-500/50 rounded-xl p-6 flex items-start gap-4">
+            <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-1" />
+            <div>
+              <h3 className="font-bold text-red-400 mb-2">스쿼드를 먼저 구성해주세요</h3>
+              <p className="text-sm text-slate-300 mb-3">
+                리그를 시작하려면 5개 포지션(TOP, JGL, MID, ADC, SUP)에 모두 선수를 배치해야 합니다.
+              </p>
+              <Button
+                onClick={onBack}
+                variant="outline"
+                size="sm"
+                className="border-red-500/50 text-red-400 hover:bg-red-500/20"
+              >
+                팀관리로 이동
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {(["legend", "tier1", "tier2", "tier3"] as LeagueType[]).map((leagueType) => {
             const config = LEAGUE_CONFIGS[leagueType];
             const colorClass = getLeagueColor(leagueType);
             const accentClass = getLeagueAccent(leagueType);
+            const squadComplete = isSquadComplete();
 
             return (
               <button
                 key={leagueType}
                 onClick={() => handleStartLeague(leagueType)}
                 className={`bg-gradient-to-br ${colorClass} rounded-2xl p-8 border 
-                           hover:scale-[1.02] transition-all duration-300 text-left
-                           hover:shadow-2xl hover:shadow-white/5 group`}
+                           transition-all duration-300 text-left
+                           ${squadComplete 
+                             ? 'hover:scale-[1.02] hover:shadow-2xl hover:shadow-white/5 cursor-pointer' 
+                             : 'opacity-40 cursor-not-allowed'
+                           } group`}
+                disabled={!squadComplete}
               >
                 {/* 리그 타이틀 */}
                 <div className="mb-6">
@@ -109,8 +148,14 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
                 </div>
 
                 {/* 버튼 힌트 */}
-                <div className="text-center py-3 bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">
-                  <span className="text-sm font-semibold">시즌 시작</span>
+                <div className={`text-center py-3 rounded-lg transition-colors ${
+                  squadComplete 
+                    ? 'bg-white/5 group-hover:bg-white/10' 
+                    : 'bg-red-500/20'
+                }`}>
+                  <span className="text-sm font-semibold">
+                    {squadComplete ? '시즌 시작' : '스쿼드 필요'}
+                  </span>
                 </div>
               </button>
             );

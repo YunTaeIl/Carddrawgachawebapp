@@ -1,12 +1,11 @@
-// 리그 진행 메인 페이지 /league/progress
-
 import React from "react";
 import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
 import { useGame } from "@/contexts/GameContext";
 import { LEAGUE_CONFIGS } from "@/types/league";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, Sparkles } from "lucide-react";
 import { calculateSynergies } from "@/utils/synergyEngine";
+import { LCKHoloCard } from "@/components/LCKHoloCard";
 
 interface LeagueProgressPageProps {
   onBack: () => void;
@@ -85,11 +84,11 @@ export function LeagueProgressPage({
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-[1500px] mx-auto px-6 py-8 space-y-6">
         {/* 내 팀 */}
         {playerTeam && (
-          <div className="bg-slate-900/30 rounded-2xl p-6 border border-white/5">
-            <div className="flex items-baseline justify-between mb-6">
+          <div className="bg-slate-900/30 rounded-2xl p-8 border border-white/5">
+            <div className="flex items-baseline justify-between mb-8">
               <div>
                 <h2 className="text-2xl font-bold font-display">MY TEAM</h2>
                 <p className="text-sm text-slate-400 mt-1">현재 순위 {playerRank}위</p>
@@ -100,45 +99,68 @@ export function LeagueProgressPage({
               </div>
             </div>
 
-            {/* 선수 목록 */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
-              {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map((pos) => {
-                const card = playerTeam.squad[pos];
-                return (
-                  <div key={pos} className="bg-black/20 rounded-lg p-3">
-                    <div className="text-xs text-slate-500 mb-2">{pos}</div>
-                    {card ? (
-                      <>
-                        <div className="font-bold text-sm mb-1 truncate">{card.name}</div>
-                        <div className="text-xs text-slate-400">{card.team} · {card.year}</div>
-                        <div className="text-lg font-bold text-amber-400 mt-2">
-                          {card.stats.ovr + (card.upgradeLevel || 0)}
+            {/* 선수 카드 목록 - 메인 화면과 동일한 디자인 */}
+            <div className="bg-gradient-to-br from-[#141B3D]/50 via-[#141B3D]/80 to-[#141B3D]/50 rounded-2xl p-8 border border-[#0047AB]/30 backdrop-blur-sm mb-4">
+              <div className="flex flex-col lg:flex-row items-center justify-center gap-6 pb-2">
+                {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map((pos) => {
+                  const card = playerTeam.squad[pos];
+                  
+                  return (
+                    <div key={pos} className="flex-shrink-0">
+                      {card ? (
+                        <div className="group relative">
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#C8102E] text-white px-3 py-1 rounded-full text-xs font-bold z-10">
+                            {pos}
+                          </div>
+                          <LCKHoloCard 
+                            card={card} 
+                            size="medium" 
+                            upgradeLevel={card.upgradeLevel}
+                          />
                         </div>
-                      </>
-                    ) : (
-                      <div className="text-slate-600 text-xs">빈 슬롯</div>
-                    )}
-                  </div>
-                );
-              })}
+                      ) : (
+                        <div className="w-60 h-[440px] bg-[#0A0E27]/50 rounded-2xl border-2 border-dashed border-[#0047AB]/30 flex flex-col items-center justify-center gap-3">
+                          <div className="text-4xl text-[#0047AB]/50">+</div>
+                          <div className="text-sm text-[#8B95B5]">{pos}</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* 시너지 */}
+            {/* 시너지 태그 */}
             {activeSynergies.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                {activeSynergies.slice(0, 5).map(s => (
-                  <span 
-                    key={s.synergy.synergy_id}
-                    className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full"
-                  >
-                    {s.synergy.synergy_name}
+              <div className="bg-gradient-to-br from-[#0047AB]/10 to-[#141B3D]/50 rounded-xl p-5 border border-[#0047AB]/30">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-4 h-4 text-[#FFB81C]" />
+                  <h3 className="font-bold font-display">활성 시너지</h3>
+                  <span className="ml-auto bg-[#FFB81C] text-[#0B0F1A] px-2.5 py-0.5 rounded-full text-xs font-bold">
+                    {activeSynergies.length}개
                   </span>
-                ))}
-                {activeSynergies.length > 5 && (
-                  <span className="text-xs text-slate-500 px-2 py-1">
-                    +{activeSynergies.length - 5}
-                  </span>
-                )}
+                </div>
+                <div className="flex gap-2.5 flex-wrap">
+                  {activeSynergies.map(s => (
+                    <div 
+                      key={s.synergy.synergy_id}
+                      className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#0047AB]/30 to-[#0047AB]/20 border-2 border-[#0047AB]/50 px-4 py-2 rounded-full hover:border-[#FFB81C]/70 transition-all group/tag"
+                    >
+                      <Sparkles className="w-3 h-3 text-[#FFB81C] group-hover/tag:scale-110 transition-transform" />
+                      <span className="text-sm font-bold text-white">
+                        {s.synergy.synergy_name}
+                      </span>
+                      {s.isPrime && (
+                        <span className="text-xs font-bold text-[#C8102E] bg-[#C8102E]/20 px-1.5 py-0.5 rounded">
+                          PRIME
+                        </span>
+                      )}
+                      <span className="text-xs text-[#8B95B5] ml-0.5">
+                        {s.synergy.type}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
