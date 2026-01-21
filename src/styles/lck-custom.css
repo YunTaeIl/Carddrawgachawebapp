@@ -1,28 +1,26 @@
 /* LCK 가챠 커스텀 스타일 */
 
-/* 모바일 전체화면 설정 (주소창 자동 숨김) */
-html {
+/* 모바일 전체화면 설정 (주소창 완전 제거) */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
   height: 100%;
-  /* 주소창 숨김을 위한 최소 높이 */
-  min-height: 100vh;
-  min-height: 100dvh;
+  overflow: hidden; /* body 스크롤 완전 차단 */
+  position: fixed; /* 주소창 완전 고정 */
+  overscroll-behavior: none; /* iOS 바운스 제거 */
 }
 
 body {
   font-family: var(--font-family-body);
-  /* 모바일 뷰포트 높이 - 자연스러운 스크롤 허용 */
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  /* iOS 스크롤 바운스 제거 */
-  overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
 }
 
-/* 앱 루트 컨테이너 */
+/* 앱 루트 컨테이너 - 여기만 스크롤 */
 #root {
-  min-height: 100vh;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Dynamic Viewport */
+  overflow-y: auto; /* 내부 스크롤 허용 */
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
 }
