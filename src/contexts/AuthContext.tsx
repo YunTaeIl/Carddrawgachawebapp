@@ -36,9 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // 인증 상태 변경 리스너
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setAccessToken(session?.access_token ?? null);
+      
+      // 로그아웃 이벤트 또는 세션 만료 시 localStorage 클리어
+      if (event === 'SIGNED_OUT' || (!session && user)) {
+        localStorage.clear();
+      }
     });
 
     return () => subscription.unsubscribe();
