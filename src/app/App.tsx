@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GameProvider } from "@/contexts/GameContext";
+import { LeagueProvider } from "@/contexts/LeagueContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { LCKHome } from "@/components/LCKHome";
 import { LCKGacha } from "@/components/LCKGacha";
@@ -14,6 +15,7 @@ import { SimulationPage } from "@/components/SimulationPage";
 import { ComingSoon } from "@/components/ComingSoon";
 import { LeagueProgressPage } from "@/components/LeagueProgressPage";
 import { SharedSquadPage } from "@/components/SharedSquadPage";
+import { LeagueRouter } from "@/components/league/LeagueRouter";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { Toaster } from "@/app/components/ui/sonner";
 import { initializeCardPool } from "@/utils/gachaEngine";
@@ -84,7 +86,7 @@ function AppContent() {
       case "simulation":
         return <SimulationPage onBack={() => handleNavigate("home")} isAdmin={isAdmin} />;
       case "league-progress":
-        return <LeagueProgressPage onBack={() => handleNavigate("home")} isAdmin={isAdmin} />;
+        return <LeagueRouter onBackToMain={() => handleNavigate("home")} />;
       case "players":
         return <ComingSoon title="선수 관리" isAdminOnly isAdmin={isAdmin} />;
       case "teams":
@@ -168,7 +170,9 @@ function App() {
   return (
     <AuthProvider>
       <GameProvider>
-        <AppContent />
+        <LeagueProvider>
+          <AppContent />
+        </LeagueProvider>
       </GameProvider>
     </AuthProvider>
   );

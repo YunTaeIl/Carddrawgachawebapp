@@ -1,0 +1,243 @@
+// 리그 라우터 - 리그 관련 모든 페이지 통합
+
+import React, { useState } from "react";
+import { useLeague } from "@/contexts/LeagueContext";
+import { LeagueSelectPage } from "./LeagueSelectPage";
+import { LeagueProgressPage } from "./LeagueProgressPage";
+import { MatchSimulationPage } from "./MatchSimulationPage";
+import { StandingsPage } from "./StandingsPage";
+import { PlayoffsPage } from "./PlayoffsPage";
+import { SeasonResultPage } from "./SeasonResultPage";
+import { Series } from "@/types/league";
+
+type LeagueRoute = 
+  | "select"
+  | "progress"
+  | "match"
+  | "standings"
+  | "playoffs"
+  | "series"
+  | "result";
+
+interface LeagueRouterProps {
+  onBackToMain: () => void;
+}
+
+export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
+  const { currentLeague, getCurrentMatch, getTeamById, advanceToPlayoffs, completeSeries, finishSeason } = useLeague();
+  const [currentRoute, setCurrentRoute] = useState<LeagueRoute>(() => {
+    // 초기 라우트 결정
+    if (!currentLeague) return "select";
+    if (currentLeague.seasonState === "finished") return "result";
+    if (currentLeague.seasonState === "playoffs") return "playoffs";
+    return "progress";
+  });
+  
+  const [currentSeriesType, setCurrentSeriesType] = useState<Series["type"] | null>(null);
+  const [currentSeriesGameIndex, setCurrentSeriesGameIndex] = useState(0);
+
+  // 리그 선택 → 진행 페이지
+  const handleLeagueStart = () => {
+    setCurrentRoute("progress");
+  };
+
+  // 경기 시작
+  const handleMatchStart = () => {
+    setCurrentRoute("match");
+  };
+
+  // 경기 완료
+  const handleMatchComplete = () => {
+    setCurrentRoute("progress");
+  };
+
+  // 순위표 보기
+  const handleViewStandings = () => {
+    setCurrentRoute("standings");
+  };
+
+  // 플레이오프 시작
+  const handleStartPlayoffs = () => {
+    advanceToPlayoffs();
+    setCurrentRoute("playoffs");
+  };
+
+  // 시리즈 시작
+  const handleSeriesStart = (seriesType: Series["type"]) => {
+    setCurrentSeriesType(seriesType);
+    setCurrentSeriesGameIndex(0);
+    setCurrentRoute("series");
+  };
+
+  // 시리즈 경기 완료
+  const handleSeriesGameComplete = (winnerId: string) => {
+    if (!currentLeague || !currentLeague.playoffBracket || !currentSeriesType) return;
+
+    const series = currentLeague.playoffBracket[currentSeriesType];
+    const winThreshold = Math.ceil(series.bestOf / 2);
+    
+    // 승수 업데이트
+    let team1Wins = series.team1Wins;
+    let team2Wins = series.team2Wins;
+    
+    if (winnerId === series.team1Id) {
+      team1Wins++;
+    } else {
+      team2Wins++;
+    }
+
+    // 시리즈 승자 결정
+    if (team1Wins >= winThreshold) {
+      completeSeries(currentSeriesType, series.team1Id!);
+      
+      // 플레이어가 졌으면 탈락
+      if (series.team2Id === currentLeague.playerTeamId) {
+        finishSeason(false);
+        setCurrentRoute("result");
+        return;
+      }
+      
+      // 결승 우승이면 우승 처리
+      if (currentSeriesType === "finals") {
+        finishSeason(true);
+        setCurrentRoute("result");
+        return;
+      }
+      
+      setCurrentRoute("playoffs");
+    } else if (team2Wins >= winThreshold) {
+      completeSeries(currentSeriesType, series.team2Id!);
+      
+      // 플레이어가 졌으면 탈락
+      if (series.team1Id === currentLeague.playerTeamId) {
+        finishSeason(false);
+        setCurrentRoute("result");
+        return;
+      }
+      
+      // 결승 우승이면 우승 처리
+      if (currentSeriesType === "finals") {
+        finishSeason(true);
+        setCurrentRoute("result");
+        return;
+      }
+      
+      setCurrentRoute("playoffs");
+    } else {
+      // 시리즈 계속
+      setCurrentSeriesGameIndex(prev => prev + 1);
+      setCurrentRoute("series");
+    }
+  };
+
+  // 결과 페이지에서 새 시즌
+  const handleNewSeason = () => {
+    setCurrentRoute("select");
+  };
+
+  // 진행 페이지로 복귀
+  const handleBackToProgress = () => {
+    setCurrentRoute("progress");
+  };
+
+  // 플레이오프로 복귀
+  const handleBackToPlayoffs = () => {
+    setCurrentRoute("playoffs");
+  };
+
+  // 시즌 종료 페이지로
+  const handleViewResult = () => {
+    finishSeason(false);
+    setCurrentRoute("result");
+  };
+
+  // 라우트별 렌더링
+  switch (currentRoute) {
+    case "select":
+      return (
+        <LeagueSelectPage
+          onBack={onBackToMain}
+          onLeagueStart={handleLeagueStart}
+        />
+      );
+
+    case "progress":
+      return (
+        <LeagueProgressPage
+          onBack={onBackToMain}
+          onMatchStart={handleMatchStart}
+          onViewStandings={handleViewStandings}
+          onStartPlayoffs={handleStartPlayoffs}
+          onViewResult={handleViewResult}
+        />
+      );
+
+    case "match": {
+      const match = getCurrentMatch();
+      if (!match) {
+        setCurrentRoute("progress");
+        return null;
+      }
+      const homeTeam = getTeamById(match.homeTeamId);
+      const awayTeam = getTeamById(match.awayTeamId);
+      if (!homeTeam || !awayTeam) {
+        setCurrentRoute("progress");
+        return null;
+      }
+      return (
+        <MatchSimulationPage
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          onMatchComplete={handleMatchComplete}
+          onBack={handleBackToProgress}
+        />
+      );
+    }
+
+    case "standings":
+      return (
+        <StandingsPage onBack={handleBackToProgress} />
+      );
+
+    case "playoffs":
+      return (
+        <PlayoffsPage
+          onBack={handleBackToProgress}
+          onSeriesStart={handleSeriesStart}
+        />
+      );
+
+    case "series": {
+      if (!currentLeague || !currentLeague.playoffBracket || !currentSeriesType) {
+        setCurrentRoute("playoffs");
+        return null;
+      }
+      const series = currentLeague.playoffBracket[currentSeriesType];
+      const homeTeam = getTeamById(series.team1Id!);
+      const awayTeam = getTeamById(series.team2Id!);
+      if (!homeTeam || !awayTeam) {
+        setCurrentRoute("playoffs");
+        return null;
+      }
+      return (
+        <MatchSimulationPage
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          onMatchComplete={handleMatchComplete}
+          onBack={handleBackToPlayoffs}
+        />
+      );
+    }
+
+    case "result":
+      return (
+        <SeasonResultPage
+          onBackToMain={onBackToMain}
+          onNewSeason={handleNewSeason}
+        />
+      );
+
+    default:
+      return null;
+  }
+}
