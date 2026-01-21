@@ -20,6 +20,7 @@ interface GameContextType {
   userData: UserData;
   isLoading: boolean;
   cardPool: LCKCard[];
+  allCards: LCKCard[]; // 추가
   
   // 가챠
   pullSingleGacha: (packType?: CardPackType) => Promise<GachaResult | null>;
@@ -45,6 +46,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [userData, setUserData] = useState<UserData>(getDefaultUserData());
   const [isLoading, setIsLoading] = useState(true);
   const [cardPool, setCardPool] = useState<LCKCard[]>([]);
+  const [allCards, setAllCards] = useState<LCKCard[]>([]); // 추가
   const [dbLoaded, setDbLoaded] = useState(false); // DB 로드 완료 플래그
   
   // DB 저장 디바운스용
@@ -93,6 +95,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // 카드 풀 초기화 (로그인 여부 상관없이 필수)
         const pool = await initializeCardPool();
         setCardPool(pool);
+        setAllCards(pool); // allCards도 동일하게 설정
       } catch (error) {
         // 에러 무시
       } finally {
@@ -481,6 +484,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     userData,
     isLoading,
     cardPool,
+    allCards, // 추가
     pullSingleGacha,
     pullTenGacha,
     upgradeCard,

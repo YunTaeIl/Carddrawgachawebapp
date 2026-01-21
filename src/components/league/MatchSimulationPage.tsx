@@ -1,12 +1,11 @@
-// 경기 시뮬레이션 페이지 /league/match
+// 경기 시뮬레이션 페이지
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
 import { Team, MatchSimulationState, LEAGUE_CONFIGS } from "@/types/league";
 import { initializeMatch, processNextTurn, generateMatchResult } from "@/utils/matchSimulation";
-import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { Play, Pause, FastForward, ArrowLeft, Trophy } from "lucide-react";
+import { Play, Pause, FastForward, ArrowLeft } from "lucide-react";
 
 interface MatchSimulationPageProps {
   homeTeam: Team;
@@ -29,38 +28,29 @@ export function MatchSimulationPage({
   const [showResult, setShowResult] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  // 자동 스크롤
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [simulation.events]);
 
-  // 자동 재생
   useEffect(() => {
     if (isAutoPlay && !simulation.isFinished) {
       const timer = setTimeout(() => {
         handleNextTurn();
-      }, 800);
+      }, 600);
       return () => clearTimeout(timer);
     }
   }, [isAutoPlay, simulation.currentTurn, simulation.isFinished]);
 
-  // 경기 종료 처리
   useEffect(() => {
     if (simulation.isFinished && !showResult) {
       setIsAutoPlay(false);
-      setTimeout(() => {
-        setShowResult(true);
-      }, 1000);
+      setTimeout(() => setShowResult(true), 1000);
     }
   }, [simulation.isFinished]);
 
   const handleNextTurn = () => {
     if (simulation.isFinished) return;
     setSimulation(prev => processNextTurn(prev));
-  };
-
-  const handleAutoPlay = () => {
-    setIsAutoPlay(!isAutoPlay);
   };
 
   const handleFastForward = () => {
@@ -85,64 +75,35 @@ export function MatchSimulationPage({
   const isPlayerWin = simulation.winnerId === currentLeague?.playerTeamId;
 
   return (
-    <div className="min-h-screen bg-[#0A0E27] text-white relative overflow-hidden">
-      {/* 배경 - 소환사의 협곡 이미지 (옵션) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0A0E27]/50 to-[#0A0E27] z-0" />
-
+    <div className="min-h-screen bg-[#0A0E27] text-white">
       {/* 헤더 */}
-      <div className="relative z-10 bg-[#0A0E27]/95 backdrop-blur-md border-b border-[#2B6CFF]/20">
-        <div className="max-w-[1800px] mx-auto px-6 py-4">
+      <div className="border-b border-white/5 bg-[#0A0E27]/95 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button
-                onClick={onBack}
-                variant="ghost"
-                size="sm"
-                className="text-[#9AA6C3] hover:text-white"
-              >
-                <ArrowLeft className="w-5 h-5 mr-2" />
+              <Button onClick={onBack} variant="ghost" size="sm" className="text-slate-400">
+                <ArrowLeft className="w-4 h-4 mr-2" />
                 돌아가기
               </Button>
               <div>
-                <h1 className="text-2xl font-bold font-display">경기 진행 중</h1>
-                <p className="text-sm text-[#8B95B5]">
-                  Turn {simulation.currentTurn} / ~{simulation.targetTurns}
-                </p>
+                <h1 className="text-xl font-bold">경기 진행 중</h1>
+                <p className="text-sm text-slate-400">Turn {simulation.currentTurn}</p>
               </div>
             </div>
 
-            {/* 컨트롤 버튼 */}
             {!simulation.isFinished && (
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleNextTurn}
-                  variant="outline"
-                  size="sm"
-                  className="border-[#0047AB] text-[#0047AB] hover:bg-[#0047AB]/10"
-                  disabled={isAutoPlay}
-                >
-                  다음 턴
+              <div className="flex gap-2">
+                <Button onClick={handleNextTurn} size="sm" variant="outline" disabled={isAutoPlay}>
+                  다음
                 </Button>
-                <Button
-                  onClick={handleAutoPlay}
-                  variant="outline"
+                <Button 
+                  onClick={() => setIsAutoPlay(!isAutoPlay)} 
                   size="sm"
-                  className={`border-[#FFB81C] ${
-                    isAutoPlay ? 'bg-[#FFB81C]/20 text-[#FFB81C]' : 'text-[#FFB81C]'
-                  }`}
+                  variant={isAutoPlay ? "default" : "outline"}
                 >
-                  {isAutoPlay ? (
-                    <><Pause className="w-4 h-4 mr-1" /> 일시정지</>
-                  ) : (
-                    <><Play className="w-4 h-4 mr-1" /> 자동</>
-                  )}
+                  {isAutoPlay ? <><Pause className="w-4 h-4 mr-1" /> 정지</> : <><Play className="w-4 h-4 mr-1" /> 자동</>}
                 </Button>
-                <Button
-                  onClick={handleFastForward}
-                  variant="outline"
-                  size="sm"
-                  className="border-[#C8102E] text-[#C8102E] hover:bg-[#C8102E]/10"
-                >
+                <Button onClick={handleFastForward} size="sm" variant="outline">
                   <FastForward className="w-4 h-4 mr-1" /> 빠르게
                 </Button>
               </div>
@@ -151,85 +112,71 @@ export function MatchSimulationPage({
         </div>
       </div>
 
-      {/* 메인 컨텐츠 */}
-      <div className="relative z-10 max-w-[1800px] mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 홈팀 카드 (데스크톱) */}
-          <div className="hidden lg:block">
-            <div className={`bg-gradient-to-br ${
-              isPlayerTeam(homeTeam.id) 
-                ? 'from-[#FFB81C]/20 to-[#141B3D] border-[#FFB81C]' 
-                : 'from-[#141B3D]/50 to-[#0A0E27] border-[#0047AB]/30'
-            } rounded-2xl p-4 border-2`}>
-              <div className="text-center mb-3">
-                <h3 className="text-xl font-bold font-display">{homeTeam.name}</h3>
-                <p className="text-sm text-[#8B95B5]">OVR {homeTeam.stats.totalOVR}</p>
-              </div>
-              <div className="space-y-2">
-                {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map(pos => {
-                  const card = homeTeam.squad[pos];
-                  return card ? (
-                    <div key={pos} className="bg-[#0A0E27]/50 rounded-lg p-2 flex items-center gap-2">
-                      <div className="text-xs font-bold text-[#FFB81C] w-8">{pos}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold truncate">{card.name}</div>
-                        <div className="text-xs text-[#8B95B5]">{card.team}</div>
-                      </div>
-                      <div className="text-sm font-bold">{card.stats.ovr}</div>
-                    </div>
-                  ) : null;
-                })}
-              </div>
+      {/* 메인 */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* 홈팀 */}
+          <div className={`rounded-2xl p-6 border ${
+            isPlayerTeam(homeTeam.id) 
+              ? 'bg-amber-500/10 border-amber-500/50' 
+              : 'bg-slate-900/30 border-white/5'
+          }`}>
+            <div className="mb-4">
+              <h3 className="text-xl font-bold mb-1">{homeTeam.name}</h3>
+              <div className="text-sm text-slate-400">OVR {homeTeam.stats.totalOVR}</div>
+            </div>
 
-              {/* 홈팀 스탯 */}
-              <div className="mt-4 bg-[#0A0E27]/50 rounded-lg p-3 space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#8B95B5]">킬</span>
-                  <span className="font-bold">{simulation.state.kills.home}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#8B95B5]">타워</span>
-                  <span className="font-bold">{simulation.state.towers.home}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#8B95B5]">드래곤</span>
-                  <span className="font-bold">{simulation.state.dragons.home}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#8B95B5]">바론</span>
-                  <span className="font-bold">{simulation.state.barons.home}</span>
-                </div>
+            <div className="space-y-2 mb-4">
+              {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map(pos => {
+                const card = homeTeam.squad[pos];
+                return card ? (
+                  <div key={pos} className="flex items-center gap-2 text-sm bg-black/20 rounded p-2">
+                    <span className="text-xs text-slate-500 w-8">{pos}</span>
+                    <span className="flex-1 truncate">{card.name}</span>
+                    <span className="text-amber-400 font-bold">{card.stats.ovr}</span>
+                  </div>
+                ) : null;
+              })}
+            </div>
+
+            <div className="bg-black/20 rounded-lg p-3 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-400">킬</span>
+                <span className="font-bold">{simulation.state.kills.home}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">타워</span>
+                <span className="font-bold">{simulation.state.towers.home}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">드래곤</span>
+                <span className="font-bold">{simulation.state.dragons.home}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">바론</span>
+                <span className="font-bold">{simulation.state.barons.home}</span>
               </div>
             </div>
           </div>
 
-          {/* 중앙 - 이벤트 로그 */}
+          {/* 로그 */}
           <div className="lg:col-span-1">
-            <div className="bg-[#141B3D]/50 rounded-2xl p-4 border border-[#0047AB]/30 h-[600px] flex flex-col">
-              <h3 className="text-lg font-bold font-display mb-3 flex items-center justify-between">
-                <span>경기 로그</span>
-                <span className="text-sm text-[#8B95B5]">Turn {simulation.currentTurn}</span>
-              </h3>
-
-              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+            <div className="bg-slate-900/30 rounded-2xl p-6 border border-white/5 h-[700px] flex flex-col">
+              <h3 className="font-bold mb-4">경기 로그</h3>
+              <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
                 {simulation.events.map((event, index) => (
                   <div 
                     key={index}
                     className={`p-3 rounded-lg text-sm ${
-                      event.type === "game_start" 
-                        ? 'bg-[#0047AB]/20 border border-[#0047AB]/50' 
-                        : event.type === "game_end"
-                        ? 'bg-[#C8102E]/20 border border-[#C8102E]/50'
-                        : event.team === "home"
-                        ? 'bg-[#10B981]/10 border-l-2 border-[#10B981]'
-                        : 'bg-[#EF4444]/10 border-l-2 border-[#EF4444]'
+                      event.type === "game_start" ? 'bg-blue-500/20' :
+                      event.type === "game_end" ? 'bg-red-500/20' :
+                      event.team === "home" ? 'bg-emerald-500/10 border-l-2 border-emerald-500' :
+                      'bg-red-500/10 border-l-2 border-red-500'
                     }`}
                   >
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs text-[#8B95B5] font-mono min-w-[3rem]">
-                        T{event.turn}
-                      </span>
-                      <span className="flex-1">{event.message}</span>
+                    <div className="flex gap-2">
+                      <span className="text-slate-500 font-mono text-xs">T{event.turn}</span>
+                      <span>{event.message}</span>
                     </div>
                   </div>
                 ))}
@@ -238,136 +185,81 @@ export function MatchSimulationPage({
             </div>
           </div>
 
-          {/* 어웨이팀 카드 (데스크톱) */}
-          <div className="hidden lg:block">
-            <div className={`bg-gradient-to-br ${
-              isPlayerTeam(awayTeam.id) 
-                ? 'from-[#FFB81C]/20 to-[#141B3D] border-[#FFB81C]' 
-                : 'from-[#141B3D]/50 to-[#0A0E27] border-[#0047AB]/30'
-            } rounded-2xl p-4 border-2`}>
-              <div className="text-center mb-3">
-                <h3 className="text-xl font-bold font-display">{awayTeam.name}</h3>
-                <p className="text-sm text-[#8B95B5]">OVR {awayTeam.stats.totalOVR}</p>
-              </div>
-              <div className="space-y-2">
-                {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map(pos => {
-                  const card = awayTeam.squad[pos];
-                  return card ? (
-                    <div key={pos} className="bg-[#0A0E27]/50 rounded-lg p-2 flex items-center gap-2">
-                      <div className="text-xs font-bold text-[#FFB81C] w-8">{pos}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold truncate">{card.name}</div>
-                        <div className="text-xs text-[#8B95B5]">{card.team}</div>
-                      </div>
-                      <div className="text-sm font-bold">{card.stats.ovr}</div>
-                    </div>
-                  ) : null;
-                })}
-              </div>
-
-              {/* 어웨이팀 스탯 */}
-              <div className="mt-4 bg-[#0A0E27]/50 rounded-lg p-3 space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#8B95B5]">킬</span>
-                  <span className="font-bold">{simulation.state.kills.away}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#8B95B5]">타워</span>
-                  <span className="font-bold">{simulation.state.towers.away}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#8B95B5]">드래곤</span>
-                  <span className="font-bold">{simulation.state.dragons.away}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#8B95B5]">바론</span>
-                  <span className="font-bold">{simulation.state.barons.away}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 모바일 - 간단한 스코어보드 */}
-        <div className="lg:hidden mt-6 grid grid-cols-2 gap-4">
-          <div className={`bg-gradient-to-br ${
-            isPlayerTeam(homeTeam.id) 
-              ? 'from-[#FFB81C]/20 to-[#141B3D] border-[#FFB81C]' 
-              : 'from-[#141B3D]/50 to-[#0A0E27] border-[#0047AB]/30'
-          } rounded-xl p-4 border`}>
-            <h3 className="font-bold mb-2">{homeTeam.name}</h3>
-            <div className="text-xs space-y-1">
-              <div className="flex justify-between">
-                <span className="text-[#8B95B5]">킬</span>
-                <span>{simulation.state.kills.home}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#8B95B5]">타워</span>
-                <span>{simulation.state.towers.home}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={`bg-gradient-to-br ${
+          {/* 어웨이팀 */}
+          <div className={`rounded-2xl p-6 border ${
             isPlayerTeam(awayTeam.id) 
-              ? 'from-[#FFB81C]/20 to-[#141B3D] border-[#FFB81C]' 
-              : 'from-[#141B3D]/50 to-[#0A0E27] border-[#0047AB]/30'
-          } rounded-xl p-4 border`}>
-            <h3 className="font-bold mb-2">{awayTeam.name}</h3>
-            <div className="text-xs space-y-1">
+              ? 'bg-amber-500/10 border-amber-500/50' 
+              : 'bg-slate-900/30 border-white/5'
+          }`}>
+            <div className="mb-4">
+              <h3 className="text-xl font-bold mb-1">{awayTeam.name}</h3>
+              <div className="text-sm text-slate-400">OVR {awayTeam.stats.totalOVR}</div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map(pos => {
+                const card = awayTeam.squad[pos];
+                return card ? (
+                  <div key={pos} className="flex items-center gap-2 text-sm bg-black/20 rounded p-2">
+                    <span className="text-xs text-slate-500 w-8">{pos}</span>
+                    <span className="flex-1 truncate">{card.name}</span>
+                    <span className="text-amber-400 font-bold">{card.stats.ovr}</span>
+                  </div>
+                ) : null;
+              })}
+            </div>
+
+            <div className="bg-black/20 rounded-lg p-3 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-[#8B95B5]">킬</span>
-                <span>{simulation.state.kills.away}</span>
+                <span className="text-slate-400">킬</span>
+                <span className="font-bold">{simulation.state.kills.away}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#8B95B5]">타워</span>
-                <span>{simulation.state.towers.away}</span>
+                <span className="text-slate-400">타워</span>
+                <span className="font-bold">{simulation.state.towers.away}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">드래곤</span>
+                <span className="font-bold">{simulation.state.dragons.away}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">바론</span>
+                <span className="font-bold">{simulation.state.barons.away}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 결과 오버레이 */}
+      {/* 결과 */}
       {showResult && simulation.isFinished && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className={`bg-gradient-to-br ${
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className={`max-w-md w-full rounded-2xl p-8 border-2 text-center ${
             isPlayerWin 
-              ? 'from-[#10B981]/30 to-[#141B3D]' 
-              : 'from-[#EF4444]/30 to-[#141B3D]'
-          } rounded-2xl p-8 border-2 ${
-            isPlayerWin ? 'border-[#10B981]' : 'border-[#EF4444]'
-          } max-w-md w-full text-center`}>
-            <Trophy className={`w-20 h-20 mx-auto mb-4 ${
-              isPlayerWin ? 'text-[#10B981]' : 'text-[#EF4444]'
-            }`} />
+              ? 'bg-emerald-500/20 border-emerald-500' 
+              : 'bg-red-500/20 border-red-500'
+          }`}>
+            <div className="text-6xl mb-6">{isPlayerWin ? '🏆' : '💔'}</div>
             
-            <h2 className="text-4xl font-bold font-display mb-2">
+            <h2 className="text-5xl font-bold font-display mb-4">
               {isPlayerWin ? 'VICTORY' : 'DEFEAT'}
             </h2>
             
-            <div className="mb-6">
-              <p className="text-xl text-[#9AA6C3] mb-2">{winner.name} 승리</p>
-              <p className="text-sm text-[#8B95B5]">
-                {simulation.currentTurn} 턴만에 경기 종료
-              </p>
-            </div>
+            <p className="text-xl text-slate-300 mb-2">{winner.name} 승리</p>
+            <p className="text-sm text-slate-400 mb-8">
+              {simulation.currentTurn} 턴만에 경기 종료
+            </p>
 
             {isPlayerWin && currentLeague && (
-              <div className="bg-[#0A0E27]/50 rounded-xl p-4 mb-6">
-                <p className="text-sm text-[#8B95B5] mb-2">획득 보상</p>
-                <p className="text-2xl font-bold font-display text-[#FFB81C]">
-                  +{LEAGUE_CONFIGS[currentLeague.leagueType].winPoints.toLocaleString()} RP
+              <div className="bg-black/30 rounded-xl p-4 mb-8">
+                <p className="text-sm text-slate-400 mb-1">획득 보상</p>
+                <p className="text-3xl font-bold text-amber-400">
+                  +{LEAGUE_CONFIGS[currentLeague.leagueType].winPoints.toLocaleString()}
                 </p>
               </div>
             )}
 
-            <Button
-              onClick={handleFinish}
-              className="w-full bg-gradient-to-r from-[#0047AB] to-[#003D8F] 
-                         hover:from-[#0047AB]/90 hover:to-[#003D8F]/90
-                         shadow-lg font-display text-lg py-6 rounded-xl"
-            >
+            <Button onClick={handleFinish} className="w-full py-6 text-lg">
               리그로 돌아가기
             </Button>
           </div>

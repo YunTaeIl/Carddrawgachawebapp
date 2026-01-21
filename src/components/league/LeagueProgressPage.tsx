@@ -5,12 +5,8 @@ import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
 import { useGame } from "@/contexts/GameContext";
 import { LEAGUE_CONFIGS } from "@/types/league";
-import { 
-  ArrowLeft, Trophy, Target, Calendar, TrendingUp, 
-  Users, Zap, ChevronRight, Award, XCircle 
-} from "lucide-react";
-import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
+import { ArrowLeft, ChevronRight } from "lucide-react";
+import { calculateSynergies } from "@/utils/synergyEngine";
 
 interface LeagueProgressPageProps {
   onBack: () => void;
@@ -34,7 +30,7 @@ export function LeagueProgressPage({
     return (
       <div className="min-h-screen bg-[#0A0E27] text-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[#9AA6C3] mb-4">진행 중인 리그가 없습니다</p>
+          <p className="text-slate-400 mb-4">진행 중인 리그가 없습니다</p>
           <Button onClick={onBack}>메인으로</Button>
         </div>
       </div>
@@ -45,50 +41,42 @@ export function LeagueProgressPage({
   const currentMatch = getCurrentMatch();
   const playerTeam = getTeamById(currentLeague.playerTeamId);
   
-  // 정규시즌 완료 여부
   const isRegularSeasonComplete = currentLeague.currentMatchIndex >= currentLeague.matches.length;
-  
-  // 플레이어 순위
   const playerRank = currentLeague.standings.findIndex(s => s.isPlayer) + 1;
   const isPlayoffQualified = playerRank <= 5 && isRegularSeasonComplete;
   const isEliminated = playerRank > 5 && isRegularSeasonComplete;
 
-  // 스쿼드 시너지 계산
   const synergies = playerTeam ? calculateSynergies(playerTeam.squad) : [];
   const activeSynergies = synergies.filter(s => s.isActive);
 
   return (
     <div className="min-h-screen bg-[#0A0E27] text-white">
       {/* 헤더 */}
-      <div className="bg-[#0A0E27]/95 backdrop-blur-md border-b border-[#2B6CFF]/20 sticky top-0 z-10">
-        <div className="max-w-[1500px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={onBack}
-                variant="ghost"
-                size="sm"
-                className="text-[#9AA6C3] hover:text-white"
-              >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                메인으로
-              </Button>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold font-display tracking-wide">
-                  {leagueConfig.name}
-                </h1>
-                <p className="text-sm text-[#8B95B5]">
-                  {currentLeague.seasonState === "regular" && "정규시즌"}
-                  {currentLeague.seasonState === "playoffs" && "플레이오프"}
-                  {currentLeague.seasonState === "finished" && "시즌 종료"}
-                </p>
-              </div>
+      <div className="border-b border-white/5 bg-[#0A0E27]/95 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <Button
+            onClick={onBack}
+            variant="ghost"
+            size="sm"
+            className="text-slate-400 hover:text-white mb-3"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            메인으로
+          </Button>
+          
+          <div className="flex items-end justify-between">
+            <div>
+              <h1 className="text-3xl font-bold font-display">{leagueConfig.name}</h1>
+              <p className="text-sm text-slate-400 mt-1">
+                {currentLeague.seasonState === "regular" && "정규시즌"}
+                {currentLeague.seasonState === "playoffs" && "플레이오프"}
+                {currentLeague.seasonState === "finished" && "시즌 종료"}
+              </p>
             </div>
 
-            {/* 현재 포인트 */}
-            <div className="bg-[#141B3D]/80 rounded-xl px-4 py-2 border border-[#FFB81C]/30">
-              <div className="text-xs text-[#8B95B5] mb-1">획득 RP</div>
-              <div className="text-xl md:text-2xl font-display font-bold text-[#FFB81C]">
+            <div className="text-right">
+              <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">포인트</div>
+              <div className="text-2xl font-bold text-amber-400">
                 {currentLeague.currentPoints.toLocaleString()}
               </div>
             </div>
@@ -97,112 +85,59 @@ export function LeagueProgressPage({
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-[1500px] mx-auto px-6 py-8 space-y-6">
-        {/* 내 팀 요약 */}
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        {/* 내 팀 */}
         {playerTeam && (
-          <div className="bg-gradient-to-br from-[#141B3D]/50 to-[#0A0E27] rounded-2xl p-6 border border-[#0047AB]/30">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-[#FFB81C]" />
-              <h2 className="text-xl font-bold font-display">MY TEAM</h2>
-              <div className="ml-auto text-sm text-[#9AA6C3]">
-                순위: <span className="text-[#FFB81C] font-bold">{playerRank}위</span>
+          <div className="bg-slate-900/30 rounded-2xl p-6 border border-white/5">
+            <div className="flex items-baseline justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold font-display">MY TEAM</h2>
+                <p className="text-sm text-slate-400 mt-1">현재 순위 {playerRank}위</p>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-slate-500 mb-1">총 OVR</div>
+                <div className="text-3xl font-bold text-amber-400">{playerTeam.stats.totalOVR}</div>
               </div>
             </div>
 
-            {/* 데스크톱: 카드 썸네일 */}
-            <div className="hidden md:flex gap-4 mb-4">
+            {/* 선수 목록 */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
               {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map((pos) => {
                 const card = playerTeam.squad[pos];
                 return (
-                  <div key={pos} className="flex-1">
+                  <div key={pos} className="bg-black/20 rounded-lg p-3">
+                    <div className="text-xs text-slate-500 mb-2">{pos}</div>
                     {card ? (
-                      <LCKHoloCard card={card} size="small" />
-                    ) : (
-                      <div className="w-full h-48 bg-[#0A0E27]/50 rounded-lg border border-dashed border-[#0047AB]/30 
-                                      flex items-center justify-center text-[#8B95B5] text-xs">
-                        {pos}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* 모바일: 선수명 텍스트 */}
-            <div className="md:hidden space-y-2 mb-4">
-              {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map((pos) => {
-                const card = playerTeam.squad[pos];
-                return (
-                  <div key={pos} className="flex items-center gap-3 bg-[#0A0E27]/50 rounded-lg p-3">
-                    <div className="w-12 text-center">
-                      <span className="text-xs font-bold text-[#FFB81C]">{pos}</span>
-                    </div>
-                    <div className="flex-1">
-                      {card ? (
-                        <div>
-                          <div className="font-bold">{card.name}</div>
-                          <div className="text-xs text-[#8B95B5]">{card.team} | {card.year}</div>
+                      <>
+                        <div className="font-bold text-sm mb-1 truncate">{card.name}</div>
+                        <div className="text-xs text-slate-400">{card.team} · {card.year}</div>
+                        <div className="text-lg font-bold text-amber-400 mt-2">
+                          {card.stats.ovr + (card.upgradeLevel || 0)}
                         </div>
-                      ) : (
-                        <div className="text-[#8B95B5] text-sm">빈 슬롯</div>
-                      )}
-                    </div>
-                    {card && (
-                      <div className="text-right">
-                        <div className="text-sm font-bold">{card.stats.ovr + (card.upgradeLevel || 0)}</div>
-                        <div className="text-xs text-[#8B95B5]">OVR</div>
-                      </div>
+                      </>
+                    ) : (
+                      <div className="text-slate-600 text-xs">빈 슬롯</div>
                     )}
                   </div>
                 );
               })}
             </div>
 
-            {/* 팀 스탯 요약 */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 bg-[#0A0E27]/50 rounded-xl p-4">
-              <div className="text-center">
-                <div className="text-xs text-[#8B95B5] mb-1">총 OVR</div>
-                <div className="text-lg font-display font-bold text-[#FFB81C]">
-                  {playerTeam.stats.totalOVR}
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-xs text-[#8B95B5] mb-1">메카닉</div>
-                <div className="text-lg font-display font-bold">{playerTeam.stats.mechanics}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xs text-[#8B95B5] mb-1">라인전</div>
-                <div className="text-lg font-display font-bold">{playerTeam.stats.laning}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xs text-[#8B95B5] mb-1">한타</div>
-                <div className="text-lg font-display font-bold">{playerTeam.stats.teamfight}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xs text-[#8B95B5] mb-1">운영</div>
-                <div className="text-lg font-display font-bold">{playerTeam.stats.macro}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xs text-[#8B95B5] mb-1">클러치</div>
-                <div className="text-lg font-display font-bold">{playerTeam.stats.clutch}</div>
-              </div>
-            </div>
-
-            {/* 시너지 요약 */}
+            {/* 시너지 */}
             {activeSynergies.length > 0 && (
-              <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <Zap className="w-4 h-4 text-[#FFB81C]" />
-                <span className="text-xs text-[#8B95B5]">활성 시너지:</span>
-                {activeSynergies.slice(0, 3).map(s => (
+              <div className="flex gap-2 flex-wrap">
+                {activeSynergies.slice(0, 5).map(s => (
                   <span 
                     key={s.synergy.synergy_id}
-                    className="text-xs bg-[#FFB81C]/20 text-[#FFB81C] px-2 py-1 rounded"
+                    className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full"
                   >
                     {s.synergy.synergy_name}
                   </span>
                 ))}
-                {activeSynergies.length > 3 && (
-                  <span className="text-xs text-[#8B95B5]">+{activeSynergies.length - 3}</span>
+                {activeSynergies.length > 5 && (
+                  <span className="text-xs text-slate-500 px-2 py-1">
+                    +{activeSynergies.length - 5}
+                  </span>
                 )}
               </div>
             )}
@@ -212,202 +147,163 @@ export function LeagueProgressPage({
         {/* 정규시즌 진행 중 */}
         {currentLeague.seasonState === "regular" && !isRegularSeasonComplete && currentMatch && (
           <>
-            {/* 다음 경기 CTA */}
-            <div className="bg-gradient-to-br from-[#C8102E]/20 to-[#141B3D] rounded-2xl p-6 border-2 border-[#C8102E]">
-              <div className="flex items-center gap-2 mb-4">
-                <Target className="w-6 h-6 text-[#C8102E]" />
-                <h2 className="text-2xl font-bold font-display">다음 경기</h2>
+            {/* 다음 경기 */}
+            <div className="bg-gradient-to-br from-red-600/10 to-slate-900/10 rounded-2xl p-8 border border-red-600/30">
+              <div className="text-center mb-6">
+                <div className="text-sm text-slate-400 mb-2">
+                  ROUND {currentMatch.round} / 18
+                </div>
+                <h2 className="text-3xl font-bold font-display">NEXT MATCH</h2>
               </div>
 
-              <div className="bg-[#0A0E27]/50 rounded-xl p-6 mb-4">
-                <div className="text-center mb-4">
-                  <div className="text-sm text-[#8B95B5] mb-1">
-                    Round {currentMatch.round} / 18
+              <div className="flex items-center justify-center gap-8 mb-8">
+                <div className="text-center flex-1">
+                  <div className="text-2xl font-bold mb-2">
+                    {getTeamById(currentMatch.homeTeamId)?.name}
                   </div>
-                  <div className="text-xs text-[#9AA6C3]">정규시즌</div>
+                  <div className="text-slate-400">
+                    {getTeamById(currentMatch.homeTeamId)?.stats.totalOVR}
+                  </div>
                 </div>
-
-                {/* 매치업 */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 text-center">
-                    <div className="text-lg font-bold">
-                      {getTeamById(currentMatch.homeTeamId)?.name || ""}
-                    </div>
-                    <div className="text-sm text-[#8B95B5]">
-                      OVR {getTeamById(currentMatch.homeTeamId)?.stats.totalOVR || 0}
-                    </div>
+                
+                <div className="text-4xl font-bold text-amber-400">VS</div>
+                
+                <div className="text-center flex-1">
+                  <div className="text-2xl font-bold mb-2">
+                    {getTeamById(currentMatch.awayTeamId)?.name}
                   </div>
-                  
-                  <div className="text-3xl font-bold text-[#FFB81C]">VS</div>
-                  
-                  <div className="flex-1 text-center">
-                    <div className="text-lg font-bold">
-                      {getTeamById(currentMatch.awayTeamId)?.name || ""}
-                    </div>
-                    <div className="text-sm text-[#8B95B5]">
-                      OVR {getTeamById(currentMatch.awayTeamId)?.stats.totalOVR || 0}
-                    </div>
+                  <div className="text-slate-400">
+                    {getTeamById(currentMatch.awayTeamId)?.stats.totalOVR}
                   </div>
                 </div>
               </div>
 
               <Button
                 onClick={onMatchStart}
-                className="w-full bg-gradient-to-r from-[#C8102E] to-[#A00D25] 
-                           hover:from-[#C8102E]/90 hover:to-[#A00D25]/90
-                           shadow-lg font-display text-lg py-6 rounded-xl transition-all duration-200
-                           transform hover:scale-[1.02]"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-6 rounded-xl text-lg font-semibold"
               >
-                <ChevronRight className="w-6 h-6 mr-2" />
-                경기 시작
+                경기 시작 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
 
-            {/* 일정/결과 리스트 */}
-            <div className="bg-[#141B3D]/50 rounded-2xl p-6 border border-[#0047AB]/30">
-              <div className="flex items-center gap-2 mb-4">
-                <Calendar className="w-5 h-5 text-[#0047AB]" />
-                <h3 className="text-xl font-bold font-display">경기 일정</h3>
+            {/* 일정 & 순위 */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* 일정 */}
+              <div className="bg-slate-900/30 rounded-2xl p-6 border border-white/5">
+                <h3 className="text-lg font-bold mb-4">일정</h3>
+                <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+                  {currentLeague.matches.map((match, index) => {
+                    const homeTeam = getTeamById(match.homeTeamId);
+                    const awayTeam = getTeamById(match.awayTeamId);
+                    const isCurrent = index === currentLeague.currentMatchIndex;
+
+                    return (
+                      <div
+                        key={match.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg text-sm ${
+                          isCurrent ? 'bg-red-600/20 border border-red-600/50' : 'bg-black/20'
+                        }`}
+                      >
+                        <div className="w-8 text-center text-slate-500">{match.round}</div>
+                        <div className="flex-1 flex items-center justify-between">
+                          <span className="truncate">{homeTeam?.name}</span>
+                          {match.isCompleted && match.result ? (
+                            <span className="text-amber-400 font-mono text-xs mx-2">
+                              {match.result.homeScore}:{match.result.awayScore}
+                            </span>
+                          ) : (
+                            <span className="text-slate-600 mx-2">vs</span>
+                          )}
+                          <span className="truncate">{awayTeam?.name}</span>
+                        </div>
+                        {match.isCompleted && match.result && (
+                          <div className={`text-xs font-bold ${
+                            match.result.winnerId === currentLeague.playerTeamId 
+                              ? 'text-emerald-400' 
+                              : 'text-red-400'
+                          }`}>
+                            {match.result.winnerId === currentLeague.playerTeamId ? 'W' : 'L'}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-                {currentLeague.matches.map((match, index) => {
-                  const homeTeam = getTeamById(match.homeTeamId);
-                  const awayTeam = getTeamById(match.awayTeamId);
-                  const isCurrent = index === currentLeague.currentMatchIndex;
-
-                  return (
+              {/* 순위 */}
+              <div className="bg-slate-900/30 rounded-2xl p-6 border border-white/5">
+                <div className="flex items-baseline justify-between mb-4">
+                  <h3 className="text-lg font-bold">순위표</h3>
+                  <Button
+                    onClick={onViewStandings}
+                    variant="ghost"
+                    size="sm"
+                    className="text-blue-400 hover:text-blue-300 text-sm"
+                  >
+                    전체보기
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {currentLeague.standings.slice(0, 10).map((entry, index) => (
                     <div
-                      key={match.id}
-                      className={`bg-[#0A0E27]/50 rounded-lg p-3 border 
-                                 ${isCurrent ? 'border-[#C8102E] bg-[#C8102E]/10' : 'border-[#0047AB]/30'}`}
+                      key={entry.teamId}
+                      className={`flex items-center gap-3 p-2 rounded-lg ${
+                        entry.isPlayer ? 'bg-amber-500/20' : 'bg-black/20'
+                      } ${index < 5 ? 'border-l-2 border-emerald-500/50' : ''}`}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="w-12 text-center">
-                          <span className="text-xs text-[#8B95B5]">R{match.round}</span>
-                        </div>
-                        
-                        <div className="flex-1 flex items-center justify-between text-sm">
-                          <span>{homeTeam?.name}</span>
-                          {match.isCompleted && match.result ? (
-                            <span className="text-[#FFB81C] font-bold">
-                              {match.result.homeScore} : {match.result.awayScore}
-                            </span>
-                          ) : (
-                            <span className="text-[#8B95B5]">vs</span>
-                          )}
-                          <span>{awayTeam?.name}</span>
-                        </div>
-
-                        <div className="w-16 text-right">
-                          {match.isCompleted && match.result ? (
-                            <span className={`text-xs font-bold ${
-                              match.result.winnerId === currentLeague.playerTeamId 
-                                ? 'text-[#10B981]' 
-                                : 'text-[#EF4444]'
-                            }`}>
-                              {match.result.winnerId === currentLeague.playerTeamId ? 'WIN' : 'LOSS'}
-                            </span>
-                          ) : isCurrent ? (
-                            <span className="text-xs text-[#C8102E] font-bold">NEXT</span>
-                          ) : (
-                            <span className="text-xs text-[#8B95B5]">예정</span>
-                          )}
-                        </div>
+                      <div className={`w-6 text-center font-bold ${
+                        index === 0 ? 'text-amber-400' : 'text-slate-400'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 truncate text-sm">
+                        {entry.teamName}
+                      </div>
+                      <div className="text-sm">
+                        <span className="text-emerald-400">{entry.wins}</span>
+                        <span className="text-slate-600 mx-1">-</span>
+                        <span className="text-red-400">{entry.losses}</span>
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </div>
           </>
         )}
 
-        {/* 정규시즌 완료 - 플레이오프 진출 */}
+        {/* 플레이오프 진출 */}
         {isRegularSeasonComplete && isPlayoffQualified && currentLeague.seasonState === "regular" && (
-          <div className="bg-gradient-to-br from-[#FFB81C]/20 to-[#141B3D] rounded-2xl p-8 border-2 border-[#FFB81C] text-center">
-            <Trophy className="w-16 h-16 text-[#FFB81C] mx-auto mb-4" />
-            <h2 className="text-3xl font-bold font-display mb-2">정규시즌 {playerRank}위!</h2>
-            <p className="text-[#9AA6C3] mb-6">플레이오프에 진출했습니다</p>
+          <div className="bg-gradient-to-br from-amber-500/20 to-slate-900/20 rounded-2xl p-12 border border-amber-500/50 text-center">
+            <div className="text-6xl mb-4">🏆</div>
+            <h2 className="text-4xl font-bold font-display mb-3">정규시즌 {playerRank}위</h2>
+            <p className="text-slate-300 mb-8 text-lg">플레이오프에 진출했습니다</p>
             
             <Button
               onClick={onStartPlayoffs}
-              className="bg-gradient-to-r from-[#FFB81C] to-[#C8102E] 
-                         hover:from-[#FFB81C]/90 hover:to-[#C8102E]/90
-                         shadow-lg font-display text-lg py-6 px-8 rounded-xl"
+              className="bg-amber-500 hover:bg-amber-600 text-black font-bold py-6 px-12 rounded-xl text-lg"
             >
-              <Award className="w-6 h-6 mr-2" />
               플레이오프 시작
             </Button>
           </div>
         )}
 
-        {/* 정규시즌 완료 - 탈락 */}
+        {/* 탈락 */}
         {isRegularSeasonComplete && isEliminated && (
-          <div className="bg-gradient-to-br from-[#EF4444]/20 to-[#141B3D] rounded-2xl p-8 border-2 border-[#EF4444] text-center">
-            <XCircle className="w-16 h-16 text-[#EF4444] mx-auto mb-4" />
-            <h2 className="text-3xl font-bold font-display mb-2">정규시즌 {playerRank}위</h2>
-            <p className="text-[#9AA6C3] mb-6">플레이오프 진출에 실패했습니다</p>
+          <div className="bg-slate-900/50 rounded-2xl p-12 border border-white/5 text-center">
+            <div className="text-6xl mb-4">😔</div>
+            <h2 className="text-3xl font-bold font-display mb-3">정규시즌 {playerRank}위</h2>
+            <p className="text-slate-400 mb-8">플레이오프 진출에 실패했습니다</p>
             
             <Button
               onClick={onViewResult}
-              className="bg-gradient-to-r from-[#8B95B5] to-[#6B7280] 
-                         hover:from-[#8B95B5]/90 hover:to-[#6B7280]/90
-                         shadow-lg font-display text-lg py-6 px-8 rounded-xl"
+              className="bg-slate-700 hover:bg-slate-600 py-6 px-12 rounded-xl"
             >
               시즌 결과 확인
             </Button>
           </div>
         )}
-
-        {/* 순위표 미리보기 */}
-        <div className="bg-[#141B3D]/50 rounded-2xl p-6 border border-[#0047AB]/30">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-[#FFB81C]" />
-              <h3 className="text-xl font-bold font-display">순위표</h3>
-            </div>
-            <Button
-              onClick={onViewStandings}
-              variant="ghost"
-              size="sm"
-              className="text-[#0047AB] hover:text-[#0047AB]/80"
-            >
-              전체 보기 <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            {currentLeague.standings.slice(0, 5).map((entry, index) => (
-              <div
-                key={entry.teamId}
-                className={`flex items-center gap-3 p-3 rounded-lg ${
-                  entry.isPlayer 
-                    ? 'bg-[#FFB81C]/20 border border-[#FFB81C]/50' 
-                    : 'bg-[#0A0E27]/50'
-                }`}
-              >
-                <div className="w-8 text-center">
-                  <span className={`font-bold ${
-                    index === 0 ? 'text-[#FFB81C]' : 'text-[#9AA6C3]'
-                  }`}>
-                    {index + 1}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <span className={entry.isPlayer ? 'font-bold text-[#FFB81C]' : ''}>
-                    {entry.teamName}
-                  </span>
-                </div>
-                <div className="text-sm">
-                  <span className="text-[#10B981]">{entry.wins}승</span>
-                  {' '}
-                  <span className="text-[#EF4444]">{entry.losses}패</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

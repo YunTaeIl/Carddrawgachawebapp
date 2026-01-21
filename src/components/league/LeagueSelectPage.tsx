@@ -4,8 +4,7 @@ import React from "react";
 import { Button } from "@/app/components/ui/button";
 import { LeagueType, LEAGUE_CONFIGS } from "@/types/league";
 import { useLeague } from "@/contexts/LeagueContext";
-import { Trophy, Zap, TrendingUp, Target, ArrowLeft } from "lucide-react";
-import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
+import { ArrowLeft } from "lucide-react";
 
 interface LeagueSelectPageProps {
   onBack: () => void;
@@ -20,169 +19,113 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
     onLeagueStart();
   };
 
-  const getLeagueIcon = (leagueType: LeagueType) => {
-    switch (leagueType) {
-      case "legend":
-        return Trophy;
-      case "tier1":
-        return Zap;
-      case "tier2":
-        return TrendingUp;
-      case "tier3":
-        return Target;
-    }
-  };
-
   const getLeagueColor = (leagueType: LeagueType) => {
     switch (leagueType) {
       case "legend":
-        return {
-          bg: "from-[#FFB81C]/20 to-[#C8102E]/20",
-          border: "border-[#FFB81C]",
-          text: "text-[#FFB81C]",
-          btnBg: "from-[#FFB81C] to-[#C8102E]",
-          btnHover: "hover:from-[#FFB81C]/90 hover:to-[#C8102E]/90"
-        };
+        return "from-amber-500/10 to-red-600/10 border-amber-500/50";
       case "tier1":
-        return {
-          bg: "from-[#C8102E]/20 to-[#141B3D]",
-          border: "border-[#C8102E]",
-          text: "text-[#C8102E]",
-          btnBg: "from-[#C8102E] to-[#A00D25]",
-          btnHover: "hover:from-[#C8102E]/90 hover:to-[#A00D25]/90"
-        };
+        return "from-red-600/10 to-slate-900/10 border-red-600/50";
       case "tier2":
-        return {
-          bg: "from-[#0047AB]/20 to-[#141B3D]",
-          border: "border-[#0047AB]",
-          text: "text-[#0047AB]",
-          btnBg: "from-[#0047AB] to-[#003D8F]",
-          btnHover: "hover:from-[#0047AB]/90 hover:to-[#003D8F]/90"
-        };
+        return "from-blue-600/10 to-slate-900/10 border-blue-600/50";
       case "tier3":
-        return {
-          bg: "from-[#10B981]/20 to-[#141B3D]",
-          border: "border-[#10B981]",
-          text: "text-[#10B981]",
-          btnBg: "from-[#10B981] to-[#059669]",
-          btnHover: "hover:from-[#10B981]/90 hover:to-[#059669]/90"
-        };
+        return "from-emerald-500/10 to-slate-900/10 border-emerald-500/50";
+    }
+  };
+
+  const getLeagueAccent = (leagueType: LeagueType) => {
+    switch (leagueType) {
+      case "legend": return "text-amber-400";
+      case "tier1": return "text-red-500";
+      case "tier2": return "text-blue-500";
+      case "tier3": return "text-emerald-400";
     }
   };
 
   return (
     <div className="min-h-screen bg-[#0A0E27] text-white">
       {/* 헤더 */}
-      <div className="bg-[#0A0E27]/95 backdrop-blur-md border-b border-[#2B6CFF]/20 sticky top-0 z-10">
-        <div className="max-w-[1500px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={onBack}
-                variant="ghost"
-                size="sm"
-                className="text-[#9AA6C3] hover:text-white"
-              >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                메인으로
-              </Button>
-              <div className="flex items-center gap-3">
-                <ImageWithFallback
-                  src="https://qpzfzemhljgzscojkxnj.supabase.co/storage/v1/object/public/team-logos/lck-logo-white.svg"
-                  alt="LCK Logo"
-                  className="w-12 h-12 object-contain"
-                />
-                <div>
-                  <h1 className="text-3xl font-bold font-display tracking-wide">
-                    리그 선택
-                  </h1>
-                  <p className="text-sm text-[#8B95B5]">시즌을 시작할 리그를 선택하세요</p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="border-b border-white/5 bg-[#0A0E27]/95 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <Button
+            onClick={onBack}
+            variant="ghost"
+            size="sm"
+            className="text-slate-400 hover:text-white mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            메인으로
+          </Button>
+          <h1 className="text-4xl font-bold font-display mb-2">리그 선택</h1>
+          <p className="text-slate-400">시즌을 시작할 리그를 선택하세요</p>
         </div>
       </div>
 
-      {/* 메인 컨텐츠 */}
-      <div className="max-w-[1500px] mx-auto px-6 py-8">
+      {/* 리그 카드 그리드 */}
+      <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {(["legend", "tier1", "tier2", "tier3"] as LeagueType[]).map((leagueType) => {
             const config = LEAGUE_CONFIGS[leagueType];
-            const Icon = getLeagueIcon(leagueType);
-            const colors = getLeagueColor(leagueType);
+            const colorClass = getLeagueColor(leagueType);
+            const accentClass = getLeagueAccent(leagueType);
 
             return (
-              <div
+              <button
                 key={leagueType}
-                className={`bg-gradient-to-br ${colors.bg} rounded-2xl p-8 border-2 ${colors.border} 
-                           hover:scale-[1.02] transition-all duration-300 hover:shadow-2xl`}
+                onClick={() => handleStartLeague(leagueType)}
+                className={`bg-gradient-to-br ${colorClass} rounded-2xl p-8 border 
+                           hover:scale-[1.02] transition-all duration-300 text-left
+                           hover:shadow-2xl hover:shadow-white/5 group`}
               >
                 {/* 리그 타이틀 */}
-                <div className="flex items-center gap-4 mb-6">
-                  <div className={`w-16 h-16 rounded-full ${colors.bg} border-2 ${colors.border} 
-                                   flex items-center justify-center`}>
-                    <Icon className={`w-8 h-8 ${colors.text}`} />
-                  </div>
-                  <div>
-                    <h2 className={`text-3xl font-bold font-display ${colors.text}`}>
-                      {config.name}
-                    </h2>
-                    <p className="text-sm text-[#8B95B5]">{config.description}</p>
-                  </div>
+                <div className="mb-6">
+                  <h2 className={`text-3xl font-bold font-display mb-2 ${accentClass}`}>
+                    {config.name}
+                  </h2>
+                  <p className="text-slate-400 text-sm">{config.description}</p>
                 </div>
 
                 {/* 난이도 */}
                 <div className="mb-6">
-                  <div className="text-xs text-[#8B95B5] mb-2">난이도</div>
-                  <div className={`text-xl font-bold ${colors.text}`}>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider">난이도</span>
+                  <div className={`text-lg font-semibold mt-1 ${accentClass}`}>
                     {config.difficulty}
                   </div>
                 </div>
 
-                {/* 보상 정보 */}
-                <div className="bg-[#0A0E27]/50 rounded-xl p-4 mb-6 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#8B95B5]">승리 보상</span>
-                    <span className="text-lg font-display font-bold text-[#FFB81C]">
-                      {config.winPoints.toLocaleString()} RP
+                {/* 보상 */}
+                <div className="space-y-3 bg-black/20 rounded-xl p-4 mb-6">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-sm text-slate-400">승리당</span>
+                    <span className="text-xl font-bold text-amber-400">
+                      {config.winPoints.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#8B95B5]">우승 보너스</span>
-                    <span className="text-lg font-display font-bold text-[#C8102E]">
-                      {config.championBonus.toLocaleString()} RP
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-sm text-slate-400">우승 보너스</span>
+                    <span className="text-2xl font-bold text-amber-400">
+                      {config.championBonus.toLocaleString()}
                     </span>
                   </div>
                 </div>
 
-                {/* 시작 버튼 */}
-                <Button
-                  onClick={() => handleStartLeague(leagueType)}
-                  className={`w-full bg-gradient-to-r ${colors.btnBg} ${colors.btnHover}
-                             shadow-lg font-display text-lg py-6 rounded-xl transition-all duration-200
-                             transform hover:scale-105`}
-                >
-                  시즌 시작
-                </Button>
-              </div>
+                {/* 버튼 힌트 */}
+                <div className="text-center py-3 bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">
+                  <span className="text-sm font-semibold">시즌 시작</span>
+                </div>
+              </button>
             );
           })}
         </div>
 
-        {/* 안내 문구 */}
-        <div className="mt-8 bg-[#141B3D]/50 rounded-xl p-6 border border-[#0047AB]/30">
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-[#FFB81C]" />
-            리그 진행 방식
-          </h3>
-          <ul className="space-y-2 text-sm text-[#9AA6C3]">
-            <li>• 정규시즌 18경기 (AI 9팀과 더블 라운드 로빈)</li>
-            <li>• 정규시즌 5위 이상 플레이오프 진출</li>
-            <li>• 플레이오프 구조: 와일드카드 (BO3) → 준플레이오프 (BO5) → 플레이오프 (BO5) → 결승 (BO5)</li>
-            <li>• 우승 시 보너스 RP 지급</li>
-            <li>• 탈락 시 획득한 RP만 유지</li>
-          </ul>
+        {/* 안내 */}
+        <div className="mt-12 bg-slate-900/30 rounded-xl p-6 border border-white/5">
+          <h3 className="font-bold mb-4">리그 시스템</h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm text-slate-400">
+            <div>정규시즌 18경기 (더블 라운드 로빈)</div>
+            <div>5위 이상 플레이오프 진출</div>
+            <div>플레이오프 단계별 BO3/BO5</div>
+            <div>우승 시 보너스 RP 지급</div>
+          </div>
         </div>
       </div>
     </div>
