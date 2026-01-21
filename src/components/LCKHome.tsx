@@ -1,16 +1,14 @@
 // LCK 가챠 메인 홈 화면
 
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { LCKAuth } from "@/components/LCKAuth";
 import { SynergyPanel } from "@/components/SynergyPanelV2";
 import { ShareCard } from "@/components/ShareCard";
-import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { GACHA_CONFIG } from "@/types/lck";
-import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogIn, LogOut, Share2, Calendar } from "lucide-react";
+import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calendar } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
@@ -23,14 +21,15 @@ const supabase = createClient(
   publicAnonKey
 );
 
+import { Page } from "@/components/Sidebar";
+
 interface LCKHomeProps {
-  onNavigate: (page: "home" | "gacha" | "squad" | "collection" | "test" | "terms") => void;
+  onNavigate: (page: Page) => void;
 }
 
 export function LCKHome({ onNavigate }: LCKHomeProps) {
   const { userData } = useGame();
   const { user, isAuthenticated, signOut, accessToken } = useAuth();
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const squadRef = useRef<HTMLDivElement>(null);
 
   const positions = ["TOP", "JGL", "MID", "ADC", "SUP"] as const;
@@ -310,7 +309,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 <h1 className="text-xl md:text-5xl font-bold tracking-wider text-white" style={{
                   textShadow: '0 0 40px rgba(255, 255, 255, 0.5), 0 0 80px rgba(200, 16, 46, 0.3)'
                 }}>
-                  LCK GACHA
+                  Legends Manager
                 </h1>
                 <p className="hidden md:block text-sm text-[#8B95B5] font-display tracking-wide">SQUAD BUILDER</p>
               </div>
@@ -318,7 +317,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
 
             {/* 로그인/로그아웃 버튼 */}
             <div className="flex items-center">
-              {isAuthenticated ? (
+              {isAuthenticated && (
                 <div className="flex items-center gap-2 md:gap-3">
                   <span className="hidden md:inline text-sm text-[#9AA6C3]">{user?.email}</span>
                   <Button
@@ -331,16 +330,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                     <span className="hidden md:inline">로그아웃</span>
                   </Button>
                 </div>
-              ) : (
-                <Button
-                  onClick={() => setShowAuthDialog(true)}
-                  className="bg-[#2B6CFF] hover:bg-[#2B6CFF]/80 text-xs md:text-sm px-2 md:px-4"
-                  size="sm"
-                >
-                  <LogIn className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
-                  <span className="hidden md:inline">로그인 / 회원가입</span>
-                  <span className="md:hidden">로그인</span>
-                </Button>
               )}
             </div>
           </div>
@@ -429,7 +418,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 className="bg-[#0047AB] hover:bg-[#003D8F] font-display flex-1 md:flex-none py-2.5 md:py-3 flex items-center justify-center"
               >
                 <Users className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">스쿼드 </span>편집
+                팀 관리
               </Button>
               <Button
                 onClick={handleShareSquad}
@@ -653,7 +642,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#C8102E] flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold mb-2 font-display tracking-wide">GACHA</h3>
+              <h3 className="text-2xl font-bold mb-2 font-display tracking-wide">선수 뽑기</h3>
               <p className="text-sm text-[#8B95B5]">카드팩 오픈</p>
             </div>
           </button>
@@ -668,7 +657,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#FFB81C] flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Library className="w-8 h-8 text-[#0A0E27]" />
               </div>
-              <h3 className="text-2xl font-bold mb-2 font-display tracking-wide">COLLECTION</h3>
+              <h3 className="text-2xl font-bold mb-2 font-display tracking-wide">선수 관리</h3>
               <p className="text-sm text-[#8B95B5]">{userData.ownedCards.length}장 보유</p>
             </div>
           </button>
@@ -709,13 +698,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           </Button>
         </div>
       </div>
-
-      {/* 로그인/회원가입 다이얼로그 */}
-      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent className="bg-[#0A0E27] text-white border-[#2B6CFF]/30">
-          <LCKAuth onSuccess={() => setShowAuthDialog(false)} />
-        </DialogContent>
-      </Dialog>
       
       {/* 숨겨진 스쿼드 공유 이미지 */}
       <div className="fixed -left-[9999px] top-0">

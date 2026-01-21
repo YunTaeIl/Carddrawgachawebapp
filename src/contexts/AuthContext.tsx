@@ -15,6 +15,7 @@ interface AuthContextType {
   accessToken: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   signInGoogle: () => Promise<void>;
   signInKakao: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accessToken,
         isLoading,
         isAuthenticated: !!user,
+        isAdmin: user?.email === "taeil710@naver.com",
         signInGoogle,
         signInKakao,
         signOut,
