@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Menu, LayoutDashboard, Users, Shield, Zap, Target, Settings, ScrollText, LogIn, FileText, Trophy, Code2 } from "lucide-react";
+import { X, Menu, LayoutDashboard, Users, Shield, Zap, Target, Settings, ScrollText, LogIn, LogOut, FileText, Trophy, Code2, Lock, Eye, EyeOff, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type Page = 
@@ -44,26 +44,33 @@ const menuItems: MenuItem[] = [
 ];
 
 export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onShowAuth }: SidebarProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, signOut } = useAuth();
   const [showDevDialog, setShowDevDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleMenuClick = (pageId: Page) => {
     // 개발중인 페이지인지 확인
     const menuItem = menuItems.find(item => item.id === pageId);
     
     if (menuItem?.inDevelopment) {
-      // 리그진행 페이지는 비밀번호 입력 필요
-      setShowPasswordDialog(true);
-      setPassword("");
-      setPasswordError("");
+      // 리그진행 페이지는 개발중 다이얼로그 먼저 표시
+      setShowDevDialog(true);
     } else {
       // 일반 페이지는 바로 이동
       onNavigate(pageId);
       onClose();
     }
+  };
+
+  const handleUnlockClick = () => {
+    // 자물쇠 버튼 클릭 -> 비밀번호 입력창으로 전환
+    setShowDevDialog(false);
+    setShowPasswordDialog(true);
+    setPassword("");
+    setPasswordError("");
   };
 
   const handlePasswordSubmit = () => {
@@ -163,29 +170,69 @@ export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onS
         </nav>
 
         {/* 하단 영역 */}
-        <div className="border-t border-[#0047AB]/30 p-4 space-y-2">
+        <div className="border-t border-[#0047AB]/30 p-4 space-y-3">
           {!isAuthenticated && onShowAuth && (
             <button
               onClick={() => {
                 onShowAuth();
                 onClose();
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg
-                         bg-[#2B6CFF] hover:bg-[#2B6CFF]/80 text-white
-                         transition-all duration-150"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                         bg-gradient-to-r from-[#2B6CFF] to-[#1E4FCC] 
+                         hover:from-[#2B6CFF]/90 hover:to-[#1E4FCC]/90
+                         text-white shadow-lg shadow-[#2B6CFF]/20
+                         transition-all duration-200 transform hover:scale-[1.02]"
             >
-              <LogIn size={18} />
-              <span className="text-sm font-medium">로그인 / 회원가입</span>
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                <LogIn size={16} />
+              </div>
+              <span className="text-sm font-medium flex-1 text-left">로그인 / 회원가입</span>
             </button>
           )}
+
+          {isAuthenticated && (
+            <button
+              onClick={() => {
+                signOut();
+                onClose();
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                         bg-gradient-to-r from-[#C8102E] to-[#A00D24]
+                         hover:from-[#C8102E]/90 hover:to-[#A00D24]/90
+                         text-white shadow-lg shadow-[#C8102E]/20
+                         transition-all duration-200 transform hover:scale-[1.02]"
+            >
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                <LogOut size={16} />
+              </div>
+              <span className="text-sm font-medium flex-1 text-left">로그아웃</span>
+            </button>
+          )}
+
+          <a
+            href="https://open.kakao.com/o/gpuXSFci"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onClose}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                       bg-gradient-to-r from-[#FFB81C] to-[#FFA500]
+                       hover:from-[#FFB81C]/90 hover:to-[#FFA500]/90
+                       text-[#141B3D] shadow-lg shadow-[#FFB81C]/30
+                       transition-all duration-200 transform hover:scale-[1.02] font-medium"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#141B3D]/10 flex items-center justify-center">
+              <MessageCircle size={16} />
+            </div>
+            <span className="text-sm flex-1 text-left">오픈카톡 문의하기</span>
+          </a>
           
           <button
             onClick={() => handleMenuClick("terms")}
-            className="w-full flex items-center gap-3 px-4 py-2 rounded-lg
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
                        text-[#8B95B5] hover:bg-[#1A2347] hover:text-white
-                       transition-all duration-150"
+                       transition-all duration-150 border border-transparent hover:border-[#0047AB]/20"
           >
-            <FileText size={16} />
+            <FileText size={15} />
             <span className="text-xs">이용약관 및 면책조항</span>
           </button>
         </div>
@@ -215,9 +262,12 @@ export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onS
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-md p-6">
             <div className="bg-gradient-to-br from-[#141B3D] to-[#0A0E27] border-2 border-[#FFB81C]/50 rounded-2xl p-8 shadow-2xl">
               <div className="text-center space-y-6">
-                {/* 아이콘 */}
+                {/* 아이콘 (클릭하면 비밀번호 입력창으로 - 숨겨진 기능) */}
                 <div className="flex justify-center">
-                  <div className="w-20 h-20 rounded-full bg-[#FFB81C]/20 flex items-center justify-center">
+                  <div 
+                    onClick={handleUnlockClick}
+                    className="w-20 h-20 rounded-full bg-[#FFB81C]/20 flex items-center justify-center cursor-pointer"
+                  >
                     <Code2 size={40} className="text-[#FFB81C]" />
                   </div>
                 </div>
@@ -284,17 +334,35 @@ export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onS
                 {/* 비밀번호 입력 필드 */}
                 <div className="bg-[#0B0F1A]/50 rounded-lg p-4 border border-[#0047AB]/30">
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyPress={handlePasswordKeyPress}
+                    onPaste={(e) => {
+                      // 기본 붙여넣기 동작 방지 (중복 방지)
+                      e.preventDefault();
+                      const pastedText = e.clipboardData.getData('text');
+                      setPassword(pastedText);
+                      setPasswordError("");
+                    }}
                     className="w-full bg-transparent text-[#9AA6C3] text-sm leading-relaxed
                                focus:outline-none focus:ring-0"
                     placeholder="비밀번호 입력"
+                    autoComplete="off"
                   />
                   {passwordError && (
                     <p className="text-red-500 text-xs mt-1">{passwordError}</p>
                   )}
+                </div>
+
+                {/* 비밀번호 표시 토글 */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-[#8B95B5] hover:text-white transition-colors"
+                  >
+                    {showPassword ? "비밀번호 숨기기" : "비밀번호 표시"}
+                  </button>
                 </div>
 
                 {/* 버튼 */}

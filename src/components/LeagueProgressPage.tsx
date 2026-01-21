@@ -7,10 +7,6 @@ interface LeagueProgressPageProps {
 }
 
 export function LeagueProgressPage({ onBack, isAdmin }: LeagueProgressPageProps) {
-  if (!isAdmin) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0B0F1A] via-[#141B3D] to-[#0B0F1A] text-white">
       {/* 헤더 */}

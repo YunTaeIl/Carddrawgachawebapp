@@ -415,16 +415,26 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
             <div className="flex items-center gap-2 md:gap-3">
               <Button
                 onClick={() => onNavigate("squad")}
-                className="bg-[#0047AB] hover:bg-[#003D8F] font-display flex-1 md:flex-none py-2.5 md:py-3 flex items-center justify-center"
+                className="bg-gradient-to-r from-[#0047AB] to-[#003D8F] hover:from-[#0047AB]/90 hover:to-[#003D8F]/90
+                           shadow-lg shadow-[#0047AB]/30 font-display flex-1 md:flex-none py-2.5 md:py-3 
+                           flex items-center justify-center rounded-xl transition-all duration-200 
+                           transform hover:scale-[1.02]"
               >
-                <Users className="w-4 h-4 mr-1 md:mr-2" />
+                <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-white/10 flex items-center justify-center mr-1.5 md:mr-2">
+                  <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                </div>
                 팀 관리
               </Button>
               <Button
                 onClick={handleShareSquad}
-                className="bg-[#C8102E] hover:bg-[#A00D25] font-display flex-1 md:flex-none py-2.5 md:py-3 flex items-center justify-center"
+                className="bg-gradient-to-r from-[#C8102E] to-[#A00D25] hover:from-[#C8102E]/90 hover:to-[#A00D25]/90
+                           shadow-lg shadow-[#C8102E]/30 font-display flex-1 md:flex-none py-2.5 md:py-3 
+                           flex items-center justify-center rounded-xl transition-all duration-200 
+                           transform hover:scale-[1.02]"
               >
-                <Share2 className="w-4 h-4 mr-1 md:mr-2" />
+                <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-white/10 flex items-center justify-center mr-1.5 md:mr-2">
+                  <Share2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                </div>
                 공유
               </Button>
             </div>
