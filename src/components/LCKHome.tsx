@@ -295,73 +295,78 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
 
   return (
     <div className="min-h-screen bg-[#0A0E27] text-white">
-      {/* 헤더 */}
-      <div className="bg-gradient-to-b from-[#C8102E]/10 to-transparent border-b border-[#C8102E]/30">
-        <div className="max-w-[1500px] mx-auto px-6 py-8">
-          {/* 로그인/회원가입 버튼 - 우측 상단 */}
-          <div className="flex justify-end mb-4">
-            {isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-[#9AA6C3]">{user?.email}</span>
-                <Button
-                  onClick={handleLogout}
-                  variant="ghost"
-                  size="sm"
-                  className="text-[#E4002B] hover:text-[#E4002B] hover:bg-[#E4002B]/10"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  로그아웃
-                </Button>
-              </div>
-            ) : (
-              <Button
-                onClick={() => setShowAuthDialog(true)}
-                className="bg-[#2B6CFF] hover:bg-[#2B6CFF]/80"
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                로그인 / 회원가입
-              </Button>
-            )}
-          </div>
-
-          <div className="text-center mb-6">
-            <h1 className="flex items-center justify-center gap-4 mb-2">
+      {/* 새 헤더 - 모바일은 작게, 데스크톱은 크게 */}
+      <div className="sticky top-0 z-10 bg-[#0A0E27]/95 backdrop-blur-md border-b border-[#2B6CFF]/20">
+        <div className="max-w-[1500px] mx-auto px-6 py-3">
+          <div className="flex items-center justify-between mb-3">
+            {/* 로고 + 타이틀 */}
+            <div className="flex items-center gap-2 md:gap-4">
               <ImageWithFallback
                 src="https://qpzfzemhljgzscojkxnj.supabase.co/storage/v1/object/public/team-logos/lck-logo-white.svg"
                 alt="LCK Logo"
-                className="w-20 h-20 object-contain"
+                className="w-8 h-8 md:w-16 md:h-16 object-contain"
               />
-              <span className="text-7xl font-bold tracking-wider text-white" style={{
-                textShadow: '0 0 40px rgba(255, 255, 255, 0.5), 0 0 80px rgba(200, 16, 46, 0.3)'
-              }}>
-                LCK GACHA
-              </span>
-            </h1>
-            <p className="text-xl text-[#8B95B5] font-display tracking-wide">SQUAD BUILDER</p>
+              <div>
+                <h1 className="text-xl md:text-5xl font-bold tracking-wider text-white" style={{
+                  textShadow: '0 0 40px rgba(255, 255, 255, 0.5), 0 0 80px rgba(200, 16, 46, 0.3)'
+                }}>
+                  LCK GACHA
+                </h1>
+                <p className="hidden md:block text-sm text-[#8B95B5] font-display tracking-wide">SQUAD BUILDER</p>
+              </div>
+            </div>
+
+            {/* 로그인/로그아웃 버튼 */}
+            <div className="flex items-center">
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="hidden md:inline text-sm text-[#9AA6C3]">{user?.email}</span>
+                  <Button
+                    onClick={handleLogout}
+                    variant="ghost"
+                    size="sm"
+                    className="text-[#E4002B] hover:text-[#E4002B] hover:bg-[#E4002B]/10 text-xs md:text-sm px-2 md:px-4"
+                  >
+                    <LogOut className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                    <span className="hidden md:inline">로그아웃</span>
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => setShowAuthDialog(true)}
+                  className="bg-[#2B6CFF] hover:bg-[#2B6CFF]/80 text-xs md:text-sm px-2 md:px-4"
+                  size="sm"
+                >
+                  <LogIn className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                  <span className="hidden md:inline">로그인 / 회원가입</span>
+                  <span className="md:hidden">로그인</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* 재화 & 천장 게이지 & 출석 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
             {/* 재화 */}
-            <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-xl p-4 border border-[#0047AB]/30">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#C8102E]/20 flex items-center justify-center">
-                    <Coins className="w-5 h-5 text-[#C8102E]" />
+            <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-lg md:rounded-xl p-2 md:p-4 border border-[#0047AB]/30">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#C8102E]/20 flex items-center justify-center">
+                    <Coins className="w-4 h-4 md:w-5 md:h-5 text-[#C8102E]" />
                   </div>
                   <div>
-                    <div className="text-xs text-[#8B95B5]">RP</div>
-                    <div className="text-xl font-display font-bold">{userData.currency.toLocaleString()}</div>
+                    <div className="text-[10px] md:text-xs text-[#8B95B5]">RP</div>
+                    <div className="text-sm md:text-xl font-display font-bold">{userData.currency.toLocaleString()}</div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#FFB81C]/20 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-[#FFB81C]" />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#FFB81C]/20 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-[#FFB81C]" />
                   </div>
                   <div>
-                    <div className="text-xs text-[#8B95B5]">샤드</div>
-                    <div className="text-xl font-display font-bold">{userData.shards.toLocaleString()}</div>
+                    <div className="text-[10px] md:text-xs text-[#8B95B5]">샤드</div>
+                    <div className="text-sm md:text-xl font-display font-bold">{userData.shards.toLocaleString()}</div>
                   </div>
                 </div>
               </div>
@@ -369,32 +374,32 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
 
             {/* 출석 체크 */}
             {isAuthenticated && (
-              <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-xl p-4 border border-[#10B981]/30">
+              <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-lg md:rounded-xl p-2 md:p-4 border border-[#10B981]/30">
                 <Button
                   onClick={handleCheckIn}
                   className="w-full h-full bg-gradient-to-br from-[#10B981]/20 to-transparent hover:from-[#10B981]/30 border border-[#10B981] text-white font-display"
                 >
-                  <Calendar className="w-6 h-6 mr-2" />
+                  <Calendar className="w-4 h-4 md:w-6 md:h-6 md:mr-2" />
                   <div className="text-left">
-                    <div className="text-xs text-[#9AA6C3]">매일 출석하고</div>
-                    <div className="text-lg font-bold">5,000 RP 받기</div>
+                    <div className="text-[10px] md:text-xs text-[#9AA6C3]">매일 출석하고</div>
+                    <div className="text-sm md:text-lg font-bold">5,000 RP 받기</div>
                   </div>
                 </Button>
               </div>
             )}
 
             {/* S 천장 게이지 */}
-            <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-xl p-4 border border-[#C8102E]/30">
+            <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-lg md:rounded-xl p-2 md:p-4 border border-[#C8102E]/30">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-[#FFB81C]" />
-                  <span className="text-sm font-semibold">S 천장</span>
+                  <Zap className="w-3 h-3 md:w-4 md:h-4 text-[#FFB81C]" />
+                  <span className="text-xs md:text-sm font-semibold">S 천장</span>
                 </div>
-                <span className="text-sm font-display text-[#FFB81C]">
+                <span className="text-xs md:text-sm font-display text-[#FFB81C]">
                   {userData.gachaState.s_pity_stack} / {GACHA_CONFIG.S_PITY_HARD}
                 </span>
               </div>
-              <div className="h-2 bg-[#0A0E27] rounded-full overflow-hidden">
+              <div className="h-1.5 md:h-2 bg-[#0A0E27] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#C8102E] via-[#FFB81C] to-[#FFB81C] transition-all duration-300"
                   style={{
@@ -403,8 +408,8 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 />
               </div>
               {userData.gachaState.s_pity_stack >= GACHA_CONFIG.S_PITY_SOFT_START && (
-                <p className="text-xs text-[#FFB81C] mt-1 flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> 확률 상승 구간
+                <p className="text-[10px] md:text-xs text-[#FFB81C] mt-1 flex items-center gap-1">
+                  <Zap className="w-2.5 h-2.5 md:w-3 md:h-3" /> 확률 상승 구간
                 </p>
               )}
             </div>
@@ -413,7 +418,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-[1500px] mx-auto px-6 py-8">{/* 카드 5장 + 간격에 맞춘 최적 너비 */}
+      <div className="max-w-[1500px] mx-auto px-6 py-8">
         {/* MY SQUAD 섹션 */}
         <div className="mb-12" ref={squadRef}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
