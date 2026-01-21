@@ -13,6 +13,7 @@ import { Sidebar, Page } from "@/components/Sidebar";
 import { SimulationPage } from "@/components/SimulationPage";
 import { ComingSoon } from "@/components/ComingSoon";
 import { LeagueProgressPage } from "@/components/LeagueProgressPage";
+import { SharedSquadPage } from "@/components/SharedSquadPage";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { Toaster } from "@/app/components/ui/sonner";
 import { initializeCardPool } from "@/utils/gachaEngine";
@@ -25,6 +26,16 @@ function AppContent() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+
+  // URL 파라미터 확인 및 공유 페이지 감지
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const page = urlParams.get('page');
+    
+    if (page === 'shared_squad') {
+      setCurrentPage('shared-squad');
+    }
+  }, []);
 
   // 카드 풀 초기화
   useEffect(() => {
@@ -84,6 +95,8 @@ function AppContent() {
         return <ComingSoon title="리그 설정" isAdminOnly isAdmin={isAdmin} />;
       case "logs":
         return <ComingSoon title="로그 / 히스토리" isAdminOnly isAdmin={isAdmin} />;
+      case "shared-squad":
+        return <SharedSquadPage />;
       default:
         return <LCKHome onNavigate={handleNavigate} />;
     }
@@ -91,14 +104,17 @@ function AppContent() {
 
   return (
     <>
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onNavigate={handleNavigate}
-        currentPage={currentPage}
-        isAdmin={isAdmin}
-        onShowAuth={() => setShowAuthDialog(true)}
-      />
+      {/* shared-squad 페이지가 아닐 때만 사이드바 표시 */}
+      {currentPage !== "shared-squad" && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onNavigate={handleNavigate}
+          currentPage={currentPage}
+          isAdmin={isAdmin}
+          onShowAuth={() => setShowAuthDialog(true)}
+        />
+      )}
 
       <div className="min-h-screen bg-[#0B0F1A]">
         {!isInitialized ? (
@@ -120,7 +136,7 @@ function AppContent() {
       </div>
 
       {/* 사이드바 트리거 버튼 (접힌 상태일 때) */}
-      {!sidebarOpen && (
+      {!sidebarOpen && currentPage !== "shared-squad" && (
         <button
           onClick={() => setSidebarOpen(true)}
           className="fixed top-1/2 left-0 -translate-y-1/2 z-30 w-8 h-16 

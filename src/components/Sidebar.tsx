@@ -16,7 +16,8 @@ export type Page =
   | "tactics"
   | "league-settings"
   | "logs"
-  | "league-progress";
+  | "league-progress"
+  | "shared-squad";
 
 interface SidebarProps {
   isOpen: boolean;

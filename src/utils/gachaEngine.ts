@@ -62,6 +62,16 @@ export async function initializeCardPool() {
   return cachedCardPool;
 }
 
+// ID로 카드 가져오기
+export async function getCardById(cardId: string): Promise<LCKCard | null> {
+  // 카드 풀이 초기화되지 않았으면 초기화
+  if (!cachedCardPool || cachedCardPool.length === 0) {
+    await initializeCardPool();
+  }
+  
+  return cachedCardPool?.find(card => card.id === cardId) || null;
+}
+
 // 카드팩별 풀 초기화
 function initializePackPools() {
   if (!cachedCardPool) return;

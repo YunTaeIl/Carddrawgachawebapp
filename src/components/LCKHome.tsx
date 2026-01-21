@@ -1,27 +1,25 @@
 // LCK 가챠 메인 홈 화면
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { SynergyPanel } from "@/components/SynergyPanelV2";
-import { ShareCard } from "@/components/ShareCard";
 import { GACHA_CONFIG } from "@/types/lck";
-import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calendar } from "lucide-react";
+import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calendar, Copy, Check } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
-import * as htmlToImage from "html-to-image";
 import { projectId, publicAnonKey } from '/utils/supabase/info';
 import { createClient } from "@supabase/supabase-js";
+import { generateShareURL } from "@/utils/squadEncryption";
+import { Page } from "@/components/Sidebar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 
 const supabase = createClient(
   `https://${projectId}.supabase.co`,
   publicAnonKey
 );
-
-import { Page } from "@/components/Sidebar";
 
 interface LCKHomeProps {
   onNavigate: (page: Page) => void;
@@ -30,7 +28,6 @@ interface LCKHomeProps {
 export function LCKHome({ onNavigate }: LCKHomeProps) {
   const { userData } = useGame();
   const { user, isAuthenticated, signOut, accessToken } = useAuth();
-  const squadRef = useRef<HTMLDivElement>(null);
 
   const positions = ["TOP", "JGL", "MID", "ADC", "SUP"] as const;
   
@@ -190,93 +187,51 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
   };
 
   const handleShareSquad = async () => {
-    console.log('=== 공유 시작 ===');
-    console.log('User Agent:', navigator.userAgent);
-    console.log('navigator.share 존재:', !!navigator.share);
+    console.log('=== 스쿼드 공유 시작 ===');
     
-    if (!squadRef.current) {
-      toast.error("스쿼드 정보를 찾을 수 없습니다.");
+    // 현재 스쿼드의 카드 ID 수집
+    const roster = {
+      top: userData.squad.TOP?.id || null,
+      jgl: userData.squad.JGL?.id || null,
+      mid: userData.squad.MID?.id || null,
+      adc: userData.squad.ADC?.id || null,
+      sup: userData.squad.SUP?.id || null,
+    };
+    
+    // 스쿼드가 비어있는지 확인
+    const hasAnyCard = Object.values(roster).some(id => id !== null);
+    if (!hasAnyCard) {
+      toast.error("공유할 스쿼드가 없습니다.");
       return;
     }
     
+    // 공유 URL 생성
+    const url = generateShareURL(roster);
+    console.log('✅ 공유 URL 생성:', url);
+    
+    // 바로 클립보드에 복사
     try {
-      // Web Share API 없으면 바로 다운로드
-      if (!navigator.share) {
-        console.log('navigator.share 없음 - PC 다운로드');
-        toast.info("이미지 생성 중...");
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const blob = await htmlToImage.toBlob(squadRef.current, {
-          quality: 0.95,
-          pixelRatio: 1.5,
-          backgroundColor: '#0A0E27',
-          cacheBust: true,
-        });
-        if (blob) downloadImage(blob);
+      await navigator.clipboard.writeText(url);
+      toast.success("공유 링크가 복사되었습니다!");
+    } catch (error) {
+      // Clipboard API가 차단된 경우 수동 복사
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success("공유 링크가 복사되었습니다!");
+      } catch (err) {
+        // 수동 복사도 실패하면 다이얼로그 표시
+        console.log('수동 복사 실패, 다이얼로그 표시');
+        setShareURL(url);
+        setShowShareDialog(true);
         return;
       }
-      
-      toast.info("이미지 생성 중...");
-      
-      // 이미지 생성
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const blob = await htmlToImage.toBlob(squadRef.current, {
-        quality: 0.95,
-        pixelRatio: 1.5,
-        backgroundColor: '#0A0E27',
-        cacheBust: true,
-      });
-      
-      if (!blob) {
-        throw new Error('이미지 생성 실패');
-      }
-      
-      console.log('✅ Blob 생성:', blob.size, 'bytes');
-      
-      const file = new File([blob], `lck_squad_${Date.now()}.png`, { type: 'image/png' });
-      console.log('✅ File 생성:', file.name);
-      
-      // canShare 체크 (참고용으로만 로그)
-      if (navigator.canShare) {
-        const canShare = navigator.canShare({ files: [file] });
-        console.log('canShare 결과:', canShare);
-      } else {
-        console.log('canShare 함수 없음');
-      }
-      
-      // canShare 결과와 상관없이 일단 시도!
-      console.log('🚀 navigator.share 호출 시도...');
-      
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'LCK 스쿼드',
-          text: `내 LCK 스쿼드 (평균 OVR ${stats.avgOVR})`,
-        });
-        
-        console.log('✅ 공유 성공!');
-        toast.success("공유 완료!");
-        
-      } catch (shareError: any) {
-        console.error('❌ navigator.share 에러:', shareError);
-        console.error('에러 이름:', shareError.name);
-        console.error('에러 메시지:', shareError.message);
-        
-        // AbortError는 사용자 취소
-        if (shareError.name === 'AbortError') {
-          console.log('사용자 취소');
-          return;
-        }
-        
-        // 공유 실패 - 다운로드로 폴백
-        console.log('공유 실패 - 다운로드');
-        toast.info('파일을 다운로드합니다.');
-        downloadImage(blob);
-      }
-      
-    } catch (error: any) {
-      console.error('❌ 전체 에러:', error);
-      toast.error('이미지 생성에 실패했습니다.');
+      document.body.removeChild(textArea);
     }
   };
   
@@ -290,6 +245,20 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     toast.success("스쿼드 이미지가 다운로드되었습니다!");
+  };
+
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareURL, setShareURL] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyURL = () => {
+    navigator.clipboard.writeText(shareURL).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(err => {
+      console.error('복사 실패:', err);
+      toast.error("복사에 실패했습니다");
+    });
   };
 
   return (
@@ -409,7 +378,7 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       {/* 메인 컨텐츠 */}
       <div className="max-w-[1500px] mx-auto px-6 py-8">
         {/* MY SQUAD 섹션 */}
-        <div className="mb-12" ref={squadRef}>
+        <div className="mb-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <h2 className="text-3xl md:text-4xl font-bold font-display tracking-wide">MY SQUAD</h2>
             <div className="flex items-center gap-2 md:gap-3">
@@ -708,17 +677,44 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
           </Button>
         </div>
       </div>
-      
-      {/* 숨겨진 스쿼드 공유 이미지 */}
-      <div className="fixed -left-[9999px] top-0">
-        <ShareCard
-          ref={squadRef}
-          squad={userData.squad}
-          synergies={synergies}
-          stats={stats}
-          cardBonuses={cardBonuses}
-        />
-      </div>
+
+      {/* 공유 다이얼로그 */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="bg-[#0A0E27] text-white border-[#2B6CFF]/30 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-display text-[#FFB81C]">스쿼드 공유</DialogTitle>
+            <DialogDescription className="text-[#9AA6C3]">
+              아래 링크를 복사하여 친구들과 공유하세요!
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            {/* URL 표시 */}
+            <div className="bg-[#141B3D]/50 p-3 rounded-lg border border-[#0047AB]/30">
+              <div className="text-xs text-[#8B95B5] mb-2">공유 링크</div>
+              <div className="text-sm text-white break-all">{shareURL}</div>
+            </div>
+            
+            {/* 복사 버튼 */}
+            <Button
+              onClick={handleCopyURL}
+              className="w-full bg-gradient-to-r from-[#C8102E] to-[#A00D25] hover:from-[#C8102E]/90 hover:to-[#A00D25]/90 shadow-lg shadow-[#C8102E]/30 font-display py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02]"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-5 h-5 mr-2" />
+                  복사 완료!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5 mr-2" />
+                  링크 복사하기
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
