@@ -103,7 +103,9 @@ export function LeagueProgressPage({
               </div>
               <div className="text-right">
                 <div className="text-xs text-slate-500 mb-1">총 OVR</div>
-                <div className="text-3xl font-bold text-amber-400">{playerTeam.stats.totalOVR}</div>
+                <div className="text-3xl font-bold text-amber-400">
+                  {playerTeam.stats.totalOVR + Object.values(cardBonuses).reduce((sum, bonus) => sum + (bonus?.ovr || 0), 0)}
+                </div>
               </div>
             </div>
 
