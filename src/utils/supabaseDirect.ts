@@ -25,7 +25,7 @@ export async function getGameDataDirect(accessToken: string) {
   const { data, error } = await supabase
     .from("user_game_data")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", user.id)  // user_id를 키로 사용
     .single();
   
   if (error) {
@@ -120,7 +120,7 @@ export async function updateGameDataDirect(
   const { data, error } = await supabase
     .from("user_game_data")
     .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("user_id", user.id)
+    .eq("user_id", user.id)  // user_id를 키로 사용
     .select()
     .single();
   

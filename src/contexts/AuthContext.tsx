@@ -74,6 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setAccessToken(null);
+    
+    // 로그아웃 시 localStorage 완전히 삭제
+    localStorage.clear();
   };
 
   return (

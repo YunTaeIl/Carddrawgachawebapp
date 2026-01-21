@@ -57,7 +57,7 @@ export async function getGameData(userId: string) {
   const { data, error } = await supabase
     .from("user_game_data")
     .select("*")
-    .eq("id", userId)  // user_id가 아닌 id 사용
+    .eq("user_id", userId)  // user_id를 키로 사용
     .single();
   
   if (error) {
@@ -82,7 +82,7 @@ export async function updateGameData(
   const { data, error } = await supabase
     .from("user_game_data")
     .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", userId)  // user_id가 아닌 id 사용
+    .eq("user_id", userId)  // user_id를 키로 사용
     .select()
     .single();
   
@@ -238,7 +238,7 @@ export async function checkDailyAttendance(userId: string) {
       last_check_in: now.toISOString(),
       updated_at: now.toISOString()
     })
-    .eq("id", userId)  // user_id가 아닌 id 사용
+    .eq("user_id", userId)  // user_id를 키로 사용
     .select()
     .single();
   

@@ -71,6 +71,27 @@ BEGIN
   )
   ON CONFLICT (id) DO NOTHING;
   
+  -- user_squads 테이블에 빈 스쿼드 생성
+  INSERT INTO public.user_squads (
+    user_id,
+    top_card_instance_id,
+    jgl_card_instance_id,
+    mid_card_instance_id,
+    adc_card_instance_id,
+    sup_card_instance_id,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NOW()
+  )
+  ON CONFLICT (user_id) DO NOTHING;
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
