@@ -12,6 +12,7 @@ import { LCKAuth } from "@/components/LCKAuth";
 import { Sidebar, Page } from "@/components/Sidebar";
 import { SimulationPage } from "@/components/SimulationPage";
 import { ComingSoon } from "@/components/ComingSoon";
+import { LeagueProgressPage } from "@/components/LeagueProgressPage";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { Toaster } from "@/app/components/ui/sonner";
 import { initializeCardPool } from "@/utils/gachaEngine";
@@ -72,7 +73,7 @@ function AppContent() {
       case "simulation":
         return <SimulationPage onBack={() => handleNavigate("home")} isAdmin={isAdmin} />;
       case "league-progress":
-        return <ComingSoon title="리그진행" isAdminOnly={false} isAdmin={isAdmin} />;
+        return <LeagueProgressPage onBack={() => handleNavigate("home")} isAdmin={isAdmin} />;
       case "players":
         return <ComingSoon title="선수 관리" isAdminOnly isAdmin={isAdmin} />;
       case "teams":
@@ -123,9 +124,9 @@ function AppContent() {
         <button
           onClick={() => setSidebarOpen(true)}
           className="fixed top-1/2 left-0 -translate-y-1/2 z-30 w-8 h-16 
-                     bg-[#141B3D]/80 hover:bg-[#141B3D] border-r border-[#0047AB]/30
-                     flex items-center justify-center text-[#8B95B5] hover:text-white
-                     transition-all duration-200 rounded-r"
+                     bg-[#C8102E]/90 hover:bg-[#C8102E] border-r border-[#FFB81C]/50
+                     flex items-center justify-center text-white hover:text-[#FFB81C]
+                     transition-all duration-200 rounded-r shadow-lg"
           aria-label="사이드바 열기"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
