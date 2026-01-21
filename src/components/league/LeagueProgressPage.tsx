@@ -53,7 +53,7 @@ export function LeagueProgressPage({
 
   // 각 카드가 시너지에 포함되는지 확인
   const isCardInSynergy = (cardId: string) => {
-    return activeSynergies.some(s => s.cardIds.includes(cardId));
+    return activeSynergies.some(s => s.cardIds && s.cardIds.includes(cardId));
   };
 
   return (
