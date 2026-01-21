@@ -32,6 +32,25 @@ function App() {
     init();
   }, []);
 
+  // 모바일 주소창 자동 숨김
+  useEffect(() => {
+    // 페이지 로드 후 약간 스크롤해서 주소창 숨김
+    const hideAddressBar = () => {
+      setTimeout(() => {
+        window.scrollTo(0, 1);
+      }, 100);
+    };
+
+    hideAddressBar();
+    window.addEventListener('orientationchange', hideAddressBar);
+    window.addEventListener('resize', hideAddressBar);
+
+    return () => {
+      window.removeEventListener('orientationchange', hideAddressBar);
+      window.removeEventListener('resize', hideAddressBar);
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <GameProvider>
