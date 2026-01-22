@@ -3,7 +3,7 @@
 import React from "react";
 import { Button } from "@/app/components/ui/button";
 import { GameSimulation, CoachCallType, CoachCall } from "@/types/advancedSimulation";
-import { COACH_CALL_CONFIGS } from "@/utils/simulationEngine";
+import { COACH_CALL_CONFIGS } from "@/utils/simulationEngine/config";
 import {
   Shield,
   Crosshair,
