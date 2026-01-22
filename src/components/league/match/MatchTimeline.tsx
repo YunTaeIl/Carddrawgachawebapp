@@ -65,14 +65,32 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
   // 타임라인 데이터 변환 (초 -> 분)
   const chartData = useMemo(() => {
     if (!game?.timeline || game.timeline.length === 0) {
+      console.warn("⚠️ MatchTimeline: 타임라인 데이터 없음", { game });
       return [];
     }
-    return game.timeline.map(point => ({
+    
+    console.log("📊 타임라인 원본 데이터:", {
+      length: game.timeline.length,
+      first: game.timeline[0],
+      last: game.timeline[game.timeline.length - 1],
+      sample: game.timeline.slice(0, 10)
+    });
+    
+    const data = game.timeline.map(point => ({
       time: (point?.time || 0) / 60, // 분 단위
       goldDiff: point?.goldDiff || 0,
       homeGold: point?.homeGold || 0,
       awayGold: point?.awayGold || 0
     }));
+    
+    console.log("📈 변환된 차트 데이터:", {
+      length: data.length,
+      goldDiffs: data.map(d => d.goldDiff),
+      homeGolds: data.map(d => d.homeGold),
+      awayGolds: data.map(d => d.awayGold)
+    });
+    
+    return data;
   }, [game?.timeline]);
 
   // 주요 이벤트만 마커로 표시
@@ -139,14 +157,25 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
 
   // 데이터가 없으면 표시하지 않음
   if (!chartData || chartData.length === 0) {
+    console.warn("⚠️ 차트 데이터 없음 - 로딩 표시", {
+      chartData,
+      gameTimeline: game?.timeline,
+      gameExists: !!game
+    });
     return (
       <div className="bg-black/60 rounded-xl border border-white/10 p-3">
         <div className="text-center text-slate-500 text-sm py-4">
-          경기 데이터를 수집하는 중...
+          경기 데이터를 수집하는 중... (타임라인: {game?.timeline?.length || 0}개)
         </div>
       </div>
     );
   }
+  
+  console.log("✅ 차트 렌더링 중:", {
+    dataPoints: chartData.length,
+    goldRange,
+    markerEvents: markerEvents.length
+  });
 
   return (
     <div className="bg-black/60 rounded-xl border border-white/10 p-3">
@@ -167,6 +196,11 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
 
       {/* 그래프 */}
       <div className="relative">
+        {/* 디버그 정보 */}
+        <div className="text-xs text-slate-600 mb-1">
+          데이터: {chartData.length}개 | 골드 범위: ±{formatGold(goldRange)}
+        </div>
+        
         <ResponsiveContainer width="100%" height={140}>
           <AreaChart data={chartData}>
             <defs>
