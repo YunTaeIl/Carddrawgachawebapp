@@ -8,7 +8,8 @@ import { initializeMatch, processNextTurn, generateMatchResult } from "@/utils/m
 import { ArrowLeft, Trophy, Skull, Target, Flame } from "lucide-react";
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
-import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
+import { PlayerImage } from "@/components/PlayerImage";
+import { GRADE_COLORS } from "@/types/lck";
 
 interface MatchSimulationPageProps {
   homeTeam: Team;
@@ -30,6 +31,12 @@ export function MatchSimulationPage({
   const [showResult, setShowResult] = useState(false);
   const [gameTime, setGameTime] = useState(0);
   const logEndRef = useRef<HTMLDivElement>(null);
+
+  // 시너지 계산
+  const homeSynergies = calculateSynergies(homeTeam.squad);
+  const awaySynergies = calculateSynergies(awayTeam.squad);
+  const homeCardBonuses = calculateCardSynergyBonuses(homeTeam.squad, homeSynergies);
+  const awayCardBonuses = calculateCardSynergyBonuses(awayTeam.squad, awaySynergies);
 
   // 자동 스크롤
   useEffect(() => {
@@ -225,8 +232,9 @@ export function MatchSimulationPage({
                 const card = homeTeam.squad[pos];
                 if (!card) return null;
                 
-                // 디버깅: 이미지 URL 확인
-                console.log(`[BLUE ${pos}] Name: ${card.name}, Image: ${card.image}`);
+                // 시너지 보너스 계산
+                const bonus = homeCardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
+                const finalOvr = card.stats.ovr + bonus.ovr;
                 
                 return (
                   <div 
@@ -234,10 +242,12 @@ export function MatchSimulationPage({
                     className="flex items-center gap-4 bg-black/30 rounded-xl p-4 border border-white/10 hover:border-blue-500/30 transition-all"
                   >
                     {/* 선수 사진 - 왼쪽 */}
-                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0 border-2 border-blue-500/30">
-                      <ImageWithFallback
-                        src={card.image}
-                        alt={card.name}
+                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-blue-500/30">
+                      <PlayerImage
+                        imageFileName={card.image}
+                        playerName={card.name}
+                        position={card.position}
+                        gradeColor={GRADE_COLORS[card.grade].from}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -252,9 +262,16 @@ export function MatchSimulationPage({
                         </div>
                       </div>
                       
-                      {/* OVR */}
-                      <div className="text-2xl font-bold text-amber-400">
-                        {card.stats.ovr}
+                      {/* OVR - 시너지 적용 */}
+                      <div className="flex items-center gap-2">
+                        <div className="text-2xl font-bold text-amber-400">
+                          {finalOvr}
+                        </div>
+                        {bonus.ovr > 0 && (
+                          <div className="text-xs font-bold text-green-400">
+                            +{bonus.ovr}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -366,8 +383,9 @@ export function MatchSimulationPage({
                 const card = awayTeam.squad[pos];
                 if (!card) return null;
                 
-                // 디버깅: 이미지 URL 확인
-                console.log(`[RED ${pos}] Name: ${card.name}, Image: ${card.image}`);
+                // 시너지 보너스 계산
+                const bonus = awayCardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
+                const finalOvr = card.stats.ovr + bonus.ovr;
                 
                 return (
                   <div 
@@ -375,10 +393,12 @@ export function MatchSimulationPage({
                     className="flex items-center gap-4 bg-black/30 rounded-xl p-4 border border-white/10 hover:border-red-500/30 transition-all"
                   >
                     {/* 선수 사진 - 왼쪽 */}
-                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0 border-2 border-red-500/30">
-                      <ImageWithFallback
-                        src={card.image}
-                        alt={card.name}
+                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-red-500/30">
+                      <PlayerImage
+                        imageFileName={card.image}
+                        playerName={card.name}
+                        position={card.position}
+                        gradeColor={GRADE_COLORS[card.grade].from}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -393,9 +413,16 @@ export function MatchSimulationPage({
                         </div>
                       </div>
                       
-                      {/* OVR */}
-                      <div className="text-2xl font-bold text-amber-400">
-                        {card.stats.ovr}
+                      {/* OVR - 시너지 적용 */}
+                      <div className="flex items-center gap-2">
+                        <div className="text-2xl font-bold text-amber-400">
+                          {finalOvr}
+                        </div>
+                        {bonus.ovr > 0 && (
+                          <div className="text-xs font-bold text-green-400">
+                            +{bonus.ovr}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
