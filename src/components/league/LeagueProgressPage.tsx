@@ -57,6 +57,18 @@ export function LeagueProgressPage({
     return activeSynergies.some(s => s.cardIds && s.cardIds.includes(cardId));
   };
 
+  // 팀의 시너지 적용된 총 OVR 계산 헬퍼 함수
+  const getTeamTotalOVR = (teamId: string) => {
+    const team = getTeamById(teamId);
+    if (!team) return 0;
+    
+    const teamSynergies = calculateSynergies(team.squad);
+    const teamCardBonuses = calculateCardSynergyBonuses(team.squad, teamSynergies);
+    const synergyBonus = Object.values(teamCardBonuses).reduce((sum, bonus) => sum + (bonus?.ovr || 0), 0);
+    
+    return team.stats.totalOVR + synergyBonus;
+  };
+
   return (
     <div className="min-h-screen bg-[#0A0E27] text-white">
       {/* 헤더 */}
@@ -208,7 +220,7 @@ export function LeagueProgressPage({
                     {getKoreanTeamName(getTeamById(currentMatch.homeTeamId)?.name || "")}
                   </div>
                   <div className="text-slate-400">
-                    {getTeamById(currentMatch.homeTeamId)?.stats.totalOVR}
+                    OVR {getTeamTotalOVR(currentMatch.homeTeamId)}
                   </div>
                 </div>
                 
@@ -219,7 +231,7 @@ export function LeagueProgressPage({
                     {getKoreanTeamName(getTeamById(currentMatch.awayTeamId)?.name || "")}
                   </div>
                   <div className="text-slate-400">
-                    {getTeamById(currentMatch.awayTeamId)?.stats.totalOVR}
+                    OVR {getTeamTotalOVR(currentMatch.awayTeamId)}
                   </div>
                 </div>
               </div>

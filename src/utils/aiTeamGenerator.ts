@@ -84,8 +84,8 @@ export function generateAITeams(
   // 2) 포지션별 + 등급별로 분리함
   const positionGradePools = splitByPositionAndGrade(candidatePool);
   
-  // 3) 전역 사용 카드 추적 집합 초기화함
-  const usedCardIds = new Set<string>();
+  // 3) 전역 사용 선수 이름 추적 집합 초기화함 (같은 선수의 다른 년도 카드 방지)
+  const usedPlayerNames = new Set<string>();
   
   // 4) 등급별 선택 통계 (디버깅용)
   const gradePickStats: Record<Grade, number> = { S: 0, A: 0, B: 0, C: 0, D: 0 };
@@ -114,9 +114,9 @@ export function generateAITeams(
       // STEP 1: 등급을 가중 랜덤으로 선택함
       const selectedGrade = weightedPickGrade(leagueConfig.weights);
       
-      // STEP 2: 해당 등급 + 포지션에서 미사용 카드 필터링
+      // STEP 2: 해당 등급 + 포지션에서 미사용 선수 필터링
       let candidates = positionGradePools[position][selectedGrade]?.filter(
-        card => !usedCardIds.has(card.id)
+        card => !usedPlayerNames.has(card.name)
       ) || [];
       
       // STEP 3: 후보가 없으면 fallback 등급 시도
@@ -125,7 +125,7 @@ export function generateAITeams(
           if (fallbackGrade === selectedGrade) continue;
           
           candidates = positionGradePools[position][fallbackGrade]?.filter(
-            card => !usedCardIds.has(card.id)
+            card => !usedPlayerNames.has(card.name)
           ) || [];
           
           if (candidates.length > 0) {
@@ -160,7 +160,7 @@ export function generateAITeams(
       const selectedCard = weightedPick(candidates);
       
       squad[position] = selectedCard;
-      usedCardIds.add(selectedCard.id);
+      usedPlayerNames.add(selectedCard.name);
     }
     
     // 전력 계산함
@@ -177,7 +177,7 @@ export function generateAITeams(
   
   // 8) 생성 결과 검증 및 통계 출력
   console.log(`[AI 로스터] ${leagueType.toUpperCase()} 등급 분포:`, gradePickStats);
-  validateRosterGeneration(aiTeams, usedCardIds, leagueType);
+  validateRosterGeneration(aiTeams, usedPlayerNames, leagueType);
   
   return aiTeams;
 }
@@ -388,12 +388,12 @@ function calculateTeamStats(squad: Team["squad"]) {
 /**
  * 로스터 생성 결과를 검증함
  * - 팀 수 확인
- * - 중복 카드 확인
+ * - 중복 선수 이름 확인
  * - 포지션 완전성 확인
  */
 function validateRosterGeneration(
   teams: Team[],
-  usedCardIds: Set<string>,
+  usedPlayerNames: Set<string>,
   leagueType: LeagueType
 ): void {
   // 1) 팀 수 확인
@@ -401,18 +401,18 @@ function validateRosterGeneration(
     console.warn(`[검증] 팀 수: ${teams.length}개 (예상: 9개)`);
   }
   
-  // 2) 중복 카드 확인
-  const allCardIds = new Set<string>();
+  // 2) 중복 선수 이름 확인
+  const allPlayerNames = new Set<string>();
   let duplicateCount = 0;
   
   for (const team of teams) {
     for (const card of Object.values(team.squad)) {
-      if (card && allCardIds.has(card.id)) {
+      if (card && allPlayerNames.has(card.name)) {
         duplicateCount++;
-        console.warn(`[검증] 카드 중복 발견: ${card.name} (${card.id})`);
+        console.warn(`[검증] 선수 중복 발견: ${card.name} (${card.year}년 ${card.team})`);
       }
       if (card) {
-        allCardIds.add(card.id);
+        allPlayerNames.add(card.name);
       }
     }
   }
@@ -429,7 +429,7 @@ function validateRosterGeneration(
   
   console.log(
     `[AI 로스터 생성 완료] ${leagueType.toUpperCase()} - ` +
-    `9팀, ${usedCardIds.size}장 사용, ` +
+    `9팀, ${usedPlayerNames.size}명 사용, ` +
     `중복 ${duplicateCount}건, 불완전 팀 ${incompleteTeams}개`
   );
 }
