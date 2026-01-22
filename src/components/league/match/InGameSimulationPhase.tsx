@@ -6,10 +6,9 @@ import { MatchSeries, CoachCallType } from "@/types/advancedSimulation";
 import { processGameTick, useCoachCall } from "@/utils/simulationEngine";
 import { finishCurrentSet } from "@/utils/simulationEngine";
 import { getKoreanTeamName } from "@/utils/teamNames";
-import { PlayerImage } from "@/components/PlayerImage";
-import { GRADE_COLORS } from "@/types/lck";
 import { CoachCallPanel } from "./CoachCallPanel";
 import { MatchTimeline } from "./MatchTimeline";
+import { PlayerConditionCard } from "./PlayerConditionCard";
 import { 
   Play, 
   Pause, 
@@ -156,30 +155,16 @@ export function InGameSimulationPhase({
             const card = homeTeam?.squad?.[pos];
             if (!card) return null;
             
-            const baseOVR = card?.stats?.ovr || 0;
+            const playerForm = game.form.home.players[card.id];
             
             return (
-              <div 
+              <PlayerConditionCard
                 key={pos}
-                className="bg-black/40 rounded-lg p-2 border border-blue-500/30 hover:border-blue-500/60 transition"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden border-2" style={{ borderColor: GRADE_COLORS[card.grade] }}>
-                    <PlayerImage
-                      imageFileName={card.image}
-                      playerName={card.name}
-                      position={pos}
-                      gradeColor={GRADE_COLORS[card.grade]}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-slate-400">{pos}</div>
-                    <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
-                    <div className="text-xs text-slate-500">OVR {Math.round(baseOVR)}</div>
-                  </div>
-                </div>
-              </div>
+                card={card}
+                position={pos}
+                playerForm={playerForm}
+                side="home"
+              />
             );
           })}
         </div>
@@ -370,30 +355,16 @@ export function InGameSimulationPhase({
             const card = awayTeam?.squad?.[pos];
             if (!card) return null;
             
-            const baseOVR = card?.stats?.ovr || 0;
+            const playerForm = game.form.away.players[card.id];
             
             return (
-              <div 
+              <PlayerConditionCard
                 key={pos}
-                className="bg-black/40 rounded-lg p-2 border border-red-500/30 hover:border-red-500/60 transition"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden border-2" style={{ borderColor: GRADE_COLORS[card.grade] }}>
-                    <PlayerImage
-                      imageFileName={card.image}
-                      playerName={card.name}
-                      position={pos}
-                      gradeColor={GRADE_COLORS[card.grade]}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-slate-400">{pos}</div>
-                    <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
-                    <div className="text-xs text-slate-500">OVR {Math.round(baseOVR)}</div>
-                  </div>
-                </div>
-              </div>
+                card={card}
+                position={pos}
+                playerForm={playerForm}
+                side="away"
+              />
             );
           })}
         </div>
