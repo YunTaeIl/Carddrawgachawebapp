@@ -6,11 +6,7 @@ import { X, TrendingUp, Users, Award, Zap } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Team } from "@/types/league";
 import { LCKCard, UserCard, Position } from "@/types/lck";
-import { 
-  calculateActiveSynergies, 
-  calculateSquadStats,
-  Squad as SynergySquad
-} from "@/utils/synergyCalculator";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { getKoreanTeamName } from "@/utils/teamNames";
 
 interface TeamDetailModalProps {
@@ -36,26 +32,126 @@ const GRADE_COLORS: Record<string, string> = {
   D: "text-slate-500",
 };
 
+interface SquadStats {
+  totalOVR: number;
+  avgOVR: number;
+  totalMechanics: number;
+  totalLaning: number;
+  totalTeamfight: number;
+  totalMacro: number;
+  totalClutch: number;
+}
+
 export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
   const [loading, setLoading] = useState(true);
   const [synergies, setSynergies] = useState<any[]>([]);
-  const [squadStats, setSquadStats] = useState<any>(null);
+  const [squadStats, setSquadStats] = useState<SquadStats | null>(null);
 
   useEffect(() => {
-    // 시너지 및 스탯 계산
+    // 시너지 및 스탯 계산 (최신 시너지 엔진 사용)
     const calculateTeamDetails = () => {
       try {
-        // LCKCard를 UserCard 형태로 변환 (시너지 계산 호환)
-        const synergySquad: SynergySquad = {
-          TOP: team.squad.TOP as UserCard | null,
-          JGL: team.squad.JGL as UserCard | null,
-          MID: team.squad.MID as UserCard | null,
-          ADC: team.squad.ADC as UserCard | null,
-          SUP: team.squad.SUP as UserCard | null,
+        // 로스터 검증: 5명이 모두 로드되었는지 확인
+        const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
+        const loadedCards = positions.filter(pos => team.squad[pos] !== null);
+        
+        if (loadedCards.length < 5) {
+          console.warn(`팀 ${team.name}: 로스터 불완전 (${loadedCards.length}/5명 로드됨)`);
+        }
+
+        // 스탯 정규화: null/undefined/string 값을 숫자로 변환
+        const normalizeCard = (card: LCKCard | null): UserCard | null => {
+          if (!card) return null;
+          
+          return {
+            ...card,
+            instanceId: card.id, // LCKCard를 UserCard로 변환
+            obtainedAt: Date.now(),
+            stats: {
+              ovr: Number(card.stats.ovr ?? 0) || 0,
+              mechanics: Number(card.stats.mechanics ?? 0) || 0,
+              laning: Number(card.stats.laning ?? 0) || 0,
+              teamfight: Number(card.stats.teamfight ?? 0) || 0,
+              macro: Number(card.stats.macro ?? 0) || 0,
+              clutch: Number(card.stats.clutch ?? 0) || 0,
+            },
+            upgradeLevel: Number(card.upgradeLevel ?? 0) || 0,
+          };
         };
 
-        const activeSynergies = calculateActiveSynergies(synergySquad);
-        const stats = calculateSquadStats(synergySquad, activeSynergies);
+        const normalizedSquad = {
+          TOP: normalizeCard(team.squad.TOP),
+          JGL: normalizeCard(team.squad.JGL),
+          MID: normalizeCard(team.squad.MID),
+          ADC: normalizeCard(team.squad.ADC),
+          SUP: normalizeCard(team.squad.SUP),
+        };
+
+        // 최신 시너지 엔진 사용 (MySquad와 동일)
+        const activeSynergies = calculateSynergies(normalizedSquad);
+        const cardBonuses = calculateCardSynergyBonuses(normalizedSquad, activeSynergies);
+
+        // 스쿼드 스탯 계산 (시너지 포함)
+        const deployedCards = Object.values(normalizedSquad).filter((card): card is UserCard => card !== null);
+        
+        if (deployedCards.length === 0) {
+          setSquadStats({
+            totalOVR: 0,
+            avgOVR: 0,
+            totalMechanics: 0,
+            totalLaning: 0,
+            totalTeamfight: 0,
+            totalMacro: 0,
+            totalClutch: 0
+          });
+          setSynergies([]);
+          setLoading(false);
+          return;
+        }
+
+        let totalOVR = 0;
+        let totalMechanics = 0;
+        let totalLaning = 0;
+        let totalTeamfight = 0;
+        let totalMacro = 0;
+        let totalClutch = 0;
+
+        deployedCards.forEach(card => {
+          const bonus = cardBonuses[card.position] || {
+            ovr: 0, mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0
+          };
+          
+          const cardOVR = Number(card.stats.ovr ?? 0) || 0;
+          const cardMechanics = Number(card.stats.mechanics ?? 0) || 0;
+          const cardLaning = Number(card.stats.laning ?? 0) || 0;
+          const cardTeamfight = Number(card.stats.teamfight ?? 0) || 0;
+          const cardMacro = Number(card.stats.macro ?? 0) || 0;
+          const cardClutch = Number(card.stats.clutch ?? 0) || 0;
+          
+          totalOVR += cardOVR + (Number(bonus.ovr ?? 0) || 0);
+          totalMechanics += cardMechanics + (Number(bonus.mechanics ?? 0) || 0);
+          totalLaning += cardLaning + (Number(bonus.laning ?? 0) || 0);
+          totalTeamfight += cardTeamfight + (Number(bonus.teamfight ?? 0) || 0);
+          totalMacro += cardMacro + (Number(bonus.macro ?? 0) || 0);
+          totalClutch += cardClutch + (Number(bonus.clutch ?? 0) || 0);
+        });
+
+        const stats: SquadStats = {
+          totalOVR: Number.isFinite(totalOVR) ? totalOVR : 0,
+          avgOVR: Number.isFinite(totalOVR) && deployedCards.length > 0 
+            ? Math.round(totalOVR / deployedCards.length) 
+            : 0,
+          totalMechanics: Number.isFinite(totalMechanics) ? totalMechanics : 0,
+          totalLaning: Number.isFinite(totalLaning) ? totalLaning : 0,
+          totalTeamfight: Number.isFinite(totalTeamfight) ? totalTeamfight : 0,
+          totalMacro: Number.isFinite(totalMacro) ? totalMacro : 0,
+          totalClutch: Number.isFinite(totalClutch) ? totalClutch : 0,
+        };
+
+        // NaN 방어: 최종 스탯 검증
+        if (!Number.isFinite(stats.totalOVR)) {
+          console.error(`팀 ${team.name}: 총 OVR이 NaN입니다. 로스터 데이터:`, normalizedSquad);
+        }
 
         setSynergies(activeSynergies);
         setSquadStats(stats);
@@ -143,32 +239,47 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                         key={position}
                         className="bg-slate-900/30 border border-white/5 rounded-xl p-4 hover:bg-slate-800/30 transition-colors"
                       >
-                        <div className="flex items-center justify-between">
-                          {/* 포지션 + 선수 정보 */}
-                          <div className="flex items-center gap-4">
-                            <div className={`${posConfig.bg} ${posConfig.color} px-3 py-1.5 rounded-lg font-bold text-sm`}>
+                        <div className="flex items-center justify-between gap-4">
+                          {/* 선수 사진 + 포지션 + 선수 정보 */}
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            {/* 선수 사진 */}
+                            {card.image && (
+                              <div className="flex-shrink-0">
+                                <img 
+                                  src={card.image} 
+                                  alt={card.name}
+                                  className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover border-2 border-white/10"
+                                  onError={(e) => {
+                                    // 이미지 로딩 실패 시 placeholder
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                            
+                            <div className={`${posConfig.bg} ${posConfig.color} px-3 py-1.5 rounded-lg font-bold text-sm flex-shrink-0`}>
                               {position}
                             </div>
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-white font-bold text-lg">{card.name}</span>
-                                <span className={`${gradeColor} font-bold text-sm`}>
+                                <span className="text-white font-bold text-lg truncate">{card.name}</span>
+                                <span className={`${gradeColor} font-bold text-sm flex-shrink-0`}>
                                   [{card.grade}]
                                 </span>
                               </div>
-                              <div className="text-xs text-slate-500 mt-0.5">
+                              <div className="text-xs text-slate-500 mt-0.5 truncate">
                                 {card.team} • {card.year}
                               </div>
                             </div>
                           </div>
 
                           {/* 스탯 */}
-                          <div className="flex items-center gap-6 text-sm">
+                          <div className="flex items-center gap-4 md:gap-6 text-sm flex-shrink-0">
                             <div className="text-center">
                               <div className="text-xs text-slate-500">OVR</div>
                               <div className="text-white font-bold text-lg">{card.stats.ovr}</div>
                             </div>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                            <div className="hidden md:grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                               <div className="text-slate-400">
                                 <span className="text-slate-500">조작:</span> {card.stats.mechanics}
                               </div>
@@ -201,22 +312,56 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                 </div>
                 {synergies.length > 0 ? (
                   <div className="grid grid-cols-1 gap-3">
-                    {synergies.map((synergy, index) => (
-                      <div
-                        key={index}
-                        className="bg-gradient-to-r from-amber-500/10 to-purple-500/10 border border-amber-500/20 rounded-xl p-4"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="text-amber-400 font-bold text-lg">{synergy.name}</div>
-                            <div className="text-slate-400 text-sm mt-1">{synergy.description}</div>
-                          </div>
-                          <div className="text-xs text-slate-500 bg-slate-900/50 px-3 py-1 rounded">
-                            {synergy.bonus}
+                    {synergies.map((synergy, index) => {
+                      const effect = synergy.currentEffect;
+                      const bonusText = effect 
+                        ? [
+                            effect.ovr > 0 && `OVR +${effect.ovr}`,
+                            effect.mec > 0 && `조작 +${effect.mec}`,
+                            effect.lan > 0 && `라인 +${effect.lan}`,
+                            effect.tf > 0 && `한타 +${effect.tf}`,
+                            effect.mac > 0 && `운영 +${effect.mac}`,
+                            effect.clu > 0 && `클러치 +${effect.clu}`,
+                          ].filter(Boolean).join(', ')
+                        : '';
+                      
+                      return (
+                        <div
+                          key={index}
+                          className={`rounded-xl p-4 ${
+                            synergy.isPrime 
+                              ? 'bg-gradient-to-r from-amber-500/20 to-purple-500/20 border-2 border-amber-500/40'
+                              : 'bg-gradient-to-r from-amber-500/10 to-purple-500/10 border border-amber-500/20'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <div className={`font-bold text-lg ${synergy.isPrime ? 'text-amber-300' : 'text-amber-400'}`}>
+                                  {synergy.synergy.synergy_name}
+                                </div>
+                                {synergy.isPrime && (
+                                  <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                    ⭐ 프라임
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-slate-400 text-sm mt-1">{synergy.synergy.description}</div>
+                              {synergy.matchedPlayers.length > 0 && (
+                                <div className="text-xs text-slate-500 mt-1">
+                                  {synergy.matchedPlayers.join(', ')}
+                                </div>
+                              )}
+                            </div>
+                            {bonusText && (
+                              <div className="text-xs text-slate-300 bg-slate-900/50 px-3 py-1 rounded flex-shrink-0">
+                                {bonusText}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="bg-slate-900/30 border border-white/5 rounded-xl p-6 text-center text-slate-500">
@@ -240,10 +385,10 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                           총 OVR
                         </div>
                         <div className="text-4xl font-bold text-amber-400">
-                          {squadStats.totalOVR}
+                          {Number.isFinite(squadStats.totalOVR) ? squadStats.totalOVR : 0}
                         </div>
                         <div className="text-sm text-slate-400 mt-1">
-                          평균 {squadStats.avgOVR}
+                          평균 {Number.isFinite(squadStats.avgOVR) ? squadStats.avgOVR : 0}
                         </div>
                       </div>
 
@@ -252,25 +397,25 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                         <div className="bg-slate-800/30 rounded-lg p-3">
                           <div className="text-xs text-slate-500 mb-1">조작력</div>
                           <div className="text-2xl font-bold text-blue-400">
-                            {squadStats.totalMechanics}
+                            {Number.isFinite(squadStats.totalMechanics) ? squadStats.totalMechanics : 0}
                           </div>
                         </div>
                         <div className="bg-slate-800/30 rounded-lg p-3">
                           <div className="text-xs text-slate-500 mb-1">라인전</div>
                           <div className="text-2xl font-bold text-green-400">
-                            {squadStats.totalLaning}
+                            {Number.isFinite(squadStats.totalLaning) ? squadStats.totalLaning : 0}
                           </div>
                         </div>
                         <div className="bg-slate-800/30 rounded-lg p-3">
                           <div className="text-xs text-slate-500 mb-1">한타력</div>
                           <div className="text-2xl font-bold text-purple-400">
-                            {squadStats.totalTeamfight}
+                            {Number.isFinite(squadStats.totalTeamfight) ? squadStats.totalTeamfight : 0}
                           </div>
                         </div>
                         <div className="bg-slate-800/30 rounded-lg p-3">
                           <div className="text-xs text-slate-500 mb-1">운영력</div>
                           <div className="text-2xl font-bold text-yellow-400">
-                            {squadStats.totalMacro}
+                            {Number.isFinite(squadStats.totalMacro) ? squadStats.totalMacro : 0}
                           </div>
                         </div>
                       </div>
@@ -284,7 +429,7 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                           <span className="text-sm text-slate-300">클러치 능력</span>
                         </div>
                         <div className="text-2xl font-bold text-red-400">
-                          {squadStats.totalClutch}
+                          {Number.isFinite(squadStats.totalClutch) ? squadStats.totalClutch : 0}
                         </div>
                       </div>
                     </div>
