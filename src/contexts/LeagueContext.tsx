@@ -146,7 +146,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       console.log("✅ 정규시즌 종료!");
     }
     
-    setCurrentLeague({
+    const updatedLeague = {
       ...currentLeague,
       matches: simulatedMatches,
       currentMatchIndex: nextMatchIndex,
@@ -154,7 +154,20 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       standings: newStandings,
       seasonState: newSeasonState,
       updatedAt: new Date().toISOString()
+    };
+    
+    console.log("[LEAGUE] League updated:", {
+      completedMatches: simulatedMatches.filter(m => m.isCompleted).length,
+      totalMatches: simulatedMatches.length,
+      standings: newStandings.map(s => ({ 
+        name: s.teamName, 
+        wins: s.wins, 
+        losses: s.losses,
+        isPlayer: s.isPlayer 
+      }))
     });
+    
+    setCurrentLeague(updatedLeague);
   };
 
   /**

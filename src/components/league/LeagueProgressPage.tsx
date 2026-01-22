@@ -275,13 +275,18 @@ export function LeagueProgressPage({
                           <span className="truncate">{getKoreanTeamName(awayTeam?.name || "")}</span>
                         </div>
                         {match.isCompleted && match.result && (
-                          <div className={`text-xs font-bold ${
-                            match.result.winnerId === currentLeague.playerTeamId 
-                              ? 'text-emerald-400' 
-                              : 'text-red-400'
-                          }`}>
-                            {match.result.winnerId === currentLeague.playerTeamId ? 'W' : 'L'}
-                          </div>
+                          // 플레이어 팀이 참여한 경기만 W/L 표시
+                          (match.homeTeamId === currentLeague.playerTeamId || match.awayTeamId === currentLeague.playerTeamId) ? (
+                            <div className={`text-xs font-bold ${
+                              match.result.winnerId === currentLeague.playerTeamId 
+                                ? 'text-emerald-400' 
+                                : 'text-red-400'
+                            }`}>
+                              {match.result.winnerId === currentLeague.playerTeamId ? 'W' : 'L'}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-slate-500">-</div>
+                          )
                         )}
                       </div>
                     );

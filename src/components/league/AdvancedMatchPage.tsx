@@ -119,11 +119,20 @@ export function AdvancedMatchPage({
                 barons: totalBarons
               };
               
+              console.log("[MATCH] Match completed:", {
+                home: homeTeam.name,
+                away: awayTeam.name,
+                score: `${homeWins}:${awayWins}`,
+                winner: winnerId === homeTeam.id ? homeTeam.name : awayTeam.name
+              });
+              
               // 리그 컨텍스트에 경기 완료 알림
               completeMatch(matchResult);
               
-              // 화면 전환
-              onMatchComplete();
+              // 상태 업데이트를 위해 약간의 딜레이 후 화면 전환
+              setTimeout(() => {
+                onMatchComplete();
+              }, 100);
             }}
           />
         );
