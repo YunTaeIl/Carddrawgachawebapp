@@ -150,7 +150,8 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
           const card = normalizedSquad[position];
           if (!card) return;
           
-          const bonus = cardBonuses[position] || {
+          // cardBonuses는 card.id를 키로 사용하므로 변환 필요
+          const bonus = cardBonuses[card.id] || {
             ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0
           };
           
@@ -184,8 +185,17 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
           synergyClutch += bonusClutch;
         });
         
-        // cardBonuses를 state에 저장
-        setCardBonusesState(cardBonuses);
+        // cardBonuses를 Position 기반으로 변환하여 state에 저장
+        const cardBonusesByPosition: Record<Position, any> = {} as Record<Position, any>;
+        positions.forEach(position => {
+          const card = normalizedSquad[position];
+          if (card) {
+            cardBonusesByPosition[position] = cardBonuses[card.id] || {
+              ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0
+            };
+          }
+        });
+        setCardBonusesState(cardBonusesByPosition);
 
         const stats: SquadStats = {
           totalOVR: Number.isFinite(totalOVR) ? totalOVR : 0,
