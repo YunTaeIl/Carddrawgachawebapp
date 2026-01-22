@@ -24,8 +24,60 @@ import {
 } from "./config";
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { LCKCard } from "@/types/lck";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 // ========== 초기화 ==========
+
+/**
+ * 팀에 시너지 적용
+ */
+function applyTeamSynergies(team: Team): Team {
+  try {
+    // 시너지 계산
+    const synergies = calculateSynergies(team.squad);
+    const cardBonuses = calculateCardSynergyBonuses(team.squad, synergies);
+    
+    // 각 카드의 시너지 보너스 합산
+    const deployedCards = Object.values(team.squad).filter(c => c !== null);
+    
+    // 시너지로 인한 스탯 보너스 계산
+    let synergyOVRBonus = 0;
+    let synergyMechanicsBonus = 0;
+    let synergyLaningBonus = 0;
+    let synergyTeamfightBonus = 0;
+    let synergyMacroBonus = 0;
+    let synergyClutchBonus = 0;
+    
+    deployedCards.forEach(card => {
+      if (!card) return;
+      const bonus = cardBonuses[card.id];
+      if (bonus) {
+        synergyOVRBonus += bonus.ovr || 0;
+        synergyMechanicsBonus += bonus.mechanics || 0;
+        synergyLaningBonus += bonus.laning || 0;
+        synergyTeamfightBonus += bonus.teamfight || 0;
+        synergyMacroBonus += bonus.macro || 0;
+        synergyClutchBonus += bonus.clutch || 0;
+      }
+    });
+    
+    // 시너지가 적용된 팀 스탯 반환
+    return {
+      ...team,
+      stats: {
+        totalOVR: team.stats.totalOVR + synergyOVRBonus,
+        mechanics: team.stats.mechanics + synergyMechanicsBonus,
+        laning: team.stats.laning + synergyLaningBonus,
+        teamfight: team.stats.teamfight + synergyTeamfightBonus,
+        macro: team.stats.macro + synergyMacroBonus,
+        clutch: team.stats.clutch + synergyClutchBonus
+      }
+    };
+  } catch (error) {
+    console.error("팀 시너지 적용 오류:", error);
+    return team; // 오류 시 원본 팀 반환
+  }
+}
 
 /**
  * 게임 시뮬레이션 초기화
@@ -37,14 +89,18 @@ export function initializeGame(
   homePlan: CoachPlan,
   awayPlan: CoachPlan
 ): GameSimulation {
+  // 시너지 적용된 팀 스탯 계산
+  const homeTeamWithSynergy = applyTeamSynergies(homeTeam);
+  const awayTeamWithSynergy = applyTeamSynergies(awayTeam);
+  
   return {
     setNumber,
-    homeTeam,
-    awayTeam,
+    homeTeam: homeTeamWithSynergy,
+    awayTeam: awayTeamWithSynergy,
     
     currentTime: 0,
     tickInterval: SIMULATION_CONSTANTS.TICK_INTERVAL,
-    targetDuration: calculateTargetDuration(homeTeam, awayTeam),
+    targetDuration: calculateTargetDuration(homeTeamWithSynergy, awayTeamWithSynergy),
     
     coachPlan: {
       home: homePlan,
@@ -62,13 +118,13 @@ export function initializeGame(
     },
     
     tendencies: {
-      home: initializeTeamTendencies(homeTeam),
-      away: initializeTeamTendencies(awayTeam)
+      home: initializeTeamTendencies(homeTeamWithSynergy),
+      away: initializeTeamTendencies(awayTeamWithSynergy)
     },
     
     form: {
-      home: initializeTeamForm(homeTeam),
-      away: initializeTeamForm(awayTeam)
+      home: initializeTeamForm(homeTeamWithSynergy),
+      away: initializeTeamForm(awayTeamWithSynergy)
     },
     
     gameState: initializeGameState(),

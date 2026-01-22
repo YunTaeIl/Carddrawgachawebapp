@@ -1,6 +1,6 @@
 // 경기 중 시뮬레이션 화면
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/app/components/ui/button";
 import { MatchSeries, CoachCallType } from "@/types/advancedSimulation";
 import { processGameTick, useCoachCall } from "@/utils/simulationEngine";
@@ -10,7 +10,6 @@ import { PlayerImage } from "@/components/PlayerImage";
 import { GRADE_COLORS } from "@/types/lck";
 import { CoachCallPanel } from "./CoachCallPanel";
 import { MatchTimeline } from "./MatchTimeline";
-import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { 
   Play, 
   Pause, 
@@ -133,63 +132,6 @@ export function InGameSimulationPhase({
     return Math.round(gold).toString();
   };
 
-  // 시너지 계산 (홈팀)
-  const homeSynergies = useMemo(() => {
-    try {
-      if (!game.homeTeam?.squad) return [];
-      return calculateSynergies(game.homeTeam.squad);
-    } catch (error) {
-      console.error("홈팀 시너지 계산 오류:", error);
-      return [];
-    }
-  }, [game.homeTeam?.squad]);
-
-  const homeSynergyBonuses = useMemo(() => {
-    try {
-      if (!game.homeTeam?.squad || !homeSynergies) return {};
-      return calculateCardSynergyBonuses(game.homeTeam.squad, homeSynergies);
-    } catch (error) {
-      console.error("홈팀 시너지 보너스 계산 오류:", error);
-      return {};
-    }
-  }, [game.homeTeam?.squad, homeSynergies]);
-
-  // 시너지 계산 (어웨이팀)
-  const awaySynergies = useMemo(() => {
-    try {
-      if (!game.awayTeam?.squad) return [];
-      return calculateSynergies(game.awayTeam.squad);
-    } catch (error) {
-      console.error("어웨이팀 시너지 계산 오류:", error);
-      return [];
-    }
-  }, [game.awayTeam?.squad]);
-
-  const awaySynergyBonuses = useMemo(() => {
-    try {
-      if (!game.awayTeam?.squad || !awaySynergies) return {};
-      return calculateCardSynergyBonuses(game.awayTeam.squad, awaySynergies);
-    } catch (error) {
-      console.error("어웨이팀 시너지 보너스 계산 오류:", error);
-      return {};
-    }
-  }, [game.awayTeam?.squad, awaySynergies]);
-
-  // 시너지가 적용된 OVR 계산
-  const getDisplayOVR = (cardId: string, baseOVR: number, side: "home" | "away") => {
-    try {
-      if (!cardId || !baseOVR) return baseOVR || 0;
-      const bonuses = side === "home" ? homeSynergyBonuses : awaySynergyBonuses;
-      if (!bonuses || typeof bonuses !== 'object') return baseOVR;
-      const bonus = bonuses[cardId];
-      const synergyBonus = bonus?.totalBonus || 0;
-      return baseOVR + synergyBonus;
-    } catch (error) {
-      console.error("OVR 계산 오류:", error, { cardId, baseOVR, side });
-      return baseOVR || 0;
-    }
-  };
-
   const homeTeam = game.homeTeam;
   const awayTeam = game.awayTeam;
   const state = game.gameState;
@@ -215,7 +157,6 @@ export function InGameSimulationPhase({
             if (!card) return null;
             
             const baseOVR = card?.stats?.ovr || 0;
-            const displayOVR = Math.round(getDisplayOVR(card.id, baseOVR, "home"));
             
             return (
               <div 
@@ -235,7 +176,7 @@ export function InGameSimulationPhase({
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{pos}</div>
                     <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
-                    <div className="text-xs text-slate-500">OVR {displayOVR}</div>
+                    <div className="text-xs text-slate-500">OVR {Math.round(baseOVR)}</div>
                   </div>
                 </div>
               </div>
@@ -430,7 +371,6 @@ export function InGameSimulationPhase({
             if (!card) return null;
             
             const baseOVR = card?.stats?.ovr || 0;
-            const displayOVR = Math.round(getDisplayOVR(card.id, baseOVR, "away"));
             
             return (
               <div 
@@ -450,7 +390,7 @@ export function InGameSimulationPhase({
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{pos}</div>
                     <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
-                    <div className="text-xs text-slate-500">OVR {displayOVR}</div>
+                    <div className="text-xs text-slate-500">OVR {Math.round(baseOVR)}</div>
                   </div>
                 </div>
               </div>
