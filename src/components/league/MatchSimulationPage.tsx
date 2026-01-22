@@ -1,4 +1,4 @@
-// 경기 시뮬레이션 페이지 - LCK 중계 스타일
+// 경기 시뮬레이션 페이지 - 롤 대회 밴픽 스타일
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/app/components/ui/button";
@@ -10,6 +10,7 @@ import { getKoreanTeamName } from "@/utils/teamNames";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { PlayerImage } from "@/components/PlayerImage";
 import { GRADE_COLORS } from "@/types/lck";
+import banpickBg from "figma:asset/84d25d704c0f83501dcee13067e3c15b13156a1e.png";
 
 interface MatchSimulationPageProps {
   homeTeam: Team;
@@ -100,149 +101,147 @@ export function MatchSimulationPage({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // 유리함 바 계산 (0-100, 50이 중립)
-  const calculateAdvantage = () => {
-    const goldWeight = 0.6;
-    const momentumWeight = 0.4;
-    
-    // goldLead를 -5000~5000 범위로 클램프하고 정규화
-    const normalizedGold = Math.max(-5000, Math.min(5000, simulation.state.goldLead)) / 5000 * 50;
-    // momentum을 -100~100 범위로 클램프하고 정규화
-    const normalizedMomentum = Math.max(-100, Math.min(100, simulation.state.momentum)) / 100 * 50;
-    
-    const advantage = 50 + (normalizedGold * goldWeight + normalizedMomentum * momentumWeight);
-    return Math.max(0, Math.min(100, advantage));
-  };
-
-  const advantage = calculateAdvantage();
   const homeScore = simulation.state.kills.home;
   const awayScore = simulation.state.kills.away;
   
   const winner = simulation.winnerId === homeTeam.id ? homeTeam : awayTeam;
   const isPlayerWin = simulation.winnerId === currentLeague?.playerTeamId;
 
+  // 팀 로고 fallback
+  const getTeamLogo = (teamName: string) => {
+    // TODO: 실제 팀 로고 매핑 로직 (현재는 placeholder)
+    return null;
+  };
+
   return (
     <div className="h-screen bg-[#0A0E27] text-white flex flex-col overflow-hidden">
-      {/* 상단 스코어보드 */}
-      <div className="border-b border-white/10 bg-[#0A0E27]/95 backdrop-blur">
-        <div className="px-4 py-3">
-          {/* 매치 정보 + 돌아가기 */}
-          <div className="flex items-center justify-between mb-3">
+      {/* 상단 헤더 - 밴픽 스타일 */}
+      <div className="sticky top-0 z-20 border-b border-white/10 bg-gradient-to-b from-[#0A0E27] via-[#0A0E27] to-[#0A0E27]/95 backdrop-blur">
+        <div className="px-6 py-4">
+          {/* 뒤로가기 버튼 */}
+          <div className="absolute left-4 top-4">
             <Button 
               onClick={onBack} 
               variant="ghost" 
               size="sm" 
-              className="text-slate-400 hover:text-white -ml-2"
+              className="text-slate-400 hover:text-white"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
               리그로
             </Button>
-            
-            <div className="text-center">
-              <div className="text-xs text-slate-500">
-                {currentLeague && LEAGUE_CONFIGS[currentLeague.leagueType].name}
+          </div>
+
+          {/* 메인 헤더: 팀 로고 + 팀명 + 스코어 */}
+          <div className="flex items-center justify-center gap-8">
+            {/* 블루팀 (홈) */}
+            <div className={`flex items-center gap-4 px-6 py-3 rounded-xl transition-all ${
+              isPlayerTeam(homeTeam.id) 
+                ? 'bg-amber-500/15 border border-amber-500/40' 
+                : 'bg-blue-500/10 border border-blue-500/30'
+            }`}>
+              {/* 팀 로고 */}
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border-2 border-blue-400/50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {getTeamLogo(homeTeam.name) ? (
+                  <img src={getTeamLogo(homeTeam.name)!} alt={homeTeam.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-xl font-bold text-blue-400">
+                    {getKoreanTeamName(homeTeam.name).substring(0, 1)}
+                  </div>
+                )}
               </div>
+              
+              {/* 팀명 + OVR */}
+              <div className="text-right">
+                <div className="text-xl font-bold text-white mb-0.5">
+                  {getKoreanTeamName(homeTeam.name)}
+                </div>
+                <div className="text-xs text-slate-400">
+                  OVR {getTeamTotalOVR(homeTeam)}
+                </div>
+              </div>
+            </div>
+
+            {/* 중앙 스코어 */}
+            <div className="flex flex-col items-center gap-2">
+              {/* 리그 정보 */}
+              <div className="text-xs text-slate-500 font-medium tracking-wider">
+                {currentLeague && LEAGUE_CONFIGS[currentLeague.leagueType].name.toUpperCase()}
+              </div>
+              
+              {/* 스코어 */}
+              <div className="flex items-center gap-6 px-8 py-3 bg-black/40 rounded-xl border border-white/10">
+                <div className="text-5xl font-bold text-blue-400 tabular-nums min-w-[3rem] text-center">
+                  {homeScore}
+                </div>
+                <div className="text-3xl text-slate-700 font-bold">:</div>
+                <div className="text-5xl font-bold text-red-400 tabular-nums min-w-[3rem] text-center">
+                  {awayScore}
+                </div>
+              </div>
+              
+              {/* 게임 타임 */}
               <div className="text-xs text-slate-400 font-mono">
                 {formatGameTime(gameTime)}
               </div>
             </div>
-            
-            <div className="w-20" /> {/* 균형 맞추기 */}
-          </div>
 
-          {/* 메인 스코어보드 */}
-          <div className="flex items-center justify-center gap-6 mb-3">
-            {/* 홈팀 */}
-            <div className={`flex items-center gap-3 px-6 py-3 rounded-xl ${
-              isPlayerTeam(homeTeam.id) 
-                ? 'bg-amber-500/15 border border-amber-500/30' 
-                : 'bg-blue-500/10 border border-blue-500/20'
-            }`}>
-              <div className="text-right">
-                <div className="text-lg font-bold">{getKoreanTeamName(homeTeam.name)}</div>
-                <div className="text-xs text-slate-400">OVR {getTeamTotalOVR(homeTeam)}</div>
-              </div>
-            </div>
-
-            {/* 스코어 */}
-            <div className="flex items-center gap-4 px-8 py-4 bg-black/30 rounded-xl border border-white/10">
-              <div className="text-4xl font-bold text-blue-400">{homeScore}</div>
-              <div className="text-2xl text-slate-600">:</div>
-              <div className="text-4xl font-bold text-red-400">{awayScore}</div>
-            </div>
-
-            {/* 어웨이팀 */}
-            <div className={`flex items-center gap-3 px-6 py-3 rounded-xl ${
+            {/* 레드팀 (어웨이) */}
+            <div className={`flex items-center gap-4 px-6 py-3 rounded-xl transition-all ${
               isPlayerTeam(awayTeam.id) 
-                ? 'bg-amber-500/15 border border-amber-500/30' 
-                : 'bg-red-500/10 border border-red-500/20'
+                ? 'bg-amber-500/15 border border-amber-500/40' 
+                : 'bg-red-500/10 border border-red-500/30'
             }`}>
+              {/* 팀명 + OVR */}
               <div className="text-left">
-                <div className="text-lg font-bold">{getKoreanTeamName(awayTeam.name)}</div>
-                <div className="text-xs text-slate-400">OVR {getTeamTotalOVR(awayTeam)}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* 유리함 바 */}
-          <div className="max-w-2xl mx-auto">
-            <div className="h-2 bg-black/30 rounded-full overflow-hidden relative">
-              {/* 중앙 기준선 */}
-              <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 z-10" />
-              
-              {/* 블루 사이드 (advantage > 50일 때 왼쪽에서 50% 이상 채움) */}
-              <div 
-                className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500"
-                style={{ width: `${advantage}%` }}
-              />
-              
-              {/* 레드 사이드 (advantage < 50일 때 오른쪽에서 채움) */}
-              <div 
-                className="absolute right-0 top-0 bottom-0 bg-gradient-to-l from-red-500 to-red-400 transition-all duration-500"
-                style={{ width: `${100 - advantage}%` }}
-              />
-            </div>
-            
-            {/* 우세 표시 */}
-            <div className="flex justify-center mt-1">
-              {Math.abs(50 - advantage) > 5 && (
-                <div className={`text-xs font-semibold ${
-                  advantage > 50 ? 'text-blue-400' : 'text-red-400'
-                }`}>
-                  {advantage > 50 ? '블루 우세' : '레드 우세'} +{Math.abs(Math.round(advantage - 50))}
+                <div className="text-xl font-bold text-white mb-0.5">
+                  {getKoreanTeamName(awayTeam.name)}
                 </div>
-              )}
+                <div className="text-xs text-slate-400">
+                  OVR {getTeamTotalOVR(awayTeam)}
+                </div>
+              </div>
+              
+              {/* 팀 로고 */}
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border-2 border-red-400/50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {getTeamLogo(awayTeam.name) ? (
+                  <img src={getTeamLogo(awayTeam.name)!} alt={awayTeam.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-xl font-bold text-red-400">
+                    {getKoreanTeamName(awayTeam.name).substring(0, 1)}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 메인 영역 */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* 좌측 패널 - 홈팀 (블루) */}
-        <div className={`w-80 border-r border-white/5 flex flex-col ${
-          isPlayerTeam(homeTeam.id) ? 'bg-amber-500/5' : 'bg-blue-500/5'
-        } hidden lg:flex`}>
-          <div className="p-4 border-b border-white/5">
-            <div className="text-sm font-bold text-slate-400 mb-3">BLUE SIDE</div>
-            
-            {/* 선수 리스트 */}
-            <div className="space-y-3">
+      {/* 메인 영역: 12컬럼 그리드 */}
+      <div className="flex-1 grid grid-cols-12 overflow-hidden">
+        {/* 좌측 패널 - 블루팀 선수 (3컬럼) */}
+        <div className="col-span-3 border-r border-white/5 bg-gradient-to-b from-blue-500/5 to-transparent overflow-y-auto hidden xl:block">
+          <div className="p-4">
+            {/* 사이드 라벨 */}
+            <div className="mb-4 pb-2 border-b border-blue-500/20">
+              <div className="text-xs font-bold text-blue-400 tracking-widest">BLUE SIDE</div>
+            </div>
+
+            {/* 선수 리스트 - 밴픽 스타일 */}
+            <div className="space-y-2">
               {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map(pos => {
                 const card = homeTeam.squad[pos];
                 if (!card) return null;
                 
-                // 시너지 보너스 계산
                 const bonus = homeCardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
                 const finalOvr = card.stats.ovr + bonus.ovr;
                 
                 return (
                   <div 
                     key={pos} 
-                    className="flex items-center gap-4 bg-black/30 rounded-xl p-4 border border-white/10 hover:border-blue-500/30 transition-all"
+                    className="flex items-center gap-3 p-2 rounded-lg bg-black/20 border border-white/5 hover:border-blue-500/30 transition-all"
                   >
-                    {/* 선수 사진 - 왼쪽 */}
-                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-blue-500/30">
+                    {/* 선수 썸네일 */}
+                    <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 border border-blue-500/30">
                       <PlayerImage
                         imageFileName={card.image}
                         playerName={card.name}
@@ -252,71 +251,74 @@ export function MatchSimulationPage({
                       />
                     </div>
                     
-                    {/* 오른쪽: 닉네임 + OVR (2줄) */}
-                    <div className="flex-1 flex flex-col justify-center gap-1.5">
-                      {/* 닉네임 + 포지션 */}
-                      <div className="flex items-center gap-2">
-                        <div className="text-base font-bold text-white">{card.name}</div>
-                        <div className="px-2 py-0.5 text-xs font-bold text-blue-400 bg-blue-500/20 rounded">
-                          {pos}
-                        </div>
+                    {/* 선수 정보 */}
+                    <div className="flex-1 min-w-0">
+                      {/* 포지션 */}
+                      <div className="text-[10px] text-blue-400 font-bold mb-0.5 tracking-wider">
+                        {pos}
                       </div>
-                      
-                      {/* OVR - 시너지 적용 */}
-                      <div className="flex items-center gap-2">
-                        <div className="text-2xl font-bold text-amber-400">
+                      {/* 닉네임 */}
+                      <div className="text-sm font-bold text-white truncate mb-0.5">
+                        {card.name}
+                      </div>
+                      {/* OVR */}
+                      <div className="flex items-center gap-1.5">
+                        <div className="text-base font-bold text-amber-400">
                           {finalOvr}
                         </div>
                         {bonus.ovr > 0 && (
-                          <div className="text-xs font-bold text-green-400">
+                          <div className="text-[10px] font-bold text-green-400">
                             +{bonus.ovr}
                           </div>
                         )}
+                        <div className="text-[10px] text-slate-500">
+                          {card.grade}
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
 
-          {/* 팀 지표 */}
-          <div className="p-4 mt-auto">
-            <div className="text-xs font-bold text-slate-400 mb-2">OBJECTIVES</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Skull className="w-4 h-4 text-slate-500" />
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-500">킬</div>
-                    <div className="text-xl font-bold">{simulation.state.kills.home}</div>
+            {/* 팀 오브젝트 */}
+            <div className="mt-6 pt-4 border-t border-blue-500/20">
+              <div className="text-xs font-bold text-slate-400 mb-3 tracking-wider">OBJECTIVES</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Skull className="w-3.5 h-3.5 text-slate-500" />
+                    <div className="flex-1">
+                      <div className="text-[10px] text-slate-500">KILLS</div>
+                      <div className="text-lg font-bold">{simulation.state.kills.home}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-slate-500" />
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-500">타워</div>
-                    <div className="text-xl font-bold">{simulation.state.towers.home}</div>
+                <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-slate-500" />
+                    <div className="flex-1">
+                      <div className="text-[10px] text-slate-500">TOWERS</div>
+                      <div className="text-lg font-bold">{simulation.state.towers.home}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-500">드래곤</div>
-                    <div className="text-xl font-bold">{simulation.state.dragons.home}</div>
+                <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-orange-500" />
+                    <div className="flex-1">
+                      <div className="text-[10px] text-slate-500">DRAGONS</div>
+                      <div className="text-lg font-bold">{simulation.state.dragons.home}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-purple-500" />
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-500">바론</div>
-                    <div className="text-xl font-bold">{simulation.state.barons.home}</div>
+                <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-purple-500" />
+                    <div className="flex-1">
+                      <div className="text-[10px] text-slate-500">BARONS</div>
+                      <div className="text-lg font-bold">{simulation.state.barons.home}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -324,76 +326,86 @@ export function MatchSimulationPage({
           </div>
         </div>
 
-        {/* 중앙 영역 - 배경 + 로그 */}
-        <div className="flex-1 relative overflow-hidden">
+        {/* 중앙 영역 - 메인 디스플레이 (6컬럼) */}
+        <div className="col-span-12 xl:col-span-6 relative overflow-hidden">
           {/* 배경 이미지 */}
           <div 
-            className="absolute inset-0 bg-cover bg-center opacity-15"
+            className="absolute inset-0 bg-cover bg-center"
             style={{
               backgroundImage: `url(https://pqoqubbqakfxrwhximxb.supabase.co/storage/v1/object/public/ui_resources/summoners_rift.webp)`,
-              filter: 'blur(1px)'
+              opacity: 0.12,
+              filter: 'blur(2px)'
             }}
           />
           
-          {/* 로그 영역 */}
-          <div className="relative h-full flex flex-col p-6">
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <div className="text-sm font-bold text-slate-400 mb-3">MATCH LOG</div>
-              
-              <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2">
-                {simulation.events.map((event, index) => (
-                  <div 
-                    key={index}
-                    className={`p-3 rounded-lg text-sm backdrop-blur-sm transition-all duration-300 ${
-                      event.type === "game_start" ? 'bg-blue-500/30 border border-blue-500/50' :
-                      event.type === "game_end" ? 'bg-purple-500/30 border border-purple-500/50' :
-                      event.type === "first_blood" || event.type === "clutch_moment" ? 
-                        'bg-red-500/30 border border-red-500/50 font-semibold' :
-                      event.type === "dragon_fight" || event.type === "baron_fight" ?
-                        'bg-orange-500/30 border border-orange-500/50' :
-                      event.team === "home" ? 
-                        'bg-blue-500/20 border-l-4 border-blue-500' :
-                        'bg-red-500/20 border-l-4 border-red-500'
-                    }`}
-                  >
-                    <div className="flex gap-2 items-start">
-                      <span className="text-slate-500 font-mono text-xs mt-0.5 flex-shrink-0">
-                        {formatGameTime(event.turn * 2)}
-                      </span>
-                      <span className="flex-1">{event.message}</span>
+          {/* 그라디언트 오버레이 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0E27]/70 to-[#0A0E27]/90" />
+          
+          {/* 중앙 콘텐츠 */}
+          <div className="relative h-full flex flex-col">
+            {/* 상단 여백 (밴픽 스타일 연출용) */}
+            <div className="flex-1" />
+            
+            {/* 경기 로그 영역 - 하단 */}
+            <div className="h-80 p-6 overflow-hidden">
+              <div className="h-full flex flex-col bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-4">
+                <div className="text-xs font-bold text-slate-400 mb-3 tracking-wider">MATCH LOG</div>
+                
+                <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2">
+                  {simulation.events.slice(-12).map((event, index) => (
+                    <div 
+                      key={index}
+                      className={`p-2.5 rounded-lg text-xs transition-all duration-300 ${
+                        event.type === "game_start" ? 'bg-blue-500/30 border border-blue-500/50' :
+                        event.type === "game_end" ? 'bg-purple-500/30 border border-purple-500/50' :
+                        event.type === "first_blood" || event.type === "clutch_moment" ? 
+                          'bg-red-500/30 border border-red-500/50 font-semibold' :
+                        event.type === "dragon_fight" || event.type === "baron_fight" ?
+                          'bg-orange-500/30 border border-orange-500/50' :
+                        event.team === "home" ? 
+                          'bg-blue-500/20 border-l-2 border-blue-500' :
+                          'bg-red-500/20 border-l-2 border-red-500'
+                      }`}
+                    >
+                      <div className="flex gap-2 items-start">
+                        <span className="text-slate-500 font-mono text-[10px] mt-0.5 flex-shrink-0">
+                          {formatGameTime(event.turn * 2)}
+                        </span>
+                        <span className="flex-1">{event.message}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                <div ref={logEndRef} />
+                  ))}
+                  <div ref={logEndRef} />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 우측 패널 - 어웨이팀 (레드) */}
-        <div className={`w-80 border-l border-white/5 flex flex-col ${
-          isPlayerTeam(awayTeam.id) ? 'bg-amber-500/5' : 'bg-red-500/5'
-        } hidden lg:flex`}>
-          <div className="p-4 border-b border-white/5">
-            <div className="text-sm font-bold text-slate-400 mb-3">RED SIDE</div>
-            
-            {/* 선수 리스트 */}
-            <div className="space-y-3">
+        {/* 우측 패널 - 레드팀 선수 (3컬럼) */}
+        <div className="col-span-3 border-l border-white/5 bg-gradient-to-b from-red-500/5 to-transparent overflow-y-auto hidden xl:block">
+          <div className="p-4">
+            {/* 사이드 라벨 */}
+            <div className="mb-4 pb-2 border-b border-red-500/20">
+              <div className="text-xs font-bold text-red-400 tracking-widest">RED SIDE</div>
+            </div>
+
+            {/* 선수 리스트 - 밴픽 스타일 */}
+            <div className="space-y-2">
               {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map(pos => {
                 const card = awayTeam.squad[pos];
                 if (!card) return null;
                 
-                // 시너지 보너스 계산
                 const bonus = awayCardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
                 const finalOvr = card.stats.ovr + bonus.ovr;
                 
                 return (
                   <div 
                     key={pos} 
-                    className="flex items-center gap-4 bg-black/30 rounded-xl p-4 border border-white/10 hover:border-red-500/30 transition-all"
+                    className="flex items-center gap-3 p-2 rounded-lg bg-black/20 border border-white/5 hover:border-red-500/30 transition-all"
                   >
-                    {/* 선수 사진 - 왼쪽 */}
-                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-red-500/30">
+                    {/* 선수 썸네일 */}
+                    <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 border border-red-500/30">
                       <PlayerImage
                         imageFileName={card.image}
                         playerName={card.name}
@@ -403,71 +415,74 @@ export function MatchSimulationPage({
                       />
                     </div>
                     
-                    {/* 오른쪽: 닉네임 + OVR (2줄) */}
-                    <div className="flex-1 flex flex-col justify-center gap-1.5">
-                      {/* 닉네임 + 포지션 */}
-                      <div className="flex items-center gap-2">
-                        <div className="text-base font-bold text-white">{card.name}</div>
-                        <div className="px-2 py-0.5 text-xs font-bold text-red-400 bg-red-500/20 rounded">
-                          {pos}
-                        </div>
+                    {/* 선수 정보 */}
+                    <div className="flex-1 min-w-0">
+                      {/* 포지션 */}
+                      <div className="text-[10px] text-red-400 font-bold mb-0.5 tracking-wider">
+                        {pos}
                       </div>
-                      
-                      {/* OVR - 시너지 적용 */}
-                      <div className="flex items-center gap-2">
-                        <div className="text-2xl font-bold text-amber-400">
+                      {/* 닉네임 */}
+                      <div className="text-sm font-bold text-white truncate mb-0.5">
+                        {card.name}
+                      </div>
+                      {/* OVR */}
+                      <div className="flex items-center gap-1.5">
+                        <div className="text-base font-bold text-amber-400">
                           {finalOvr}
                         </div>
                         {bonus.ovr > 0 && (
-                          <div className="text-xs font-bold text-green-400">
+                          <div className="text-[10px] font-bold text-green-400">
                             +{bonus.ovr}
                           </div>
                         )}
+                        <div className="text-[10px] text-slate-500">
+                          {card.grade}
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
 
-          {/* 팀 지표 */}
-          <div className="p-4 mt-auto">
-            <div className="text-xs font-bold text-slate-400 mb-2">OBJECTIVES</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Skull className="w-4 h-4 text-slate-500" />
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-500">킬</div>
-                    <div className="text-xl font-bold">{simulation.state.kills.away}</div>
+            {/* 팀 오브젝트 */}
+            <div className="mt-6 pt-4 border-t border-red-500/20">
+              <div className="text-xs font-bold text-slate-400 mb-3 tracking-wider">OBJECTIVES</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Skull className="w-3.5 h-3.5 text-slate-500" />
+                    <div className="flex-1">
+                      <div className="text-[10px] text-slate-500">KILLS</div>
+                      <div className="text-lg font-bold">{simulation.state.kills.away}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-slate-500" />
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-500">타워</div>
-                    <div className="text-xl font-bold">{simulation.state.towers.away}</div>
+                <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-slate-500" />
+                    <div className="flex-1">
+                      <div className="text-[10px] text-slate-500">TOWERS</div>
+                      <div className="text-lg font-bold">{simulation.state.towers.away}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-500">드래곤</div>
-                    <div className="text-xl font-bold">{simulation.state.dragons.away}</div>
+                <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-orange-500" />
+                    <div className="flex-1">
+                      <div className="text-[10px] text-slate-500">DRAGONS</div>
+                      <div className="text-lg font-bold">{simulation.state.dragons.away}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-purple-500" />
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-500">바론</div>
-                    <div className="text-xl font-bold">{simulation.state.barons.away}</div>
+                <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-purple-500" />
+                    <div className="flex-1">
+                      <div className="text-[10px] text-slate-500">BARONS</div>
+                      <div className="text-lg font-bold">{simulation.state.barons.away}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -476,8 +491,8 @@ export function MatchSimulationPage({
         </div>
       </div>
 
-      {/* 모바일 하단 요약 (lg 미만에서만 표시) */}
-      <div className="lg:hidden border-t border-white/5 bg-[#0A0E27]/95 p-3">
+      {/* 모바일 하단 요약 (xl 미만에서만 표시) */}
+      <div className="xl:hidden border-t border-white/5 bg-[#0A0E27]/95 p-3">
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
             <div className="font-bold text-blue-400">BLUE SIDE</div>
