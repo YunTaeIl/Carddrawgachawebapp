@@ -44,13 +44,6 @@ export function InGameSimulationPhase({
         
         const updatedGame = processGameTick(prev.currentGame);
         
-        console.log(`🎮 게임 틱 처리됨:`, {
-          시간: updatedGame.currentTime,
-          타임라인길이: updatedGame.timeline.length,
-          골드차이: updatedGame.gameState.goldDiff,
-          이벤트수: updatedGame.events.length
-        });
-        
         return {
           ...prev,
           currentGame: updatedGame

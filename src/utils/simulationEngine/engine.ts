@@ -276,24 +276,9 @@ export function processGameTick(game: GameSimulation): GameSimulation {
   
   // 1. 기본 골드 증가 (파밍)
   const goldIncrease = (SIMULATION_CONSTANTS.BASE_GOLD_PER_MINUTE / 60) * game.tickInterval;
-  const beforeHome = game.gameState.goldHome;
-  const beforeAway = game.gameState.goldAway;
-  
   game.gameState.goldHome += goldIncrease;
   game.gameState.goldAway += goldIncrease;
   game.gameState.goldDiff = game.gameState.goldHome - game.gameState.goldAway;
-  
-  // 첫 10초만 디버깅 로그
-  if (newTime <= 10) {
-    console.log(`💰 [${newTime}초] 골드 증가:`, {
-      goldIncrease,
-      beforeHome,
-      afterHome: game.gameState.goldHome,
-      beforeAway,
-      afterAway: game.gameState.goldAway,
-      goldDiff: game.gameState.goldDiff
-    });
-  }
   
   // 2. CP 회복
   const cpRegen = (SIMULATION_CONSTANTS.CP_REGEN_PER_MINUTE / 60) * game.tickInterval;
@@ -318,26 +303,18 @@ export function processGameTick(game: GameSimulation): GameSimulation {
   // 5. 이벤트 적용
   newEvents.forEach(event => {
     applyEventEffects(game, event);
-    game.events.push(event);
   });
+  // 이벤트 추가 (불변성 유지!)
+  if (newEvents.length > 0) {
+    game.events = [...game.events, ...newEvents];
+  }
   
   // 6. 승률 계산
   game.gameState.winProbHome = calculateWinProbability(game, "home");
   
-  // 7. 타임라인 포인트 기록
+  // 7. 타임라인 포인트 기록 (불변성 유지!)
   const timelinePoint = createTimelinePoint(game, newTime);
-  game.timeline.push(timelinePoint);
-  
-  // 디버깅: 주요 시점마다 로그
-  if (newTime % 60 === 0 || newTime === 10) {
-    console.log(`⏱️ [${Math.floor(newTime/60)}분] 타임라인 포인트:`, {
-      time: newTime,
-      goldHome: game.gameState.goldHome,
-      goldAway: game.gameState.goldAway,
-      goldDiff: game.gameState.goldDiff,
-      timelineLength: game.timeline.length
-    });
-  }
+  game.timeline = [...game.timeline, timelinePoint];
   
   // 8. 게임 종료 체크
   checkGameEnd(game, newTime);
