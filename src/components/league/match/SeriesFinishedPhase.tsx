@@ -6,6 +6,7 @@ import { MatchSeries } from "@/types/advancedSimulation";
 import { getSeriesResult } from "@/utils/simulationEngine";
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { Trophy, TrendingUp } from "lucide-react";
+import { useLeague } from "@/contexts/LeagueContext";
 
 interface SeriesFinishedPhaseProps {
   series: MatchSeries;
@@ -16,11 +17,11 @@ export function SeriesFinishedPhase({
   series,
   onComplete
 }: SeriesFinishedPhaseProps) {
+  const { currentLeague } = useLeague();
   const result = getSeriesResult(series);
   
-  // 플레이어가 승리했는지 확인
-  const playerWon = (result.winnerId === series.homeTeam.id && series.homeTeam.isPlayer) ||
-                    (result.winnerId === series.awayTeam.id && series.awayTeam.isPlayer);
+  // 플레이어 팀이 승리했는지 확인 (playerTeamId 기준)
+  const playerWon = currentLeague?.playerTeamId === result.winnerId;
   
   const winnerName = getKoreanTeamName(
     result.winnerId === series.homeTeam.id 
@@ -64,13 +65,15 @@ export function SeriesFinishedPhase({
           <div className="space-y-2">
             {series.sets.map((set, idx) => {
               const setHomeWon = set.winnerId === series.homeTeam.id;
+              const isPlayerTeamHome = currentLeague?.playerTeamId === series.homeTeam.id;
+              const setPlayerWon = isPlayerTeamHome ? setHomeWon : !setHomeWon;
               
               return (
                 <div
                   key={idx}
                   className={`
                     p-4 rounded-lg border-l-4
-                    ${setHomeWon 
+                    ${setPlayerWon 
                       ? 'bg-blue-500/10 border-blue-500' 
                       : 'bg-red-500/10 border-red-500'
                     }
@@ -81,7 +84,7 @@ export function SeriesFinishedPhase({
                       <div className="text-lg font-bold text-white/70">
                         세트 {set.setNumber}
                       </div>
-                      <div className={`text-sm font-bold ${setHomeWon ? 'text-blue-400' : 'text-red-400'}`}>
+                      <div className={`text-sm font-bold ${setPlayerWon ? 'text-blue-400' : 'text-red-400'}`}>
                         {getKoreanTeamName(setHomeWon ? series.homeTeam.name : series.awayTeam.name)} 승리
                       </div>
                     </div>

@@ -6,6 +6,7 @@ import { MatchSeries, PostGameFeedback } from "@/types/advancedSimulation";
 import { applyPostGameFeedback } from "@/utils/simulationEngine";
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { MapPin, Heart, Crosshair, Users } from "lucide-react";
+import { useLeague } from "@/contexts/LeagueContext";
 
 interface PostGameFeedbackPhaseProps {
   series: MatchSeries;
@@ -53,11 +54,16 @@ export function PostGameFeedbackPhase({
   series,
   setSeries
 }: PostGameFeedbackPhaseProps) {
+  const { currentLeague } = useLeague();
   const [homeFeedback, setHomeFeedback] = useState<PostGameFeedback>("MENTAL_CARE");
   const [awayFeedback, setAwayFeedback] = useState<PostGameFeedback>("MENTAL_CARE");
 
   const lastSet = series.sets[series.sets.length - 1];
   const homeWon = lastSet.winnerId === series.homeTeam.id;
+  
+  // 플레이어 팀이 이겼는지 확인 (playerTeamId 기준)
+  const isPlayerTeamHome = currentLeague?.playerTeamId === series.homeTeam.id;
+  const playerWon = isPlayerTeamHome ? homeWon : !homeWon;
 
   const handleContinue = () => {
     // AI 팀 피드백 랜덤 선택
@@ -74,10 +80,10 @@ export function PostGameFeedbackPhase({
         {/* 세트 결과 */}
         <div className="text-center mb-8">
           <div className={`text-6xl mb-4`}>
-            {homeWon ? "🏆" : "😔"}
+            {playerWon ? "🏆" : "😔"}
           </div>
           <h2 className="text-3xl font-bold font-display mb-2">
-            세트 {lastSet.setNumber} - {homeWon ? "승리" : "패배"}
+            세트 {lastSet.setNumber} - {playerWon ? "승리" : "패배"}
           </h2>
           <p className="text-slate-400">
             {getKoreanTeamName(homeWon ? series.homeTeam.name : series.awayTeam.name)}이 승리했습니다
