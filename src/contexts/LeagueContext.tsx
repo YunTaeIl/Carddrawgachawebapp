@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { LeagueInstance, LeagueType, Team, Match, MatchResult, SeasonState, PlayoffBracket, Series } from "@/types/league";
 import { useGame } from "./GameContext";
 import { generateAITeams, createPlayerTeam } from "@/utils/aiTeamGenerator";
-import { generateSchedule, calculateStandings } from "@/utils/leagueScheduler";
+import { generateSchedule, calculateStandings, simulateRemainingMatches } from "@/utils/leagueScheduler";
 import { LEAGUE_CONFIGS } from "@/types/league";
 
 interface LeagueContextType {
@@ -120,8 +120,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     
     // 같은 라운드의 다른 AI 경기들도 자동 시뮬레이션
     const currentRound = currentMatch.round;
-    // simulateRemainingMatches를 import할 수 없어서 직접 import
-    const { simulateRemainingMatches } = require("@/utils/leagueScheduler");
     const simulatedMatches = simulateRemainingMatches(
       currentRound,
       currentLeague.teams,
