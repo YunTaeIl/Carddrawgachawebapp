@@ -355,7 +355,7 @@ function weightedPick(cards: LCKCard[]): LCKCard {
 // ============================================================
 
 /**
- * 팀 스탯 계산
+ * 팀 스탯 계산 (시너지 포함)
  */
 function calculateTeamStats(squad: Team["squad"]) {
   const cards = Object.values(squad).filter(c => c !== null) as LCKCard[];
@@ -371,7 +371,8 @@ function calculateTeamStats(squad: Team["squad"]) {
     };
   }
   
-  return {
+  // 기본 스탯 합계
+  const baseStats = {
     totalOVR: cards.reduce((sum, c) => sum + c.stats.ovr + (c.upgradeLevel || 0), 0),
     mechanics: cards.reduce((sum, c) => sum + c.stats.mechanics, 0),
     laning: cards.reduce((sum, c) => sum + c.stats.laning, 0),
@@ -379,6 +380,30 @@ function calculateTeamStats(squad: Team["squad"]) {
     macro: cards.reduce((sum, c) => sum + c.stats.macro, 0),
     clutch: cards.reduce((sum, c) => sum + c.stats.clutch, 0)
   };
+  
+  // 시너지 보너스 계산 (UserCard 타입으로 변환)
+  try {
+    const { calculateSynergies, calculateCardSynergyBonuses } = require("@/utils/synergyEngine");
+    const synergies = calculateSynergies(squad);
+    const cardBonuses = calculateCardSynergyBonuses(squad, synergies);
+    
+    // 각 카드의 시너지 보너스 합산
+    let totalSynergyBonus = 0;
+    for (const card of cards) {
+      const bonus = cardBonuses[card.id];
+      if (bonus) {
+        totalSynergyBonus += bonus.totalBonus || 0;
+      }
+    }
+    
+    // 시너지 보너스를 totalOVR에 추가
+    baseStats.totalOVR += totalSynergyBonus;
+  } catch (error) {
+    // 시너지 엔진이 없거나 오류 시 기본 스탯만 사용
+    console.warn("시너지 계산 실패:", error);
+  }
+  
+  return baseStats;
 }
 
 // ============================================================

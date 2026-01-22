@@ -256,6 +256,15 @@ function generateEvents(game: GameSimulation, currentTime: number): GameEvent[] 
   
   // 이벤트 후보군 필터링
   const candidates = Object.values(EVENT_CONFIGS).filter(config => {
+    // NEXUS_DESTROYED는 여기서 생성하지 않음 (게임 종료 체크에서만)
+    if (config.type === "NEXUS_DESTROYED") return false;
+    
+    // FIRST_BLOOD 계열은 첫 킬이 발생하지 않았을 때만
+    if (config.type.includes("FIRST_BLOOD")) {
+      const totalKills = game.gameState.kills.home + game.gameState.kills.away;
+      if (totalKills > 0) return false;
+    }
+    
     // 시간 범위 체크
     if (currentTime < config.minTime || currentTime > config.maxTime) return false;
     
@@ -629,15 +638,15 @@ function checkGameEnd(game: GameSimulation, time: number): void {
       const winner = state.goldDiff > 0 ? "home" : "away";
       const winnerId = winner === "home" ? game.homeTeam.id : game.awayTeam.id;
       
+      const winnerTeamName = getKoreanTeamName(winner === "home" ? game.homeTeam.name : game.awayTeam.name);
+      
       const endEvent: GameEvent = {
         time,
-        type: "NEXUS_END",
+        type: "NEXUS_DESTROYED",
         side: winner,
         success: true,
         goldSwing: 0,
-        text: EVENT_MESSAGES["NEXUS_END"].success(
-          getKoreanTeamName(winner === "home" ? game.homeTeam.name : game.awayTeam.name)
-        ),
+        text: `${winnerTeamName}이 넥서스를 파괴했습니다! 승리!`,
         impactTags: ["game_end"]
       };
       

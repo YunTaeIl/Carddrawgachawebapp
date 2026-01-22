@@ -118,10 +118,10 @@ export function InGameSimulationPhase({
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
-  // 골드 포맷
+  // 골드 포맷 (소수점 제거)
   const formatGold = (gold: number) => {
     if (gold >= 1000) {
-      return `${(gold / 1000).toFixed(1)}k`;
+      return `${Math.round(gold / 1000)}k`;
     }
     return gold.toString();
   };
@@ -157,7 +157,13 @@ export function InGameSimulationPhase({
               >
                 <div className="flex items-center gap-2">
                   <div className="w-12 h-12 rounded-lg overflow-hidden border-2" style={{ borderColor: GRADE_COLORS[card.grade] }}>
-                    <PlayerImage card={card} />
+                    <PlayerImage
+                      imageFileName={card.image}
+                      playerName={card.name}
+                      position={pos}
+                      gradeColor={GRADE_COLORS[card.grade]}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{pos}</div>
@@ -240,9 +246,9 @@ export function InGameSimulationPhase({
           </div>
 
           {/* 이벤트 로그 + 감독 콜 패널 */}
-          <div className="flex-1 flex gap-2 p-2">
+          <div className="flex-1 flex gap-2 p-2 min-h-0">
             {/* 왼쪽: 이벤트 로그 */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar bg-black/20 rounded-lg">
+            <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar bg-black/20 rounded-lg max-h-full">
               {game.events.map((event, idx) => (
                 <div
                   key={idx}
@@ -358,7 +364,13 @@ export function InGameSimulationPhase({
               >
                 <div className="flex items-center gap-2">
                   <div className="w-12 h-12 rounded-lg overflow-hidden border-2" style={{ borderColor: GRADE_COLORS[card.grade] }}>
-                    <PlayerImage card={card} />
+                    <PlayerImage
+                      imageFileName={card.image}
+                      playerName={card.name}
+                      position={pos}
+                      gradeColor={GRADE_COLORS[card.grade]}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{pos}</div>
