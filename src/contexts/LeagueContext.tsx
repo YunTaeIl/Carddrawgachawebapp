@@ -120,12 +120,22 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     
     // 같은 라운드의 다른 AI 경기들도 자동 시뮬레이션
     const currentRound = currentMatch.round;
+    console.log("[LEAGUE] Current round:", currentRound);
+    
     const simulatedMatches = simulateRemainingMatches(
       currentRound,
       currentLeague.teams,
       updatedMatches,
       currentLeague.playerTeamId
     );
+    
+    const aiMatchesCompleted = simulatedMatches.filter(
+      m => m.round === currentRound && 
+      m.isCompleted && 
+      m.homeTeamId !== currentLeague.playerTeamId && 
+      m.awayTeamId !== currentLeague.playerTeamId
+    );
+    console.log("[LEAGUE] AI matches simulated:", aiMatchesCompleted.length);
     
     // 승리 포인트 지급
     let newPoints = currentLeague.currentPoints;
