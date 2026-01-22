@@ -2,7 +2,7 @@
 // 팀 로스터, 시너지, 최종 스탯 표시
 
 import React, { useState, useEffect } from "react";
-import { X, TrendingUp, Users, Award, Zap, ChevronDown, ChevronUp } from "lucide-react";
+import { X, TrendingUp, Users, Award, Zap, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Team } from "@/types/league";
 import { LCKCard, UserCard, Position } from "@/types/lck";
