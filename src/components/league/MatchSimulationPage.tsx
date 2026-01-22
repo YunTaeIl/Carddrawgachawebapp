@@ -29,7 +29,8 @@ export function MatchSimulationPage({
   const [simulation, setSimulation] = useState<MatchSimulationState>(() => 
     initializeMatch(homeTeam, awayTeam)
   );
-  const [showResult, setShowResult] = useState(false);
+  const [gameEnded, setGameEnded] = useState(false); // 경기 종료 화면
+  const [showRewardModal, setShowRewardModal] = useState(false); // 포인트 보상 모달
   const [gameTime, setGameTime] = useState(0);
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -67,10 +68,10 @@ export function MatchSimulationPage({
     }
   }, [simulation.isFinished]);
 
-  // 경기 종료 처리
+  // 경기 종료 처리 - 결과 화면만 표시
   useEffect(() => {
-    if (simulation.isFinished && !showResult) {
-      setTimeout(() => setShowResult(true), 1500);
+    if (simulation.isFinished && !gameEnded) {
+      setTimeout(() => setGameEnded(true), 1500);
     }
   }, [simulation.isFinished]);
 
@@ -79,9 +80,15 @@ export function MatchSimulationPage({
     setSimulation(prev => processNextTurn(prev));
   };
 
-  const handleFinish = () => {
+  // 결과 확인 버튼 클릭 -> 포인트 즉시 지급 + 보상 모달 표시
+  const handleConfirmResult = () => {
     const result = generateMatchResult(simulation);
-    completeMatch(result);
+    completeMatch(result); // 포인트 즉시 지급
+    setShowRewardModal(true); // 보상 모달 표시
+  };
+
+  // 리그로 돌아가기
+  const handleFinish = () => {
     onMatchComplete();
   };
 
@@ -523,37 +530,129 @@ export function MatchSimulationPage({
         </div>
       </div>
 
-      {/* 결과 모달 */}
-      {showResult && simulation.isFinished && (
+      {/* 경기 종료 오버레이 - 결과 확인 */}
+      {gameEnded && !showRewardModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-6">
+          <div className={`max-w-2xl w-full rounded-3xl p-10 border-2 text-center ${
+            isPlayerWin 
+              ? 'bg-gradient-to-b from-emerald-500/30 to-emerald-600/20 border-emerald-500' 
+              : 'bg-gradient-to-b from-red-500/30 to-red-600/20 border-red-500'
+          }`}>
+            <div className="text-7xl mb-6">{isPlayerWin ? '🏆' : '💔'}</div>
+            
+            <h2 className="text-6xl font-bold font-display mb-6">
+              {isPlayerWin ? 'VICTORY' : 'DEFEAT'}
+            </h2>
+            
+            <p className="text-2xl text-white font-bold mb-2">{getKoreanTeamName(winner.name)} 승리</p>
+            <p className="text-base text-slate-300 mb-8">
+              게임 시간: {formatGameTime(gameTime)}
+            </p>
+
+            {/* 경기 통계 */}
+            <div className="grid grid-cols-2 gap-4 mb-8 bg-black/30 rounded-2xl p-6">
+              <div className="text-center border-r border-white/10">
+                <div className="text-sm text-slate-400 mb-2">
+                  {getKoreanTeamName(homeTeam.name)}
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">킬</span>
+                    <span className="text-lg font-bold text-blue-400">{simulation.state.kills.home}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">타워</span>
+                    <span className="text-lg font-bold text-blue-400">{simulation.state.towers.home}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">드래곤</span>
+                    <span className="text-lg font-bold text-blue-400">{simulation.state.dragons.home}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">바론</span>
+                    <span className="text-lg font-bold text-blue-400">{simulation.state.barons.home}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-slate-400 mb-2">
+                  {getKoreanTeamName(awayTeam.name)}
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">킬</span>
+                    <span className="text-lg font-bold text-red-400">{simulation.state.kills.away}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">타워</span>
+                    <span className="text-lg font-bold text-red-400">{simulation.state.towers.away}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">드래곤</span>
+                    <span className="text-lg font-bold text-red-400">{simulation.state.dragons.away}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">바론</span>
+                    <span className="text-lg font-bold text-red-400">{simulation.state.barons.away}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button onClick={handleConfirmResult} className="w-full py-6 text-lg font-bold">
+              결과 확인하고 계속하기
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 포인트 보상 모달 */}
+      {showRewardModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className={`max-w-md w-full rounded-2xl p-8 border-2 text-center ${
             isPlayerWin 
               ? 'bg-emerald-500/20 border-emerald-500' 
-              : 'bg-red-500/20 border-red-500'
+              : 'bg-slate-700/20 border-slate-600'
           }`}>
-            <div className="text-6xl mb-6">{isPlayerWin ? '🏆' : '💔'}</div>
-            
-            <h2 className="text-5xl font-bold font-display mb-4">
-              {isPlayerWin ? 'VICTORY' : 'DEFEAT'}
-            </h2>
-            
-            <p className="text-xl text-slate-300 mb-2">{getKoreanTeamName(winner.name)} 승리</p>
-            <p className="text-sm text-slate-400 mb-8">
-              게임 시간: {formatGameTime(gameTime)}
-            </p>
+            {isPlayerWin ? (
+              <>
+                <div className="text-6xl mb-6">💰</div>
+                
+                <h2 className="text-4xl font-bold font-display mb-4">
+                  포인트 획득!
+                </h2>
+                
+                {currentLeague && (
+                  <div className="bg-black/30 rounded-xl p-6 mb-8">
+                    <p className="text-sm text-slate-400 mb-2">승리 보상</p>
+                    <p className="text-5xl font-bold text-amber-400 mb-1">
+                      +{LEAGUE_CONFIGS[currentLeague.leagueType].winPoints.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-slate-500">포인트가 지급되었습니다</p>
+                  </div>
+                )}
 
-            {isPlayerWin && currentLeague && (
-              <div className="bg-black/30 rounded-xl p-4 mb-8">
-                <p className="text-sm text-slate-400 mb-1">획득 보상</p>
-                <p className="text-3xl font-bold text-amber-400">
-                  +{LEAGUE_CONFIGS[currentLeague.leagueType].winPoints.toLocaleString()}
+                <Button onClick={handleFinish} className="w-full py-6 text-lg">
+                  리그로 돌아가기
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="text-6xl mb-6">😔</div>
+                
+                <h2 className="text-4xl font-bold font-display mb-4">
+                  아쉽지만...
+                </h2>
+                
+                <p className="text-slate-400 mb-8">
+                  다음 경기에서 승리하세요!
                 </p>
-              </div>
-            )}
 
-            <Button onClick={handleFinish} className="w-full py-6 text-lg">
-              리그로 돌아가기
-            </Button>
+                <Button onClick={handleFinish} className="w-full py-6 text-lg">
+                  리그로 돌아가기
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
