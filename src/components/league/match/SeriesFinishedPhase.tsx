@@ -1,0 +1,115 @@
+// 시리즈 종료 화면
+
+import React from "react";
+import { Button } from "@/app/components/ui/button";
+import { MatchSeries } from "@/types/advancedSimulation";
+import { getSeriesResult } from "@/utils/simulationEngine";
+import { getKoreanTeamName } from "@/utils/teamNames";
+import { Trophy, TrendingUp } from "lucide-react";
+
+interface SeriesFinishedPhaseProps {
+  series: MatchSeries;
+  onComplete: () => void;
+}
+
+export function SeriesFinishedPhase({
+  series,
+  onComplete
+}: SeriesFinishedPhaseProps) {
+  const result = getSeriesResult(series);
+  const homeWon = result.winnerId === series.homeTeam.id;
+  const winnerName = getKoreanTeamName(homeWon ? series.homeTeam.name : series.awayTeam.name);
+
+  return (
+    <div className="w-full h-full flex items-center justify-center p-8">
+      <div className="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-12 border border-white/10">
+        {/* 승리 아이콘 */}
+        <div className="text-center mb-8">
+          <div className="text-8xl mb-6">
+            {homeWon ? "🏆" : "💔"}
+          </div>
+          
+          <h1 className={`text-6xl font-bold font-display mb-4 ${homeWon ? 'text-yellow-400' : 'text-slate-400'}`}>
+            {homeWon ? "VICTORY" : "DEFEAT"}
+          </h1>
+          
+          <p className="text-2xl text-slate-300 mb-2">
+            {winnerName} 승리!
+          </p>
+          
+          <div className="text-xl text-slate-500">
+            {series.seriesType} - {result.winnerScore}:{result.loserScore}
+          </div>
+        </div>
+
+        {/* 세트별 결과 */}
+        <div className="mb-8">
+          <h3 className="text-lg font-bold mb-4 text-center text-white/90">세트별 결과</h3>
+          <div className="space-y-2">
+            {series.sets.map((set, idx) => {
+              const setHomeWon = set.winnerId === series.homeTeam.id;
+              
+              return (
+                <div
+                  key={idx}
+                  className={`
+                    p-4 rounded-lg border-l-4
+                    ${setHomeWon 
+                      ? 'bg-blue-500/10 border-blue-500' 
+                      : 'bg-red-500/10 border-red-500'
+                    }
+                  `}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-lg font-bold text-white/70">
+                        세트 {set.setNumber}
+                      </div>
+                      <div className={`text-sm font-bold ${setHomeWon ? 'text-blue-400' : 'text-red-400'}`}>
+                        {getKoreanTeamName(setHomeWon ? series.homeTeam.name : series.awayTeam.name)} 승리
+                      </div>
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      {Math.floor(set.duration / 60)}:{(set.duration % 60).toString().padStart(2, '0')}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 flex gap-6 text-xs text-slate-400">
+                    <span>킬: {set.finalState.objectives.kills.home} - {set.finalState.objectives.kills.away}</span>
+                    <span>타워: {set.finalState.objectives.towers.home} - {set.finalState.objectives.towers.away}</span>
+                    <span>드래곤: {set.finalState.objectives.dragons.home} - {set.finalState.objectives.dragons.away}</span>
+                    <span>골드차: {set.finalState.goldDiff > 0 ? '+' : ''}{(set.finalState.goldDiff / 1000).toFixed(1)}k</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 보상 (승리 시) */}
+        {homeWon && (
+          <div className="mb-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Trophy className="w-6 h-6 text-yellow-400" />
+              <h3 className="text-xl font-bold text-yellow-400">승리 보상</h3>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-yellow-400 mb-1">
+                +500
+              </div>
+              <div className="text-sm text-slate-400">포인트 획득</div>
+            </div>
+          </div>
+        )}
+
+        {/* 완료 버튼 */}
+        <Button
+          onClick={onComplete}
+          className="w-full py-6 text-lg font-bold"
+        >
+          리그로 돌아가기
+        </Button>
+      </div>
+    </div>
+  );
+}

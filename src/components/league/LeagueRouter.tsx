@@ -4,11 +4,12 @@ import React, { useState } from "react";
 import { useLeague } from "@/contexts/LeagueContext";
 import { LeagueSelectPage } from "./LeagueSelectPage";
 import { LeagueProgressPage } from "./LeagueProgressPage";
-import { MatchSimulationPage } from "./MatchSimulationPage";
+import { AdvancedMatchPage } from "./AdvancedMatchPage";
 import { StandingsPage } from "./StandingsPage";
 import { PlayoffsPage } from "./PlayoffsPage";
 import { SeasonResultPage } from "./SeasonResultPage";
 import { Series } from "@/types/league";
+import { SeriesType } from "@/types/advancedSimulation";
 
 type LeagueRoute = 
   | "select"
@@ -184,10 +185,13 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
         setCurrentRoute("progress");
         return null;
       }
+      // 정규리그는 BO3
+      const seriesType: SeriesType = "BO3";
       return (
-        <MatchSimulationPage
+        <AdvancedMatchPage
           homeTeam={homeTeam}
           awayTeam={awayTeam}
+          seriesType={seriesType}
           onMatchComplete={handleMatchComplete}
           onBack={handleBackToProgress}
         />
@@ -219,10 +223,13 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
         setCurrentRoute("playoffs");
         return null;
       }
+      // 플레이오프는 BO5
+      const advancedSeriesType: SeriesType = "BO5";
       return (
-        <MatchSimulationPage
+        <AdvancedMatchPage
           homeTeam={homeTeam}
           awayTeam={awayTeam}
+          seriesType={advancedSeriesType}
           onMatchComplete={handleMatchComplete}
           onBack={handleBackToPlayoffs}
         />

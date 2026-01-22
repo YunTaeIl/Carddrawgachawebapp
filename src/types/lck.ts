@@ -17,12 +17,14 @@ export interface LCKCard {
   year: number;
   team: string;
   name: string;
+  ign?: string; // 게임 내 닉네임 (없으면 name 사용)
   grade: Grade;
   position: Position;
   image: string;
   stats: CardStats;
   // 강화 레벨 (사용자별로 다름)
   upgradeLevel?: number;
+  ovr?: number; // OVR 계산값
 }
 
 export interface UserCard extends LCKCard {
