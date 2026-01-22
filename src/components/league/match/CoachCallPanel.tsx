@@ -44,6 +44,18 @@ const CALL_LABELS: Record<CoachCallType, string> = {
   BARON_FAKE: "페이크"
 };
 
+// 모든 콜 타입 배열 (순서 보장)
+const ALL_CALL_TYPES: CoachCallType[] = [
+  "SAFE_PLAY",
+  "DIVE_CALL",
+  "INVADE_CALL",
+  "VISION_CONTROL",
+  "FORCE_OBJECTIVE",
+  "AVOID_FIGHT",
+  "START_BARON",
+  "BARON_FAKE"
+];
+
 export function CoachCallPanel({
   game,
   side,
@@ -125,7 +137,7 @@ export function CoachCallPanel({
 
       {/* 콜 버튼들 */}
       <div className="grid grid-cols-2 gap-2">
-        {(Object.keys(COACH_CALL_CONFIGS) as CoachCallType[]).map(callType => {
+        {ALL_CALL_TYPES.map(callType => {
           const config = COACH_CALL_CONFIGS[callType];
           const Icon = CALL_ICONS[callType];
           const active = isCallActive(callType);
