@@ -73,7 +73,20 @@ export function initializeGame(
     
     gameState: initializeGameState(),
     
-    timeline: [],
+    timeline: [{
+      time: 0,
+      goldHome: 0,
+      goldAway: 0,
+      goldDiff: 0,
+      winProbHome: 50,
+      objectiveState: {
+        kills: { home: 0, away: 0 },
+        towers: { home: 0, away: 0 },
+        dragons: { home: 0, away: 0 },
+        barons: { home: 0, away: 0 }
+      },
+      markers: []
+    }],
     events: [{
       time: 0,
       type: "GAME_START",

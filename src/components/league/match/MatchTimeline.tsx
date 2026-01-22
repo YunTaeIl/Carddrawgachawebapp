@@ -50,6 +50,14 @@ const EVENT_COLORS: Record<string, string> = {
   TEAMFIGHT: "#f97316"
 };
 
+// 골드 포맷 함수 (소수점 제거)
+function formatGold(gold: number): string {
+  if (gold >= 1000) {
+    return `${Math.round(gold / 1000)}k`;
+  }
+  return gold.toString();
+}
+
 export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
   // 타임라인 데이터 변환 (초 -> 분)
   const chartData = useMemo(() => {
@@ -101,20 +109,20 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
           <div className="flex items-center justify-between gap-4">
             <span className="text-xs text-blue-400">블루</span>
             <span className="text-sm font-bold text-blue-400">
-              {(data.homeGold / 1000).toFixed(1)}k
+              {formatGold(data.homeGold)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
             <span className="text-xs text-red-400">레드</span>
             <span className="text-sm font-bold text-red-400">
-              {(data.awayGold / 1000).toFixed(1)}k
+              {formatGold(data.awayGold)}
             </span>
           </div>
           <div className="border-t border-white/10 pt-1 mt-1">
             <div className="flex items-center justify-between gap-4">
               <span className="text-xs text-slate-400">차이</span>
               <span className={`text-sm font-bold ${data.goldDiff > 0 ? "text-blue-400" : data.goldDiff < 0 ? "text-red-400" : "text-slate-400"}`}>
-                {data.goldDiff > 0 ? "+" : ""}{(data.goldDiff / 1000).toFixed(1)}k
+                {data.goldDiff > 0 ? "+" : ""}{formatGold(Math.abs(data.goldDiff))}
               </span>
             </div>
           </div>
@@ -122,6 +130,17 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
       </div>
     );
   };
+
+  // 데이터가 없으면 표시하지 않음
+  if (!chartData || chartData.length === 0) {
+    return (
+      <div className="bg-black/60 rounded-xl border border-white/10 p-3">
+        <div className="text-center text-slate-500 text-sm py-4">
+          경기 데이터를 수집하는 중...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black/60 rounded-xl border border-white/10 p-3">
@@ -165,7 +184,7 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
               stroke="#64748b"
               fontSize={11}
               domain={[-goldRange, goldRange]}
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              tickFormatter={(value) => `${Math.round(value / 1000)}k`}
             />
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine y={0} stroke="#ffffff20" strokeWidth={1.5} />
@@ -226,14 +245,14 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                     <div className="bg-slate-900/95 border border-white/20 rounded px-3 py-1.5 text-xs shadow-xl">
                       <div className="text-slate-400 mb-0.5">
-                        {Math.floor(event.time / 60)}:{((event.time % 60).toFixed(0)).padStart(2, "0")}
+                        {Math.floor(event.time / 60)}:{(event.time % 60).toString().padStart(2, "0")}
                       </div>
                       <div className="text-white font-bold">
                         {getEventTypeName(event.type)}
                       </div>
                       {event.goldSwing > 0 && (
                         <div className={`text-xs mt-0.5 font-bold ${event.side === "home" ? "text-blue-400" : "text-red-400"}`}>
-                          +{(event.goldSwing / 1000).toFixed(1)}k 골드
+                          +{formatGold(event.goldSwing)} 골드
                         </div>
                       )}
                     </div>

@@ -5,6 +5,7 @@
 
 import { LCKCard, Position } from "@/types/lck";
 import { Team, LeagueType } from "@/types/league";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 // ============================================================
 // 1. 타입 정의
@@ -381,27 +382,21 @@ function calculateTeamStats(squad: Team["squad"]) {
     clutch: cards.reduce((sum, c) => sum + c.stats.clutch, 0)
   };
   
-  // 시너지 보너스 계산 (UserCard 타입으로 변환)
-  try {
-    const { calculateSynergies, calculateCardSynergyBonuses } = require("@/utils/synergyEngine");
-    const synergies = calculateSynergies(squad);
-    const cardBonuses = calculateCardSynergyBonuses(squad, synergies);
-    
-    // 각 카드의 시너지 보너스 합산
-    let totalSynergyBonus = 0;
-    for (const card of cards) {
-      const bonus = cardBonuses[card.id];
-      if (bonus) {
-        totalSynergyBonus += bonus.totalBonus || 0;
-      }
+  // 시너지 보너스 계산
+  const synergies = calculateSynergies(squad);
+  const cardBonuses = calculateCardSynergyBonuses(squad, synergies);
+  
+  // 각 카드의 시너지 보너스 합산
+  let totalSynergyBonus = 0;
+  for (const card of cards) {
+    const bonus = cardBonuses[card.id];
+    if (bonus) {
+      totalSynergyBonus += bonus.totalBonus || 0;
     }
-    
-    // 시너지 보너스를 totalOVR에 추가
-    baseStats.totalOVR += totalSynergyBonus;
-  } catch (error) {
-    // 시너지 엔진이 없거나 오류 시 기본 스탯만 사용
-    console.warn("시너지 계산 실패:", error);
   }
+  
+  // 시너지 보너스를 totalOVR에 추가
+  baseStats.totalOVR += totalSynergyBonus;
   
   return baseStats;
 }
