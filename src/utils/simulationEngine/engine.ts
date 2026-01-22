@@ -278,6 +278,7 @@ export function processGameTick(game: GameSimulation): GameSimulation {
   const goldIncrease = (SIMULATION_CONSTANTS.BASE_GOLD_PER_MINUTE / 60) * game.tickInterval;
   game.gameState.goldHome += goldIncrease;
   game.gameState.goldAway += goldIncrease;
+  game.gameState.goldDiff = game.gameState.goldHome - game.gameState.goldAway;
   
   // 2. CP 회복
   const cpRegen = (SIMULATION_CONSTANTS.CP_REGEN_PER_MINUTE / 60) * game.tickInterval;
