@@ -61,9 +61,33 @@ function applyTeamSynergies(team: Team): Team {
       }
     });
     
-    // 시너지가 적용된 팀 스탯 반환
+    // 각 카드에 시너지 적용
+    const updatedSquad = { ...team.squad };
+    (["TOP", "JGL", "MID", "ADC", "SUP"] as const).forEach(pos => {
+      const card = updatedSquad[pos];
+      if (card) {
+        const bonus = cardBonuses[card.id];
+        if (bonus) {
+          updatedSquad[pos] = {
+            ...card,
+            stats: {
+              ...card.stats,
+              ovr: (card.stats.ovr || 0) + (bonus.ovr || 0),
+              mechanics: (card.stats.mechanics || 0) + (bonus.mechanics || 0),
+              laning: (card.stats.laning || 0) + (bonus.laning || 0),
+              teamfight: (card.stats.teamfight || 0) + (bonus.teamfight || 0),
+              macro: (card.stats.macro || 0) + (bonus.macro || 0),
+              clutch: (card.stats.clutch || 0) + (bonus.clutch || 0)
+            }
+          };
+        }
+      }
+    });
+    
+    // 시너지가 적용된 팀 스탯 + 개별 카드 스탯 반환
     return {
       ...team,
+      squad: updatedSquad,
       stats: {
         totalOVR: team.stats.totalOVR + synergyOVRBonus,
         mechanics: team.stats.mechanics + synergyMechanicsBonus,
