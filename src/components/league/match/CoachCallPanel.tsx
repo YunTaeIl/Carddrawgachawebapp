@@ -3,7 +3,6 @@
 import React from "react";
 import { Button } from "@/app/components/ui/button";
 import { GameSimulation, CoachCallType, CoachCall } from "@/types/advancedSimulation";
-import { COACH_CALL_CONFIGS } from "@/utils/simulationEngine/config";
 import {
   Shield,
   Crosshair,
@@ -21,6 +20,21 @@ interface CoachCallPanelProps {
   onUseCall: (callType: CoachCallType) => void;
   disabled?: boolean;
 }
+
+// 감독 콜 설정 (로컬 정의)
+const COACH_CALL_CONFIGS: Record<CoachCallType, {
+  cpCost: number;
+  duration: number;
+}> = {
+  SAFE_PLAY: { cpCost: 15, duration: 3 },
+  DIVE_CALL: { cpCost: 20, duration: 2 },
+  INVADE_CALL: { cpCost: 18, duration: 2 },
+  VISION_CONTROL: { cpCost: 12, duration: 4 },
+  FORCE_OBJECTIVE: { cpCost: 25, duration: 2 },
+  AVOID_FIGHT: { cpCost: 10, duration: 3 },
+  START_BARON: { cpCost: 30, duration: 1 },
+  BARON_FAKE: { cpCost: 15, duration: 1 }
+};
 
 const CALL_ICONS: Record<CoachCallType, React.ComponentType<{ className?: string }>> = {
   SAFE_PLAY: Shield,
