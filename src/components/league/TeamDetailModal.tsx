@@ -2,13 +2,15 @@
 // 팀 로스터, 시너지, 최종 스탯 표시
 
 import React, { useState, useEffect } from "react";
-import { X, TrendingUp, Users, Award, Zap } from "lucide-react";
+import { X, TrendingUp, Users, Award, Zap, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Team } from "@/types/league";
 import { LCKCard, UserCard, Position } from "@/types/lck";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { PlayerImage } from "@/components/PlayerImage";
+import { LCKHoloCard } from "@/components/LCKHoloCard";
+import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 
 interface TeamDetailModalProps {
   team: Team;
@@ -55,6 +57,8 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
   const [loading, setLoading] = useState(true);
   const [synergies, setSynergies] = useState<any[]>([]);
   const [squadStats, setSquadStats] = useState<SquadStats | null>(null);
+  const [expandedPosition, setExpandedPosition] = useState<Position | null>(null);
+  const [cardBonusesState, setCardBonusesState] = useState<Record<Position, any>>({} as Record<Position, any>);
 
   useEffect(() => {
     // 시너지 및 스탯 계산 (최신 시너지 엔진 사용)
@@ -141,9 +145,14 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
         let synergyMacro = 0;
         let synergyClutch = 0;
 
-        deployedCards.forEach(card => {
-          const bonus = cardBonuses[card.position] || {
-            ovr: 0, mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0
+        // 포지션별로 시너지 보너스 계산
+        const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
+        positions.forEach(position => {
+          const card = normalizedSquad[position];
+          if (!card) return;
+          
+          const bonus = cardBonuses[position] || {
+            ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0
           };
           
           const cardOVR = Number(card.stats.ovr ?? 0) || 0;
@@ -154,11 +163,11 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
           const cardClutch = Number(card.stats.clutch ?? 0) || 0;
           
           const bonusOVR = Number(bonus.ovr ?? 0) || 0;
-          const bonusMechanics = Number(bonus.mechanics ?? 0) || 0;
-          const bonusLaning = Number(bonus.laning ?? 0) || 0;
-          const bonusTeamfight = Number(bonus.teamfight ?? 0) || 0;
-          const bonusMacro = Number(bonus.macro ?? 0) || 0;
-          const bonusClutch = Number(bonus.clutch ?? 0) || 0;
+          const bonusMechanics = Number(bonus.mec ?? 0) || 0;
+          const bonusLaning = Number(bonus.lan ?? 0) || 0;
+          const bonusTeamfight = Number(bonus.tf ?? 0) || 0;
+          const bonusMacro = Number(bonus.mac ?? 0) || 0;
+          const bonusClutch = Number(bonus.clu ?? 0) || 0;
           
           totalOVR += cardOVR + bonusOVR;
           totalMechanics += cardMechanics + bonusMechanics;
@@ -175,6 +184,9 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
           synergyMacro += bonusMacro;
           synergyClutch += bonusClutch;
         });
+        
+        // cardBonuses를 state에 저장
+        setCardBonusesState(cardBonuses);
 
         const stats: SquadStats = {
           totalOVR: Number.isFinite(totalOVR) ? totalOVR : 0,
@@ -282,66 +294,96 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                     const posConfig = POSITION_CONFIG[position];
                     const gradeColor = GRADE_COLORS[card.grade] || "text-slate-400";
 
+                    const isExpanded = expandedPosition === position;
+                    const synergyBonus = cardBonusesState[position] || {
+                      ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0
+                    };
+                    
                     return (
                       <div
                         key={position}
-                        className="bg-slate-900/30 border border-white/5 rounded-xl p-4 hover:bg-slate-800/30 transition-colors"
+                        className="bg-slate-900/30 border border-white/5 rounded-xl overflow-hidden"
                       >
-                        <div className="flex items-center justify-between gap-4">
-                          {/* 선수 사진 + 포지션 + 선수 정보 */}
-                          <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-                            {/* 선수 사진 */}
-                            <div className="flex-shrink-0">
-                              <PlayerImage
-                                imageFileName={card.image}
-                                playerName={card.name}
-                                position={position}
-                                gradeColor={gradeColor}
-                                className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover border-2 border-white/10"
-                              />
-                            </div>
-                            
-                            <div className={`${posConfig.bg} ${posConfig.color} px-2.5 md:px-3 py-1.5 rounded-lg font-bold text-xs md:text-sm flex-shrink-0`}>
-                              {position}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-white font-bold text-base md:text-lg truncate">{card.name}</span>
-                                <span className={`${gradeColor} font-bold text-sm flex-shrink-0`}>
-                                  [{card.grade}]
-                                </span>
+                        {/* 선수 정보 (클릭 가능) */}
+                        <div
+                          onClick={() => setExpandedPosition(isExpanded ? null : position)}
+                          className="p-4 hover:bg-slate-800/30 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            {/* 선수 사진 + 포지션 + 선수 정보 */}
+                            <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                              {/* 선수 사진 */}
+                              <div className="flex-shrink-0">
+                                <PlayerImage
+                                  imageFileName={card.image}
+                                  playerName={card.name}
+                                  position={position}
+                                  gradeColor={gradeColor}
+                                  className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover border-2 border-white/10"
+                                />
                               </div>
-                              <div className="text-xs text-slate-500 mt-0.5 truncate">
-                                {card.team} • {card.year}
+                              
+                              <div className={`${posConfig.bg} ${posConfig.color} px-2.5 md:px-3 py-1.5 rounded-lg font-bold text-xs md:text-sm flex-shrink-0`}>
+                                {position}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white font-bold text-base md:text-lg truncate">{card.name}</span>
+                                  <span className={`${gradeColor} font-bold text-sm flex-shrink-0`}>
+                                    [{card.grade}]
+                                  </span>
+                                </div>
+                                <div className="text-xs text-slate-500 mt-0.5 truncate">
+                                  {card.team} • {card.year}
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* 스탯 */}
-                          <div className="flex items-center gap-4 md:gap-6 text-sm flex-shrink-0">
-                            <div className="text-center">
-                              <div className="text-xs text-slate-500">OVR</div>
-                              <div className="text-white font-bold text-lg">{card.stats.ovr}</div>
-                            </div>
-                            <div className="hidden md:grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                              <div className="text-slate-400">
-                                <span className="text-slate-500">조작:</span> {card.stats.mechanics}
+                            {/* 스탯 + 펼치기 버튼 */}
+                            <div className="flex items-center gap-4 md:gap-6 text-sm flex-shrink-0">
+                              <div className="text-center">
+                                <div className="text-xs text-slate-500">OVR</div>
+                                <div className="text-white font-bold text-lg">{card.stats.ovr}</div>
                               </div>
-                              <div className="text-slate-400">
-                                <span className="text-slate-500">라인:</span> {card.stats.laning}
+                              <div className="hidden md:grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                <div className="text-slate-400">
+                                  <span className="text-slate-500">조작:</span> {card.stats.mechanics}
+                                </div>
+                                <div className="text-slate-400">
+                                  <span className="text-slate-500">라인:</span> {card.stats.laning}
+                                </div>
+                                <div className="text-slate-400">
+                                  <span className="text-slate-500">한타:</span> {card.stats.teamfight}
+                                </div>
+                                <div className="text-slate-400">
+                                  <span className="text-slate-500">운영:</span> {card.stats.macro}
+                                </div>
+                                <div className="text-slate-400 col-span-2">
+                                  <span className="text-slate-500">클러치:</span> {card.stats.clutch}
+                                </div>
                               </div>
-                              <div className="text-slate-400">
-                                <span className="text-slate-500">한타:</span> {card.stats.teamfight}
-                              </div>
-                              <div className="text-slate-400">
-                                <span className="text-slate-500">운영:</span> {card.stats.macro}
-                              </div>
-                              <div className="text-slate-400 col-span-2">
-                                <span className="text-slate-500">클러치:</span> {card.stats.clutch}
-                              </div>
+                              {isExpanded ? (
+                                <ChevronUp className="w-5 h-5 text-slate-400" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5 text-slate-400" />
+                              )}
                             </div>
                           </div>
                         </div>
+                        
+                        {/* 펼쳐진 카드 */}
+                        {isExpanded && (
+                          <div className="p-6 bg-slate-950/50 border-t border-white/5">
+                            <div className="flex justify-center">
+                              <LCKHoloCard
+                                card={card}
+                                size="medium"
+                                synergyBonus={synergyBonus}
+                                disableFlip={false}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -418,94 +460,147 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-xl font-bold text-white">최종 팀 스탯</h3>
+                  <h3 className="text-xl font-bold text-white">최종 팀 스탯 (시너지 적용)</h3>
                 </div>
                 {squadStats && (
-                  <div className="bg-slate-900/30 border border-white/5 rounded-xl p-6 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* 총 OVR */}
-                      <div className="text-center">
-                        <div className="text-xs text-slate-500 uppercase tracking-wider mb-2">
-                          총 OVR
-                        </div>
-                        <div className="text-4xl font-bold text-amber-400">
-                          {Number.isFinite(squadStats.totalOVR) ? squadStats.totalOVR : 0}
-                        </div>
-                        <div className="text-sm text-slate-400 mt-1">
-                          평균 {Number.isFinite(squadStats.avgOVR) ? squadStats.avgOVR : 0}
-                        </div>
-                        {squadStats.synergyBonus.ovr > 0 && (
-                          <div className="text-xs text-amber-300 mt-1">
-                            +{squadStats.synergyBonus.ovr} 시너지
+                  <div className="bg-slate-900/30 border border-white/5 rounded-xl p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* 왼쪽: 총 OVR 및 스탯 요약 */}
+                      <div className="space-y-4">
+                        {/* 총 OVR */}
+                        <div className="bg-gradient-to-br from-amber-500/20 to-purple-500/20 border border-amber-500/30 rounded-xl p-6 text-center">
+                          <div className="text-xs text-slate-400 uppercase tracking-wider mb-2">
+                            총 OVR
                           </div>
-                        )}
+                          <div className="text-5xl font-bold text-amber-400">
+                            {Number.isFinite(squadStats.totalOVR) ? squadStats.totalOVR : 0}
+                          </div>
+                          <div className="text-sm text-slate-400 mt-2">
+                            평균 {Number.isFinite(squadStats.avgOVR) ? squadStats.avgOVR : 0}
+                          </div>
+                          {squadStats.synergyBonus.ovr > 0 && (
+                            <div className="text-sm text-amber-300 mt-2 font-semibold">
+                              +{squadStats.synergyBonus.ovr} 시너지 보너스
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 스탯 요약 */}
+                        <div className="space-y-2">
+                          <div className="bg-slate-800/30 rounded-lg p-3 flex items-center justify-between">
+                            <span className="text-sm text-slate-400">조작력</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-blue-400">
+                                {Number.isFinite(squadStats.totalMechanics) ? squadStats.totalMechanics : 0}
+                              </span>
+                              {squadStats.synergyBonus.mechanics > 0 && (
+                                <span className="text-xs text-amber-300">
+                                  +{squadStats.synergyBonus.mechanics}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="bg-slate-800/30 rounded-lg p-3 flex items-center justify-between">
+                            <span className="text-sm text-slate-400">라인전</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-green-400">
+                                {Number.isFinite(squadStats.totalLaning) ? squadStats.totalLaning : 0}
+                              </span>
+                              {squadStats.synergyBonus.laning > 0 && (
+                                <span className="text-xs text-amber-300">
+                                  +{squadStats.synergyBonus.laning}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="bg-slate-800/30 rounded-lg p-3 flex items-center justify-between">
+                            <span className="text-sm text-slate-400">한타력</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-purple-400">
+                                {Number.isFinite(squadStats.totalTeamfight) ? squadStats.totalTeamfight : 0}
+                              </span>
+                              {squadStats.synergyBonus.teamfight > 0 && (
+                                <span className="text-xs text-amber-300">
+                                  +{squadStats.synergyBonus.teamfight}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="bg-slate-800/30 rounded-lg p-3 flex items-center justify-between">
+                            <span className="text-sm text-slate-400">운영력</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-yellow-400">
+                                {Number.isFinite(squadStats.totalMacro) ? squadStats.totalMacro : 0}
+                              </span>
+                              {squadStats.synergyBonus.macro > 0 && (
+                                <span className="text-xs text-amber-300">
+                                  +{squadStats.synergyBonus.macro}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30 rounded-lg p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Award className="w-4 h-4 text-red-400" />
+                              <span className="text-sm text-slate-300">클러치</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-red-400">
+                                {Number.isFinite(squadStats.totalClutch) ? squadStats.totalClutch : 0}
+                              </span>
+                              {squadStats.synergyBonus.clutch > 0 && (
+                                <span className="text-xs text-amber-300">
+                                  +{squadStats.synergyBonus.clutch}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* 종합 전력 */}
-                      <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
-                        <div className="bg-slate-800/30 rounded-lg p-3">
-                          <div className="text-xs text-slate-500 mb-1">조작력</div>
-                          <div className="text-2xl font-bold text-blue-400">
-                            {Number.isFinite(squadStats.totalMechanics) ? squadStats.totalMechanics : 0}
-                          </div>
-                          {squadStats.synergyBonus.mechanics > 0 && (
-                            <div className="text-xs text-amber-300 mt-1">
-                              +{squadStats.synergyBonus.mechanics} 시너지
-                            </div>
-                          )}
-                        </div>
-                        <div className="bg-slate-800/30 rounded-lg p-3">
-                          <div className="text-xs text-slate-500 mb-1">라인전</div>
-                          <div className="text-2xl font-bold text-green-400">
-                            {Number.isFinite(squadStats.totalLaning) ? squadStats.totalLaning : 0}
-                          </div>
-                          {squadStats.synergyBonus.laning > 0 && (
-                            <div className="text-xs text-amber-300 mt-1">
-                              +{squadStats.synergyBonus.laning} 시너지
-                            </div>
-                          )}
-                        </div>
-                        <div className="bg-slate-800/30 rounded-lg p-3">
-                          <div className="text-xs text-slate-500 mb-1">한타력</div>
-                          <div className="text-2xl font-bold text-purple-400">
-                            {Number.isFinite(squadStats.totalTeamfight) ? squadStats.totalTeamfight : 0}
-                          </div>
-                          {squadStats.synergyBonus.teamfight > 0 && (
-                            <div className="text-xs text-amber-300 mt-1">
-                              +{squadStats.synergyBonus.teamfight} 시너지
-                            </div>
-                          )}
-                        </div>
-                        <div className="bg-slate-800/30 rounded-lg p-3">
-                          <div className="text-xs text-slate-500 mb-1">운영력</div>
-                          <div className="text-2xl font-bold text-yellow-400">
-                            {Number.isFinite(squadStats.totalMacro) ? squadStats.totalMacro : 0}
-                          </div>
-                          {squadStats.synergyBonus.macro > 0 && (
-                            <div className="text-xs text-amber-300 mt-1">
-                              +{squadStats.synergyBonus.macro} 시너지
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 클러치 */}
-                    <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Award className="w-4 h-4 text-red-400" />
-                          <span className="text-sm text-slate-300">클러치 능력</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-2xl font-bold text-red-400">
-                            {Number.isFinite(squadStats.totalClutch) ? squadStats.totalClutch : 0}
-                          </div>
-                          {squadStats.synergyBonus.clutch > 0 && (
-                            <div className="text-xs text-amber-300">
-                              +{squadStats.synergyBonus.clutch}
-                            </div>
-                          )}
+                      {/* 오른쪽: 5각형 레이더 차트 */}
+                      <div className="flex items-center justify-center">
+                        <div className="w-full h-80 md:h-96">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart
+                              data={[
+                                {
+                                  stat: '조작',
+                                  value: Number.isFinite(squadStats.totalMechanics) ? squadStats.totalMechanics : 0,
+                                },
+                                {
+                                  stat: '라인',
+                                  value: Number.isFinite(squadStats.totalLaning) ? squadStats.totalLaning : 0,
+                                },
+                                {
+                                  stat: '한타',
+                                  value: Number.isFinite(squadStats.totalTeamfight) ? squadStats.totalTeamfight : 0,
+                                },
+                                {
+                                  stat: '운영',
+                                  value: Number.isFinite(squadStats.totalMacro) ? squadStats.totalMacro : 0,
+                                },
+                                {
+                                  stat: '클러치',
+                                  value: Number.isFinite(squadStats.totalClutch) ? squadStats.totalClutch : 0,
+                                },
+                              ]}
+                            >
+                              <PolarGrid stroke="#ffffff20" />
+                              <PolarAngleAxis 
+                                dataKey="stat" 
+                                tick={{ fill: '#94a3b8', fontSize: 14, fontWeight: 600 }}
+                              />
+                              <Radar
+                                name="팀 스탯"
+                                dataKey="value"
+                                stroke="#fbbf24"
+                                fill="#fbbf24"
+                                fillOpacity={0.4}
+                                strokeWidth={2}
+                              />
+                            </RadarChart>
+                          </ResponsiveContainer>
                         </div>
                       </div>
                     </div>
