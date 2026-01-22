@@ -412,61 +412,66 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
               {/* 활성 시너지 */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                  <Zap className="w-5 h-5 text-amber-400" />
+                  <Sparkles className="w-5 h-5 text-amber-400" />
                   <h3 className="text-xl font-bold text-white">활성 시너지</h3>
+                  {synergies.length > 0 && (
+                    <span className="ml-auto bg-amber-400 text-slate-900 px-3 py-0.5 rounded-full text-sm font-bold">
+                      {synergies.length}개
+                    </span>
+                  )}
                 </div>
                 {synergies.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-3">
-                    {synergies.map((synergy, index) => {
-                      const effect = synergy.currentEffect;
-                      const bonusText = effect 
-                        ? [
-                            effect.ovr > 0 && `OVR +${effect.ovr}`,
-                            effect.mec > 0 && `조작 +${effect.mec}`,
-                            effect.lan > 0 && `라인 +${effect.lan}`,
-                            effect.tf > 0 && `한타 +${effect.tf}`,
-                            effect.mac > 0 && `운영 +${effect.mac}`,
-                            effect.clu > 0 && `클러치 +${effect.clu}`,
-                          ].filter(Boolean).join(', ')
-                        : '';
-                      
-                      return (
-                        <div
-                          key={index}
-                          className={`rounded-xl p-4 ${
-                            synergy.isPrime 
-                              ? 'bg-gradient-to-r from-amber-500/20 to-purple-500/20 border-2 border-amber-500/40'
-                              : 'bg-gradient-to-r from-amber-500/10 to-purple-500/10 border border-amber-500/20'
-                          }`}
-                        >
-                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <div className={`font-bold text-base md:text-lg ${synergy.isPrime ? 'text-amber-300' : 'text-amber-400'}`}>
-                                  {synergy.synergy.synergy_name}
-                                </div>
-                                {synergy.isPrime && (
-                                  <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
-                                    ⭐ 프라임
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-slate-400 text-sm mt-1">{synergy.synergy.description}</div>
-                              {synergy.matchedPlayers.length > 0 && (
-                                <div className="text-xs text-slate-500 mt-1">
-                                  {synergy.matchedPlayers.join(', ')}
-                                </div>
-                              )}
+                  <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                    {synergies.map((synergy) => (
+                      <div key={synergy.synergy.synergy_id} className="bg-slate-900/50 p-4 rounded-lg border border-amber-400/30">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="text-base font-bold text-amber-400">{synergy.synergy.synergy_name}</div>
+                          {synergy.isPrime && (
+                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white">
+                              PRIME
+                            </span>
+                          )}
+                          <span className="ml-auto px-2 py-0.5 rounded text-xs font-bold bg-slate-950 text-slate-400">
+                            {synergy.synergy.type}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-400 mb-2">
+                          {synergy.synergy.description}
+                        </div>
+                        {synergy.currentEffect && (
+                          <div className="flex items-center gap-1 flex-wrap text-xs">
+                            <div className="bg-slate-950 px-2 py-1 rounded text-green-400 font-bold">
+                              OVR +{synergy.currentEffect.ovr}
                             </div>
-                            {bonusText && (
-                              <div className="text-xs text-slate-300 bg-slate-900/50 px-3 py-1.5 rounded whitespace-nowrap self-start">
-                                {bonusText}
-                              </div>
+                            {synergy.currentEffect.mec > 0 && (
+                              <span className="bg-slate-950 px-2 py-1 rounded text-slate-300">
+                                메카닉 +{synergy.currentEffect.mec}
+                              </span>
+                            )}
+                            {synergy.currentEffect.lan > 0 && (
+                              <span className="bg-slate-950 px-2 py-1 rounded text-slate-300">
+                                라인 +{synergy.currentEffect.lan}
+                              </span>
+                            )}
+                            {synergy.currentEffect.tf > 0 && (
+                              <span className="bg-slate-950 px-2 py-1 rounded text-slate-300">
+                                한타 +{synergy.currentEffect.tf}
+                              </span>
+                            )}
+                            {synergy.currentEffect.mac > 0 && (
+                              <span className="bg-slate-950 px-2 py-1 rounded text-slate-300">
+                                운영 +{synergy.currentEffect.mac}
+                              </span>
+                            )}
+                            {synergy.currentEffect.clu > 0 && (
+                              <span className="bg-slate-950 px-2 py-1 rounded text-slate-300">
+                                클러치 +{synergy.currentEffect.clu}
+                              </span>
                             )}
                           </div>
-                        </div>
-                      );
-                    })}
+                        )}
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="bg-slate-900/30 border border-white/5 rounded-xl p-6 text-center text-slate-500">
