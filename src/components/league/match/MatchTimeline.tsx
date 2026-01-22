@@ -67,12 +67,17 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
     if (!game?.timeline || game.timeline.length === 0) {
       return [];
     }
-    return game.timeline.map(point => ({
-      time: (point?.time || 0) / 60, // 분 단위
-      goldDiff: point?.goldDiff || 0,
-      homeGold: point?.homeGold || 0,
-      awayGold: point?.awayGold || 0
-    }));
+    return game.timeline.map(point => {
+      const goldDiff = point?.goldDiff || 0;
+      return {
+        time: (point?.time || 0) / 60, // 분 단위
+        goldDiff,
+        goldDiffPositive: goldDiff > 0 ? goldDiff : 0, // 블루팀 유리
+        goldDiffNegative: goldDiff < 0 ? goldDiff : 0, // 레드팀 유리
+        homeGold: point?.homeGold || 0,
+        awayGold: point?.awayGold || 0
+      };
+    });
   }, [game?.timeline]);
 
   // 주요 이벤트만 마커로 표시
@@ -170,13 +175,15 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
         <ResponsiveContainer width="100%" height={140}>
           <AreaChart data={chartData}>
             <defs>
-              <linearGradient id="goldDiffPositive" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              {/* 블루팀 유리 (양수) - 파란색 */}
+              <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
               </linearGradient>
-              <linearGradient id="goldDiffNegative" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#ef4444" stopOpacity={0} />
-                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.3} />
+              {/* 레드팀 유리 (음수) - 빨간색 */}
+              <linearGradient id="redGradient" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -195,14 +202,26 @@ export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine y={0} stroke="#ffffff20" strokeWidth={1.5} />
             
-            {/* 골드 차이 영역 */}
+            {/* 블루팀 유리 영역 (양수) */}
             <Area
               type="monotone"
-              dataKey="goldDiff"
+              dataKey="goldDiffPositive"
               stroke="#3b82f6"
               strokeWidth={2}
-              fill="url(#goldDiffPositive)"
+              fill="url(#blueGradient)"
               fillOpacity={1}
+              isAnimationActive={false}
+            />
+            
+            {/* 레드팀 유리 영역 (음수) */}
+            <Area
+              type="monotone"
+              dataKey="goldDiffNegative"
+              stroke="#ef4444"
+              strokeWidth={2}
+              fill="url(#redGradient)"
+              fillOpacity={1}
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>
