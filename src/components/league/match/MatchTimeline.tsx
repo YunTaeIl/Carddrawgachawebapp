@@ -52,27 +52,30 @@ const EVENT_COLORS: Record<string, string> = {
 
 // 골드 포맷 함수 (소수점 제거)
 function formatGold(gold: number): string {
+  if (gold === undefined || gold === null || isNaN(gold)) {
+    return "0";
+  }
   if (gold >= 1000) {
     return `${Math.round(gold / 1000)}k`;
   }
-  return gold.toString();
+  return Math.round(gold).toString();
 }
 
 export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
   // 타임라인 데이터 변환 (초 -> 분)
   const chartData = useMemo(() => {
-    if (!game.timeline || game.timeline.length === 0) {
+    if (!game?.timeline || game.timeline.length === 0) {
       console.log("MatchTimeline: 타임라인 데이터 없음");
       return [];
     }
     console.log(`MatchTimeline: ${game.timeline.length}개 포인트 로드됨`);
     return game.timeline.map(point => ({
-      time: point.time / 60, // 분 단위
-      goldDiff: point.goldDiff,
-      homeGold: point.homeGold,
-      awayGold: point.awayGold
+      time: (point?.time || 0) / 60, // 분 단위
+      goldDiff: point?.goldDiff || 0,
+      homeGold: point?.homeGold || 0,
+      awayGold: point?.awayGold || 0
     }));
-  }, [game.timeline]);
+  }, [game?.timeline]);
 
   // 주요 이벤트만 마커로 표시
   const markerEvents = useMemo(() => {

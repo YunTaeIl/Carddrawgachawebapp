@@ -114,13 +114,19 @@ export function InGameSimulationPhase({
 
   // 시간 포맷
   const formatTime = (seconds: number) => {
+    if (seconds === undefined || seconds === null || isNaN(seconds)) {
+      return "0:00";
+    }
     const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
+    const sec = Math.floor(seconds % 60);
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
   // 골드 포맷 (소수점 제거)
   const formatGold = (gold: number) => {
+    if (gold === undefined || gold === null || isNaN(gold)) {
+      return "0";
+    }
     if (gold >= 1000) {
       return `${Math.round(gold / 1000)}k`;
     }
@@ -129,28 +135,59 @@ export function InGameSimulationPhase({
 
   // 시너지 계산 (홈팀)
   const homeSynergies = useMemo(() => {
-    return calculateSynergies(game.homeTeam.squad);
-  }, [game.homeTeam.squad]);
+    try {
+      if (!game.homeTeam?.squad) return [];
+      return calculateSynergies(game.homeTeam.squad);
+    } catch (error) {
+      console.error("홈팀 시너지 계산 오류:", error);
+      return [];
+    }
+  }, [game.homeTeam?.squad]);
 
   const homeSynergyBonuses = useMemo(() => {
-    return calculateCardSynergyBonuses(game.homeTeam.squad, homeSynergies);
-  }, [game.homeTeam.squad, homeSynergies]);
+    try {
+      if (!game.homeTeam?.squad || !homeSynergies) return {};
+      return calculateCardSynergyBonuses(game.homeTeam.squad, homeSynergies);
+    } catch (error) {
+      console.error("홈팀 시너지 보너스 계산 오류:", error);
+      return {};
+    }
+  }, [game.homeTeam?.squad, homeSynergies]);
 
   // 시너지 계산 (어웨이팀)
   const awaySynergies = useMemo(() => {
-    return calculateSynergies(game.awayTeam.squad);
-  }, [game.awayTeam.squad]);
+    try {
+      if (!game.awayTeam?.squad) return [];
+      return calculateSynergies(game.awayTeam.squad);
+    } catch (error) {
+      console.error("어웨이팀 시너지 계산 오류:", error);
+      return [];
+    }
+  }, [game.awayTeam?.squad]);
 
   const awaySynergyBonuses = useMemo(() => {
-    return calculateCardSynergyBonuses(game.awayTeam.squad, awaySynergies);
-  }, [game.awayTeam.squad, awaySynergies]);
+    try {
+      if (!game.awayTeam?.squad || !awaySynergies) return {};
+      return calculateCardSynergyBonuses(game.awayTeam.squad, awaySynergies);
+    } catch (error) {
+      console.error("어웨이팀 시너지 보너스 계산 오류:", error);
+      return {};
+    }
+  }, [game.awayTeam?.squad, awaySynergies]);
 
   // 시너지가 적용된 OVR 계산
   const getDisplayOVR = (cardId: string, baseOVR: number, side: "home" | "away") => {
-    const bonuses = side === "home" ? homeSynergyBonuses : awaySynergyBonuses;
-    const bonus = bonuses[cardId];
-    const synergyBonus = bonus?.totalBonus || 0;
-    return baseOVR + synergyBonus;
+    try {
+      if (!cardId || !baseOVR) return baseOVR || 0;
+      const bonuses = side === "home" ? homeSynergyBonuses : awaySynergyBonuses;
+      if (!bonuses || typeof bonuses !== 'object') return baseOVR;
+      const bonus = bonuses[cardId];
+      const synergyBonus = bonus?.totalBonus || 0;
+      return baseOVR + synergyBonus;
+    } catch (error) {
+      console.error("OVR 계산 오류:", error, { cardId, baseOVR, side });
+      return baseOVR || 0;
+    }
   };
 
   const homeTeam = game.homeTeam;
@@ -174,10 +211,11 @@ export function InGameSimulationPhase({
           </div>
           
           {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map(pos => {
-            const card = homeTeam.squad[pos];
+            const card = homeTeam?.squad?.[pos];
             if (!card) return null;
             
-            const displayOVR = Math.round(getDisplayOVR(card.id, card.stats.ovr, "home"));
+            const baseOVR = card?.stats?.ovr || 0;
+            const displayOVR = Math.round(getDisplayOVR(card.id, baseOVR, "home"));
             
             return (
               <div 
@@ -212,15 +250,15 @@ export function InGameSimulationPhase({
             {/* 홈팀 스코어 */}
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-400">{state.kills.home}</div>
+                <div className="text-4xl font-bold text-blue-400">{state?.kills?.home || 0}</div>
                 <div className="text-xs text-slate-500">KILLS</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-slate-300">{state.towers.home}</div>
+                <div className="text-2xl font-bold text-slate-300">{state?.towers?.home || 0}</div>
                 <div className="text-xs text-slate-500">TOWERS</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-slate-300">{state.dragons.home}</div>
+                <div className="text-2xl font-bold text-slate-300">{state?.dragons?.home || 0}</div>
                 <div className="text-xs text-slate-500">DRAGONS</div>
               </div>
             </div>
@@ -228,10 +266,10 @@ export function InGameSimulationPhase({
             {/* 중앙: 시간 + 골드 차이 */}
             <div className="text-center">
               <div className="text-3xl font-bold text-white mb-1">
-                {formatTime(game.currentTime)}
+                {formatTime(game?.currentTime || 0)}
               </div>
-              <div className={`text-xl font-bold ${state.goldDiff > 0 ? 'text-blue-400' : state.goldDiff < 0 ? 'text-red-400' : 'text-slate-400'}`}>
-                {state.goldDiff > 0 ? '+' : ''}{formatGold(Math.abs(state.goldDiff))}
+              <div className={`text-xl font-bold ${(state?.goldDiff || 0) > 0 ? 'text-blue-400' : (state?.goldDiff || 0) < 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                {(state?.goldDiff || 0) > 0 ? '+' : ''}{formatGold(Math.abs(state?.goldDiff || 0))}
               </div>
               <div className="text-xs text-slate-500">골드 차이</div>
             </div>
@@ -239,15 +277,15 @@ export function InGameSimulationPhase({
             {/* 어웨이팀 스코어 */}
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-slate-300">{state.dragons.away}</div>
+                <div className="text-2xl font-bold text-slate-300">{state?.dragons?.away || 0}</div>
                 <div className="text-xs text-slate-500">DRAGONS</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-slate-300">{state.towers.away}</div>
+                <div className="text-2xl font-bold text-slate-300">{state?.towers?.away || 0}</div>
                 <div className="text-xs text-slate-500">TOWERS</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-red-400">{state.kills.away}</div>
+                <div className="text-4xl font-bold text-red-400">{state?.kills?.away || 0}</div>
                 <div className="text-xs text-slate-500">KILLS</div>
               </div>
             </div>
@@ -256,18 +294,18 @@ export function InGameSimulationPhase({
           {/* 승률 바 (양쪽 표시) */}
           <div className="h-8 bg-black/40 flex items-center px-8">
             <div className="flex-1 flex items-center gap-2">
-              <span className="text-xs text-blue-400 w-12">{state.winProbHome.toFixed(0)}%</span>
+              <span className="text-xs text-blue-400 w-12">{(state?.winProbHome || 50).toFixed(0)}%</span>
               <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden flex">
                 <div 
                   className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500"
-                  style={{ width: `${state.winProbHome}%` }}
+                  style={{ width: `${state?.winProbHome || 50}%` }}
                 />
                 <div 
                   className="h-full bg-gradient-to-l from-red-500 to-red-400 transition-all duration-500"
-                  style={{ width: `${100 - state.winProbHome}%` }}
+                  style={{ width: `${100 - (state?.winProbHome || 50)}%` }}
                 />
               </div>
-              <span className="text-xs text-red-400 w-12 text-right">{(100 - state.winProbHome).toFixed(0)}%</span>
+              <span className="text-xs text-red-400 w-12 text-right">{(100 - (state?.winProbHome || 50)).toFixed(0)}%</span>
             </div>
           </div>
 
@@ -280,35 +318,38 @@ export function InGameSimulationPhase({
           <div className="flex-1 flex gap-2 p-2 min-h-0">
             {/* 왼쪽: 이벤트 로그 */}
             <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar bg-black/20 rounded-lg max-h-full">
-              {game.events.map((event, idx) => (
-                <div
-                  key={idx}
-                  ref={(el) => { eventRefs.current[idx] = el; }}
-                  className={`
-                    p-3 rounded-lg border-l-4 bg-black/30 transition-all
-                    ${event.side === "home" ? "border-blue-500" : event.side === "away" ? "border-red-500" : "border-slate-600"}
-                  `}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs text-slate-500">{formatTime(event.time)}</span>
-                        {event.impactTags.includes("huge_swing") && (
-                          <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
-                            대규모
-                          </span>
-                        )}
+              {game?.events?.map((event, idx) => {
+                if (!event) return null;
+                return (
+                  <div
+                    key={idx}
+                    ref={(el) => { eventRefs.current[idx] = el; }}
+                    className={`
+                      p-3 rounded-lg border-l-4 bg-black/30 transition-all
+                      ${event.side === "home" ? "border-blue-500" : event.side === "away" ? "border-red-500" : "border-slate-600"}
+                    `}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-slate-500">{formatTime(event.time)}</span>
+                          {event.impactTags?.includes("huge_swing") && (
+                            <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
+                              대규모
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-white/90">{event.text || "이벤트 발생"}</p>
                       </div>
-                      <p className="text-sm text-white/90">{event.text}</p>
+                      {event.goldSwing > 0 && (
+                        <div className={`text-sm font-bold ml-4 ${event.side === "home" ? "text-blue-400" : "text-red-400"}`}>
+                          +{formatGold(event.goldSwing)}
+                        </div>
+                      )}
                     </div>
-                    {event.goldSwing > 0 && (
-                      <div className={`text-sm font-bold ml-4 ${event.side === "home" ? "text-blue-400" : "text-red-400"}`}>
-                        +{formatGold(event.goldSwing)}
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={logEndRef} />
             </div>
 
@@ -385,10 +426,11 @@ export function InGameSimulationPhase({
           </div>
           
           {(["TOP", "JGL", "MID", "ADC", "SUP"] as const).map(pos => {
-            const card = awayTeam.squad[pos];
+            const card = awayTeam?.squad?.[pos];
             if (!card) return null;
             
-            const displayOVR = Math.round(getDisplayOVR(card.id, card.stats.ovr, "away"));
+            const baseOVR = card?.stats?.ovr || 0;
+            const displayOVR = Math.round(getDisplayOVR(card.id, baseOVR, "away"));
             
             return (
               <div 
