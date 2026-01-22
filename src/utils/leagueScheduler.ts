@@ -1,6 +1,7 @@
 // 리그 일정 생성 및 순위 계산 로직
 
 import { Team, Match, StandingEntry, MatchResult } from "@/types/league";
+import { calculateSynergies, calculateCardSynergyBonuses } from "./synergyEngine";
 
 /**
  * 더블 라운드 로빈 일정 생성 (플레이어 기준 18경기)
@@ -54,13 +55,21 @@ function shuffleArray<T>(array: T[]): T[] {
  * 순위표 계산
  */
 export function calculateStandings(teams: Team[], matches: Match[]): StandingEntry[] {
+  // 각 팀의 시너지 적용된 OVR 계산
+  const getTeamTotalOVR = (team: Team) => {
+    const teamSynergies = calculateSynergies(team.squad);
+    const teamCardBonuses = calculateCardSynergyBonuses(team.squad, teamSynergies);
+    const synergyBonus = Object.values(teamCardBonuses).reduce((sum, bonus) => sum + (bonus?.ovr || 0), 0);
+    return team.stats.totalOVR + synergyBonus;
+  };
+
   const standings: StandingEntry[] = teams.map(team => ({
     teamId: team.id,
     teamName: team.name,
     wins: 0,
     losses: 0,
     scoreDiff: 0,
-    totalOVR: team.stats.totalOVR,
+    totalOVR: getTeamTotalOVR(team), // 시너지 적용된 OVR
     isPlayer: team.isPlayer
   }));
   
