@@ -563,11 +563,8 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                               )}
                             </div>
                           </div>
-                          <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30 rounded-lg p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Award className="w-4 h-4 text-red-400" />
-                              <span className="text-sm text-slate-300">클러치</span>
-                            </div>
+                          <div className="bg-slate-800/30 rounded-lg p-3 flex items-center justify-between">
+                            <span className="text-sm text-slate-400">클러치</span>
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-bold text-red-400">
                                 {Number.isFinite(squadStats.totalClutch) ? squadStats.totalClutch : 0}
