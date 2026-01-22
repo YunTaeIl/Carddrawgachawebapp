@@ -10,7 +10,7 @@ import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergy
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { PlayerImage } from "@/components/PlayerImage";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from "recharts";
 
 interface TeamDetailModalProps {
   team: Team;
@@ -614,6 +614,11 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                               <PolarAngleAxis 
                                 dataKey="stat" 
                                 tick={{ fill: '#94a3b8', fontSize: 14, fontWeight: 600 }}
+                              />
+                              <PolarRadiusAxis 
+                                domain={[0, 500]} 
+                                tick={{ fill: '#64748b', fontSize: 12 }}
+                                axisLine={false}
                               />
                               <Radar
                                 name="팀 스탯"
