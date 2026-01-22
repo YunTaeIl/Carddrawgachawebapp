@@ -146,7 +146,6 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
         let synergyClutch = 0;
 
         // 포지션별로 시너지 보너스 계산
-        const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
         positions.forEach(position => {
           const card = normalizedSquad[position];
           if (!card) return;
