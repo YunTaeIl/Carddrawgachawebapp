@@ -8,6 +8,7 @@ import { Team } from "@/types/league";
 import { LCKCard, UserCard, Position } from "@/types/lck";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { getKoreanTeamName } from "@/utils/teamNames";
+import { PlayerImage } from "@/components/PlayerImage";
 
 interface TeamDetailModalProps {
   team: Team;
@@ -40,6 +41,14 @@ interface SquadStats {
   totalTeamfight: number;
   totalMacro: number;
   totalClutch: number;
+  synergyBonus: {
+    ovr: number;
+    mechanics: number;
+    laning: number;
+    teamfight: number;
+    macro: number;
+    clutch: number;
+  };
 }
 
 export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
@@ -102,7 +111,15 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
             totalLaning: 0,
             totalTeamfight: 0,
             totalMacro: 0,
-            totalClutch: 0
+            totalClutch: 0,
+            synergyBonus: {
+              ovr: 0,
+              mechanics: 0,
+              laning: 0,
+              teamfight: 0,
+              macro: 0,
+              clutch: 0,
+            },
           });
           setSynergies([]);
           setLoading(false);
@@ -115,6 +132,14 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
         let totalTeamfight = 0;
         let totalMacro = 0;
         let totalClutch = 0;
+        
+        // 시너지 보너스 총합
+        let synergyOVR = 0;
+        let synergyMechanics = 0;
+        let synergyLaning = 0;
+        let synergyTeamfight = 0;
+        let synergyMacro = 0;
+        let synergyClutch = 0;
 
         deployedCards.forEach(card => {
           const bonus = cardBonuses[card.position] || {
@@ -128,12 +153,27 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
           const cardMacro = Number(card.stats.macro ?? 0) || 0;
           const cardClutch = Number(card.stats.clutch ?? 0) || 0;
           
-          totalOVR += cardOVR + (Number(bonus.ovr ?? 0) || 0);
-          totalMechanics += cardMechanics + (Number(bonus.mechanics ?? 0) || 0);
-          totalLaning += cardLaning + (Number(bonus.laning ?? 0) || 0);
-          totalTeamfight += cardTeamfight + (Number(bonus.teamfight ?? 0) || 0);
-          totalMacro += cardMacro + (Number(bonus.macro ?? 0) || 0);
-          totalClutch += cardClutch + (Number(bonus.clutch ?? 0) || 0);
+          const bonusOVR = Number(bonus.ovr ?? 0) || 0;
+          const bonusMechanics = Number(bonus.mechanics ?? 0) || 0;
+          const bonusLaning = Number(bonus.laning ?? 0) || 0;
+          const bonusTeamfight = Number(bonus.teamfight ?? 0) || 0;
+          const bonusMacro = Number(bonus.macro ?? 0) || 0;
+          const bonusClutch = Number(bonus.clutch ?? 0) || 0;
+          
+          totalOVR += cardOVR + bonusOVR;
+          totalMechanics += cardMechanics + bonusMechanics;
+          totalLaning += cardLaning + bonusLaning;
+          totalTeamfight += cardTeamfight + bonusTeamfight;
+          totalMacro += cardMacro + bonusMacro;
+          totalClutch += cardClutch + bonusClutch;
+          
+          // 시너지 보너스 누적
+          synergyOVR += bonusOVR;
+          synergyMechanics += bonusMechanics;
+          synergyLaning += bonusLaning;
+          synergyTeamfight += bonusTeamfight;
+          synergyMacro += bonusMacro;
+          synergyClutch += bonusClutch;
         });
 
         const stats: SquadStats = {
@@ -146,6 +186,14 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
           totalTeamfight: Number.isFinite(totalTeamfight) ? totalTeamfight : 0,
           totalMacro: Number.isFinite(totalMacro) ? totalMacro : 0,
           totalClutch: Number.isFinite(totalClutch) ? totalClutch : 0,
+          synergyBonus: {
+            ovr: Number.isFinite(synergyOVR) ? synergyOVR : 0,
+            mechanics: Number.isFinite(synergyMechanics) ? synergyMechanics : 0,
+            laning: Number.isFinite(synergyLaning) ? synergyLaning : 0,
+            teamfight: Number.isFinite(synergyTeamfight) ? synergyTeamfight : 0,
+            macro: Number.isFinite(synergyMacro) ? synergyMacro : 0,
+            clutch: Number.isFinite(synergyClutch) ? synergyClutch : 0,
+          },
         };
 
         // NaN 방어: 최종 스탯 검증
@@ -241,28 +289,24 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                       >
                         <div className="flex items-center justify-between gap-4">
                           {/* 선수 사진 + 포지션 + 선수 정보 */}
-                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                          <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
                             {/* 선수 사진 */}
-                            {card.image && (
-                              <div className="flex-shrink-0">
-                                <img 
-                                  src={card.image} 
-                                  alt={card.name}
-                                  className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover border-2 border-white/10"
-                                  onError={(e) => {
-                                    // 이미지 로딩 실패 시 placeholder
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            )}
+                            <div className="flex-shrink-0">
+                              <PlayerImage
+                                imageFileName={card.image}
+                                playerName={card.name}
+                                position={position}
+                                gradeColor={gradeColor}
+                                className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover border-2 border-white/10"
+                              />
+                            </div>
                             
-                            <div className={`${posConfig.bg} ${posConfig.color} px-3 py-1.5 rounded-lg font-bold text-sm flex-shrink-0`}>
+                            <div className={`${posConfig.bg} ${posConfig.color} px-2.5 md:px-3 py-1.5 rounded-lg font-bold text-xs md:text-sm flex-shrink-0`}>
                               {position}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-white font-bold text-lg truncate">{card.name}</span>
+                                <span className="text-white font-bold text-base md:text-lg truncate">{card.name}</span>
                                 <span className={`${gradeColor} font-bold text-sm flex-shrink-0`}>
                                   [{card.grade}]
                                 </span>
@@ -334,10 +378,10 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                               : 'bg-gradient-to-r from-amber-500/10 to-purple-500/10 border border-amber-500/20'
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-4">
+                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <div className={`font-bold text-lg ${synergy.isPrime ? 'text-amber-300' : 'text-amber-400'}`}>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <div className={`font-bold text-base md:text-lg ${synergy.isPrime ? 'text-amber-300' : 'text-amber-400'}`}>
                                   {synergy.synergy.synergy_name}
                                 </div>
                                 {synergy.isPrime && (
@@ -354,7 +398,7 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                               )}
                             </div>
                             {bonusText && (
-                              <div className="text-xs text-slate-300 bg-slate-900/50 px-3 py-1 rounded flex-shrink-0">
+                              <div className="text-xs text-slate-300 bg-slate-900/50 px-3 py-1.5 rounded whitespace-nowrap self-start">
                                 {bonusText}
                               </div>
                             )}
@@ -377,8 +421,8 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                   <h3 className="text-xl font-bold text-white">최종 팀 스탯</h3>
                 </div>
                 {squadStats && (
-                  <div className="bg-slate-900/30 border border-white/5 rounded-xl p-6">
-                    <div className="grid grid-cols-3 gap-6">
+                  <div className="bg-slate-900/30 border border-white/5 rounded-xl p-6 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {/* 총 OVR */}
                       <div className="text-center">
                         <div className="text-xs text-slate-500 uppercase tracking-wider mb-2">
@@ -390,46 +434,78 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                         <div className="text-sm text-slate-400 mt-1">
                           평균 {Number.isFinite(squadStats.avgOVR) ? squadStats.avgOVR : 0}
                         </div>
+                        {squadStats.synergyBonus.ovr > 0 && (
+                          <div className="text-xs text-amber-300 mt-1">
+                            +{squadStats.synergyBonus.ovr} 시너지
+                          </div>
+                        )}
                       </div>
 
                       {/* 종합 전력 */}
-                      <div className="col-span-2 grid grid-cols-2 gap-4">
+                      <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
                         <div className="bg-slate-800/30 rounded-lg p-3">
                           <div className="text-xs text-slate-500 mb-1">조작력</div>
                           <div className="text-2xl font-bold text-blue-400">
                             {Number.isFinite(squadStats.totalMechanics) ? squadStats.totalMechanics : 0}
                           </div>
+                          {squadStats.synergyBonus.mechanics > 0 && (
+                            <div className="text-xs text-amber-300 mt-1">
+                              +{squadStats.synergyBonus.mechanics} 시너지
+                            </div>
+                          )}
                         </div>
                         <div className="bg-slate-800/30 rounded-lg p-3">
                           <div className="text-xs text-slate-500 mb-1">라인전</div>
                           <div className="text-2xl font-bold text-green-400">
                             {Number.isFinite(squadStats.totalLaning) ? squadStats.totalLaning : 0}
                           </div>
+                          {squadStats.synergyBonus.laning > 0 && (
+                            <div className="text-xs text-amber-300 mt-1">
+                              +{squadStats.synergyBonus.laning} 시너지
+                            </div>
+                          )}
                         </div>
                         <div className="bg-slate-800/30 rounded-lg p-3">
                           <div className="text-xs text-slate-500 mb-1">한타력</div>
                           <div className="text-2xl font-bold text-purple-400">
                             {Number.isFinite(squadStats.totalTeamfight) ? squadStats.totalTeamfight : 0}
                           </div>
+                          {squadStats.synergyBonus.teamfight > 0 && (
+                            <div className="text-xs text-amber-300 mt-1">
+                              +{squadStats.synergyBonus.teamfight} 시너지
+                            </div>
+                          )}
                         </div>
                         <div className="bg-slate-800/30 rounded-lg p-3">
                           <div className="text-xs text-slate-500 mb-1">운영력</div>
                           <div className="text-2xl font-bold text-yellow-400">
                             {Number.isFinite(squadStats.totalMacro) ? squadStats.totalMacro : 0}
                           </div>
+                          {squadStats.synergyBonus.macro > 0 && (
+                            <div className="text-xs text-amber-300 mt-1">
+                              +{squadStats.synergyBonus.macro} 시너지
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* 클러치 */}
-                    <div className="mt-4 bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-lg p-4">
+                    <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Award className="w-4 h-4 text-red-400" />
                           <span className="text-sm text-slate-300">클러치 능력</span>
                         </div>
-                        <div className="text-2xl font-bold text-red-400">
-                          {Number.isFinite(squadStats.totalClutch) ? squadStats.totalClutch : 0}
+                        <div className="flex items-center gap-2">
+                          <div className="text-2xl font-bold text-red-400">
+                            {Number.isFinite(squadStats.totalClutch) ? squadStats.totalClutch : 0}
+                          </div>
+                          {squadStats.synergyBonus.clutch > 0 && (
+                            <div className="text-xs text-amber-300">
+                              +{squadStats.synergyBonus.clutch}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
