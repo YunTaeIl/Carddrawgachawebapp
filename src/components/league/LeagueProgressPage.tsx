@@ -6,6 +6,7 @@ import { LEAGUE_CONFIGS } from "@/types/league";
 import { ArrowLeft, ChevronRight, Sparkles } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
+import { getKoreanTeamName } from "@/utils/teamNames";
 
 interface LeagueProgressPageProps {
   onBack: () => void;
@@ -204,7 +205,7 @@ export function LeagueProgressPage({
               <div className="flex items-center justify-center gap-8 mb-8">
                 <div className="text-center flex-1">
                   <div className="text-2xl font-bold mb-2">
-                    {getTeamById(currentMatch.homeTeamId)?.name}
+                    {getKoreanTeamName(getTeamById(currentMatch.homeTeamId)?.name || "")}
                   </div>
                   <div className="text-slate-400">
                     {getTeamById(currentMatch.homeTeamId)?.stats.totalOVR}
@@ -215,7 +216,7 @@ export function LeagueProgressPage({
                 
                 <div className="text-center flex-1">
                   <div className="text-2xl font-bold mb-2">
-                    {getTeamById(currentMatch.awayTeamId)?.name}
+                    {getKoreanTeamName(getTeamById(currentMatch.awayTeamId)?.name || "")}
                   </div>
                   <div className="text-slate-400">
                     {getTeamById(currentMatch.awayTeamId)?.stats.totalOVR}
@@ -251,7 +252,7 @@ export function LeagueProgressPage({
                       >
                         <div className="w-8 text-center text-slate-500">{match.round}</div>
                         <div className="flex-1 flex items-center justify-between">
-                          <span className="truncate">{homeTeam?.name}</span>
+                          <span className="truncate">{getKoreanTeamName(homeTeam?.name || "")}</span>
                           {match.isCompleted && match.result ? (
                             <span className="text-amber-400 font-mono text-xs mx-2">
                               {match.result.homeScore}:{match.result.awayScore}
@@ -259,7 +260,7 @@ export function LeagueProgressPage({
                           ) : (
                             <span className="text-slate-600 mx-2">vs</span>
                           )}
-                          <span className="truncate">{awayTeam?.name}</span>
+                          <span className="truncate">{getKoreanTeamName(awayTeam?.name || "")}</span>
                         </div>
                         {match.isCompleted && match.result && (
                           <div className={`text-xs font-bold ${
@@ -303,7 +304,7 @@ export function LeagueProgressPage({
                         {index + 1}
                       </div>
                       <div className="flex-1 truncate text-sm">
-                        {entry.teamName}
+                        {getKoreanTeamName(entry.teamName)}
                       </div>
                       <div className="text-sm">
                         <span className="text-emerald-400">{entry.wins}</span>

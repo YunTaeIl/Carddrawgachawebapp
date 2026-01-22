@@ -6,6 +6,7 @@ import { useLeague } from "@/contexts/LeagueContext";
 import { Team, MatchSimulationState, LEAGUE_CONFIGS } from "@/types/league";
 import { initializeMatch, processNextTurn, generateMatchResult } from "@/utils/matchSimulation";
 import { Play, Pause, FastForward, ArrowLeft } from "lucide-react";
+import { getKoreanTeamName } from "@/utils/teamNames";
 
 interface MatchSimulationPageProps {
   homeTeam: Team;
@@ -122,7 +123,7 @@ export function MatchSimulationPage({
               : 'bg-slate-900/30 border-white/5'
           }`}>
             <div className="mb-4">
-              <h3 className="text-xl font-bold mb-1">{homeTeam.name}</h3>
+              <h3 className="text-xl font-bold mb-1">{getKoreanTeamName(homeTeam.name)}</h3>
               <div className="text-sm text-slate-400">OVR {homeTeam.stats.totalOVR}</div>
             </div>
 
@@ -192,7 +193,7 @@ export function MatchSimulationPage({
               : 'bg-slate-900/30 border-white/5'
           }`}>
             <div className="mb-4">
-              <h3 className="text-xl font-bold mb-1">{awayTeam.name}</h3>
+              <h3 className="text-xl font-bold mb-1">{getKoreanTeamName(awayTeam.name)}</h3>
               <div className="text-sm text-slate-400">OVR {awayTeam.stats.totalOVR}</div>
             </div>
 
@@ -245,7 +246,7 @@ export function MatchSimulationPage({
               {isPlayerWin ? 'VICTORY' : 'DEFEAT'}
             </h2>
             
-            <p className="text-xl text-slate-300 mb-2">{winner.name} 승리</p>
+            <p className="text-xl text-slate-300 mb-2">{getKoreanTeamName(winner.name)} 승리</p>
             <p className="text-sm text-slate-400 mb-8">
               {simulation.currentTurn} 턴만에 경기 종료
             </p>

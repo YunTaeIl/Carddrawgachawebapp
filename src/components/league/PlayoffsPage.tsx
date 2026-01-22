@@ -5,6 +5,7 @@ import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Series } from "@/types/league";
+import { getKoreanTeamName } from "@/utils/teamNames";
 
 interface PlayoffsPageProps {
   onBack: () => void;
@@ -47,14 +48,14 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex-1">
                   <div className={`font-bold ${team1.isPlayer ? 'text-amber-400' : ''}`}>
-                    {team1.name}
+                    {getKoreanTeamName(team1.name)}
                   </div>
                   <div className="text-xs text-slate-500">OVR {team1.stats.totalOVR}</div>
                 </div>
                 <div className="text-2xl font-bold text-slate-600 mx-4">VS</div>
                 <div className="flex-1 text-right">
                   <div className={`font-bold ${team2.isPlayer ? 'text-amber-400' : ''}`}>
-                    {team2.name}
+                    {getKoreanTeamName(team2.name)}
                   </div>
                   <div className="text-xs text-slate-500">OVR {team2.stats.totalOVR}</div>
                 </div>

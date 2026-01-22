@@ -1,16 +1,19 @@
 // 순위표 페이지
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
+import { getKoreanTeamName } from "@/utils/teamNames";
+import { TeamDetailModal } from "./TeamDetailModal";
 
 interface StandingsPageProps {
   onBack: () => void;
 }
 
 export function StandingsPage({ onBack }: StandingsPageProps) {
-  const { currentLeague } = useLeague();
+  const { currentLeague, getTeamById } = useLeague();
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
   if (!currentLeague) {
     return (
@@ -20,7 +23,16 @@ export function StandingsPage({ onBack }: StandingsPageProps) {
     );
   }
 
+  const selectedTeam = selectedTeamId ? getTeamById(selectedTeamId) : null;
+
   return (
+    <>
+      {selectedTeam && (
+        <TeamDetailModal
+          team={selectedTeam}
+          onClose={() => setSelectedTeamId(null)}
+        />
+      )}
     <div className="min-h-screen bg-[#0A0E27] text-white">
       {/* 헤더 */}
       <div className="border-b border-white/5 bg-[#0A0E27]/95 backdrop-blur sticky top-0 z-10">
@@ -39,10 +51,11 @@ export function StandingsPage({ onBack }: StandingsPageProps) {
           {/* 헤더 */}
           <div className="bg-black/30 px-6 py-4 grid grid-cols-12 gap-4 text-sm font-semibold text-slate-400 border-b border-white/5">
             <div className="col-span-1 text-center">순위</div>
-            <div className="col-span-5">팀명</div>
+            <div className="col-span-4">팀명</div>
             <div className="col-span-2 text-center">경기</div>
             <div className="col-span-2 text-center">전적</div>
             <div className="col-span-2 text-center">승률</div>
+            <div className="col-span-1 text-center">상세</div>
           </div>
 
           {/* 순위 목록 */}
@@ -52,6 +65,7 @@ export function StandingsPage({ onBack }: StandingsPageProps) {
               const isPlayoffZone = rank <= 5;
               const totalGames = entry.wins + entry.losses;
               const winRate = totalGames > 0 ? ((entry.wins / totalGames) * 100).toFixed(0) : '0';
+              const koreanTeamName = getKoreanTeamName(entry.teamName);
 
               return (
                 <div
@@ -73,10 +87,10 @@ export function StandingsPage({ onBack }: StandingsPageProps) {
                   </div>
 
                   {/* 팀명 */}
-                  <div className="col-span-5">
+                  <div className="col-span-4">
                     <div className="flex items-center gap-2">
                       <span className={`font-bold ${entry.isPlayer ? 'text-amber-400' : ''}`}>
-                        {entry.teamName}
+                        {koreanTeamName}
                       </span>
                       {entry.isPlayer && (
                         <span className="text-xs bg-amber-500 text-black px-2 py-0.5 rounded font-bold">
@@ -103,6 +117,18 @@ export function StandingsPage({ onBack }: StandingsPageProps) {
                   <div className="col-span-2 text-center font-bold">
                     {winRate}%
                   </div>
+
+                  {/* 상세보기 버튼 */}
+                  <div className="col-span-1 text-center">
+                    <Button
+                      onClick={() => setSelectedTeamId(entry.teamId)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-400 hover:text-amber-400 p-1"
+                    >
+                      <Info className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
@@ -116,5 +142,6 @@ export function StandingsPage({ onBack }: StandingsPageProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
