@@ -6,6 +6,7 @@ import { useLeague } from "@/contexts/LeagueContext";
 import { ArrowLeft, Info } from "lucide-react";
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { TeamDetailModal } from "./TeamDetailModal";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 interface StandingsPageProps {
   onBack: () => void;
@@ -22,6 +23,18 @@ export function StandingsPage({ onBack }: StandingsPageProps) {
       </div>
     );
   }
+
+  // 팀의 시너지 적용된 총 OVR 계산 헬퍼 함수
+  const getTeamTotalOVR = (teamId: string) => {
+    const team = getTeamById(teamId);
+    if (!team) return 0;
+    
+    const teamSynergies = calculateSynergies(team.squad);
+    const teamCardBonuses = calculateCardSynergyBonuses(team.squad, teamSynergies);
+    const synergyBonus = Object.values(teamCardBonuses).reduce((sum, bonus) => sum + (bonus?.ovr || 0), 0);
+    
+    return team.stats.totalOVR + synergyBonus;
+  };
 
   const selectedTeam = selectedTeamId ? getTeamById(selectedTeamId) : null;
 
@@ -98,7 +111,7 @@ export function StandingsPage({ onBack }: StandingsPageProps) {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">OVR {entry.totalOVR}</div>
+                    <div className="text-xs text-slate-500 mt-1">OVR {getTeamTotalOVR(entry.teamId)}</div>
                   </div>
 
                   {/* 경기수 */}

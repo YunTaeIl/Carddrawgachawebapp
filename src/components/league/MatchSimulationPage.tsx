@@ -7,6 +7,7 @@ import { Team, MatchSimulationState, LEAGUE_CONFIGS } from "@/types/league";
 import { initializeMatch, processNextTurn, generateMatchResult } from "@/utils/matchSimulation";
 import { Play, Pause, FastForward, ArrowLeft } from "lucide-react";
 import { getKoreanTeamName } from "@/utils/teamNames";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 interface MatchSimulationPageProps {
   homeTeam: Team;
@@ -72,6 +73,14 @@ export function MatchSimulationPage({
     return currentLeague?.playerTeamId === teamId;
   };
 
+  // 팀의 시너지 적용된 총 OVR 계산
+  const getTeamTotalOVR = (team: Team) => {
+    const teamSynergies = calculateSynergies(team.squad);
+    const teamCardBonuses = calculateCardSynergyBonuses(team.squad, teamSynergies);
+    const synergyBonus = Object.values(teamCardBonuses).reduce((sum, bonus) => sum + (bonus?.ovr || 0), 0);
+    return team.stats.totalOVR + synergyBonus;
+  };
+
   const winner = simulation.winnerId === homeTeam.id ? homeTeam : awayTeam;
   const isPlayerWin = simulation.winnerId === currentLeague?.playerTeamId;
 
@@ -124,7 +133,7 @@ export function MatchSimulationPage({
           }`}>
             <div className="mb-4">
               <h3 className="text-xl font-bold mb-1">{getKoreanTeamName(homeTeam.name)}</h3>
-              <div className="text-sm text-slate-400">OVR {homeTeam.stats.totalOVR}</div>
+              <div className="text-sm text-slate-400">OVR {getTeamTotalOVR(homeTeam)}</div>
             </div>
 
             <div className="space-y-2 mb-4">
@@ -194,7 +203,7 @@ export function MatchSimulationPage({
           }`}>
             <div className="mb-4">
               <h3 className="text-xl font-bold mb-1">{getKoreanTeamName(awayTeam.name)}</h3>
-              <div className="text-sm text-slate-400">OVR {awayTeam.stats.totalOVR}</div>
+              <div className="text-sm text-slate-400">OVR {getTeamTotalOVR(awayTeam)}</div>
             </div>
 
             <div className="space-y-2 mb-4">
