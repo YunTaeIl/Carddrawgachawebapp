@@ -67,6 +67,8 @@ export function createMatchSeries(
 
 /**
  * 새 세트 시작
+ * 홀수 세트(1, 3, 5): 원래대로
+ * 짝수 세트(2, 4): 홈/어웨이 교체
  */
 export function startNewSet(
   series: MatchSeries,
@@ -75,16 +77,26 @@ export function startNewSet(
 ): MatchSeries {
   const setNumber = series.currentSetIndex + 1;
   
+  // 짝수 세트는 팀 교체
+  const shouldSwap = setNumber % 2 === 0;
+  
   const game = initializeGame(
     setNumber,
-    series.homeTeam,
-    series.awayTeam,
-    homePlan,
-    awayPlan
+    shouldSwap ? series.awayTeam : series.homeTeam,
+    shouldSwap ? series.homeTeam : series.awayTeam,
+    shouldSwap ? awayPlan : homePlan,
+    shouldSwap ? homePlan : awayPlan
   );
   
-  // 시리즈 적응 효과 적용
-  applySeriesAdaptation(game, series.seriesAdaptation);
+  // 시리즈 적응 효과 적용 (교체 고려)
+  if (shouldSwap) {
+    applySeriesAdaptation(game, {
+      home: series.seriesAdaptation.away,
+      away: series.seriesAdaptation.home
+    });
+  } else {
+    applySeriesAdaptation(game, series.seriesAdaptation);
+  }
   
   return {
     ...series,

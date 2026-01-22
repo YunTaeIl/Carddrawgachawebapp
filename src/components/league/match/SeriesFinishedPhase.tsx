@@ -17,8 +17,25 @@ export function SeriesFinishedPhase({
   onComplete
 }: SeriesFinishedPhaseProps) {
   const result = getSeriesResult(series);
-  const homeWon = result.winnerId === series.homeTeam.id;
-  const winnerName = getKoreanTeamName(homeWon ? series.homeTeam.name : series.awayTeam.name);
+  
+  // 플레이어가 승리했는지 확인
+  const playerWon = result.winnerId === series.homeTeam.id 
+    ? series.homeTeam.isPlayer 
+    : series.awayTeam.isPlayer;
+  
+  const winnerName = getKoreanTeamName(
+    result.winnerId === series.homeTeam.id 
+      ? series.homeTeam.name 
+      : series.awayTeam.name
+  );
+
+  // 골드 포맷 함수
+  const formatGold = (gold: number) => {
+    if (gold >= 1000) {
+      return `${Math.round(gold / 1000)}k`;
+    }
+    return Math.round(gold).toString();
+  };
 
   return (
     <div className="w-full h-full flex items-center justify-center p-8">
@@ -26,11 +43,11 @@ export function SeriesFinishedPhase({
         {/* 승리 아이콘 */}
         <div className="text-center mb-8">
           <div className="text-8xl mb-6">
-            {homeWon ? "🏆" : "💔"}
+            {playerWon ? "🏆" : "💔"}
           </div>
           
-          <h1 className={`text-6xl font-bold font-display mb-4 ${homeWon ? 'text-yellow-400' : 'text-slate-400'}`}>
-            {homeWon ? "VICTORY" : "DEFEAT"}
+          <h1 className={`text-6xl font-bold font-display mb-4 ${playerWon ? 'text-yellow-400' : 'text-slate-400'}`}>
+            {playerWon ? "VICTORY" : "DEFEAT"}
           </h1>
           
           <p className="text-2xl text-slate-300 mb-2">
@@ -78,7 +95,7 @@ export function SeriesFinishedPhase({
                     <span>킬: {set.finalState.objectives.kills.home} - {set.finalState.objectives.kills.away}</span>
                     <span>타워: {set.finalState.objectives.towers.home} - {set.finalState.objectives.towers.away}</span>
                     <span>드래곤: {set.finalState.objectives.dragons.home} - {set.finalState.objectives.dragons.away}</span>
-                    <span>골드차: {set.finalState.goldDiff > 0 ? '+' : ''}{(set.finalState.goldDiff / 1000).toFixed(1)}k</span>
+                    <span>골드차: {set.finalState.goldDiff > 0 ? '+' : ''}{formatGold(Math.abs(set.finalState.goldDiff))}</span>
                   </div>
                 </div>
               );
@@ -87,7 +104,7 @@ export function SeriesFinishedPhase({
         </div>
 
         {/* 보상 (승리 시) */}
-        {homeWon && (
+        {playerWon && (
           <div className="mb-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
             <div className="flex items-center justify-center gap-3 mb-2">
               <Trophy className="w-6 h-6 text-yellow-400" />

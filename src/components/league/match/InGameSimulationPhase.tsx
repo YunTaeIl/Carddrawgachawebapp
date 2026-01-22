@@ -123,7 +123,7 @@ export function InGameSimulationPhase({
     if (gold >= 1000) {
       return `${Math.round(gold / 1000)}k`;
     }
-    return gold.toString();
+    return Math.round(gold).toString();
   };
 
   const homeTeam = series.homeTeam;
@@ -168,7 +168,7 @@ export function InGameSimulationPhase({
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{pos}</div>
                     <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
-                    <div className="text-xs text-slate-500">OVR {card.ovr || card.stats.ovr}</div>
+                    <div className="text-xs text-slate-500">OVR {card.stats.ovr}</div>
                   </div>
                 </div>
               </div>
@@ -202,7 +202,7 @@ export function InGameSimulationPhase({
                 {formatTime(game.currentTime)}
               </div>
               <div className={`text-xl font-bold ${state.goldDiff > 0 ? 'text-blue-400' : state.goldDiff < 0 ? 'text-red-400' : 'text-slate-400'}`}>
-                {state.goldDiff > 0 ? '+' : ''}{formatGold(state.goldDiff)}
+                {state.goldDiff > 0 ? '+' : ''}{formatGold(Math.abs(state.goldDiff))}
               </div>
               <div className="text-xs text-slate-500">골드 차이</div>
             </div>
@@ -224,19 +224,21 @@ export function InGameSimulationPhase({
             </div>
           </div>
 
-          {/* 승률 바 */}
+          {/* 승률 바 (양쪽 표시) */}
           <div className="h-8 bg-black/40 flex items-center px-8">
             <div className="flex-1 flex items-center gap-2">
-              <span className="text-xs text-slate-400 w-16">승률</span>
-              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+              <span className="text-xs text-blue-400 w-12">{state.winProbHome.toFixed(0)}%</span>
+              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden flex">
                 <div 
                   className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500"
                   style={{ width: `${state.winProbHome}%` }}
                 />
+                <div 
+                  className="h-full bg-gradient-to-l from-red-500 to-red-400 transition-all duration-500"
+                  style={{ width: `${100 - state.winProbHome}%` }}
+                />
               </div>
-              <span className="text-sm font-bold text-blue-400 w-12 text-right">
-                {state.winProbHome.toFixed(0)}%
-              </span>
+              <span className="text-xs text-red-400 w-12 text-right">{(100 - state.winProbHome).toFixed(0)}%</span>
             </div>
           </div>
 
@@ -375,7 +377,7 @@ export function InGameSimulationPhase({
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{pos}</div>
                     <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
-                    <div className="text-xs text-slate-500">OVR {card.ovr || card.stats.ovr}</div>
+                    <div className="text-xs text-slate-500">OVR {card.stats.ovr}</div>
                   </div>
                 </div>
               </div>

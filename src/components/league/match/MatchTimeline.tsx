@@ -61,6 +61,9 @@ function formatGold(gold: number): string {
 export function MatchTimeline({ game, onEventClick }: MatchTimelineProps) {
   // 타임라인 데이터 변환 (초 -> 분)
   const chartData = useMemo(() => {
+    if (!game.timeline || game.timeline.length === 0) {
+      return [];
+    }
     return game.timeline.map(point => ({
       time: point.time / 60, // 분 단위
       goldDiff: point.goldDiff,
