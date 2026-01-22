@@ -12,36 +12,41 @@ import { Team, LeagueType } from "@/types/league";
 
 type Grade = "S" | "A" | "B" | "C" | "D";
 
-interface GradeFilterConfig {
-  primary: Grade[];        // 우선 등급
-  fallback: Grade[];       // 부족 시 대체 등급
-  minOvr?: number;         // 최소 ovr 필터 (선택)
+// ============================================================
+// 2. 리그별 등급 가중치 설정
+// ============================================================
+
+/**
+ * 리그 타입별 등급 선택 확률 가중치
+ * - 각 포지션 pick 시 먼저 등급을 가중 랜덤으로 선택함
+ * - 예: TIER3에서 B 40%, C 40%, A 20% 분포
+ */
+interface GradeWeights {
+  weights: Record<Grade, number>;  // 등급별 가중치
+  fallbackOrder: Grade[];          // 후보 부족 시 시도할 등급 순서
+  minOvr?: number;                 // 최소 ovr 필터 (선택)
 }
 
-// ============================================================
-// 2. 리그별 등급 필터 설정
-// ============================================================
-
-const LEAGUE_GRADE_FILTERS: Record<LeagueType, GradeFilterConfig> = {
-  legend: {
-    primary: ["S"],
-    fallback: ["A"],
-    minOvr: 90,           // 레전드는 90+ 선수만 사용
-  },
-  tier1: {
-    primary: ["S"],
-    fallback: ["A"],
-    minOvr: 85,
+const LEAGUE_GRADE_WEIGHTS: Record<LeagueType, GradeWeights> = {
+  tier3: {
+    weights: { B: 0.4, C: 0.4, A: 0.2, S: 0, D: 0 },
+    fallbackOrder: ["B", "C", "A", "D", "S"],
+    minOvr: 60,
   },
   tier2: {
-    primary: ["A"],
-    fallback: ["B", "S"],
+    weights: { A: 0.4, B: 0.4, S: 0.2, C: 0, D: 0 },
+    fallbackOrder: ["A", "B", "S", "C", "D"],
     minOvr: 75,
   },
-  tier3: {
-    primary: ["B", "C"],
-    fallback: ["A"],
-    minOvr: 60,
+  tier1: {
+    weights: { S: 0.4, A: 0.4, B: 0.2, C: 0, D: 0 },
+    fallbackOrder: ["S", "A", "B", "C", "D"],
+    minOvr: 85,
+  },
+  legend: {
+    weights: { S: 0.5, A: 0.35, B: 0.15, C: 0, D: 0 },
+    fallbackOrder: ["S", "A", "B", "C", "D"],
+    minOvr: 90,
   },
 };
 
@@ -76,16 +81,22 @@ export function generateAITeams(
   // 1) 리그별 후보 풀 구축함
   const candidatePool = buildCandidatePool(leagueType, allCards);
   
-  // 2) 포지션별로 분리함
-  const positionPools = splitByPosition(candidatePool);
+  // 2) 포지션별 + 등급별로 분리함
+  const positionGradePools = splitByPositionAndGrade(candidatePool);
   
   // 3) 전역 사용 카드 추적 집합 초기화함
   const usedCardIds = new Set<string>();
   
-  // 4) AI 팀 생성 배열 초기화함
+  // 4) 등급별 선택 통계 (디버깅용)
+  const gradePickStats: Record<Grade, number> = { S: 0, A: 0, B: 0, C: 0, D: 0 };
+  
+  // 5) AI 팀 생성 배열 초기화함
   const aiTeams: Team[] = [];
   
-  // 5) 팀 생성 루프 (9회)
+  // 6) 리그 설정 가져오기
+  const leagueConfig = LEAGUE_GRADE_WEIGHTS[leagueType];
+  
+  // 7) 팀 생성 루프 (9회)
   for (let i = 0; i < 9; i++) {
     const teamId = `ai_team_${i}`;
     const teamName = AI_TEAM_NAMES[i];
@@ -100,25 +111,53 @@ export function generateAITeams(
     };
     
     for (const position of ["TOP", "JGL", "MID", "ADC", "SUP"] as Position[]) {
-      const availableCards = positionPools[position].filter(
-        card => !usedCardIds.has(card.id)
-      );
+      // STEP 1: 등급을 가중 랜덤으로 선택함
+      const selectedGrade = weightedPickGrade(leagueConfig.weights);
       
-      // 카드 부족 시 에러 처리함
-      if (availableCards.length === 0) {
+      // STEP 2: 해당 등급 + 포지션에서 미사용 카드 필터링
+      let candidates = positionGradePools[position][selectedGrade]?.filter(
+        card => !usedCardIds.has(card.id)
+      ) || [];
+      
+      // STEP 3: 후보가 없으면 fallback 등급 시도
+      if (candidates.length === 0) {
+        for (const fallbackGrade of leagueConfig.fallbackOrder) {
+          if (fallbackGrade === selectedGrade) continue;
+          
+          candidates = positionGradePools[position][fallbackGrade]?.filter(
+            card => !usedCardIds.has(card.id)
+          ) || [];
+          
+          if (candidates.length > 0) {
+            console.warn(
+              `[AI 로스터] ${position} ${selectedGrade}→${fallbackGrade} fallback (팀 ${i + 1})`
+            );
+            gradePickStats[fallbackGrade]++;
+            break;
+          }
+        }
+      } else {
+        gradePickStats[selectedGrade]++;
+      }
+      
+      // STEP 4: 여전히 후보가 없으면 에러 처리
+      if (candidates.length === 0) {
         console.error(
           `[AI 로스터 생성 실패] ${position} 포지션 카드 부족 (팀 ${i + 1}/${leagueType})`
         );
-        // Fallback: 이미 사용된 카드라도 선택 (최후의 수단)
-        const fallbackCard = positionPools[position][0];
-        if (fallbackCard) {
-          squad[position] = fallbackCard;
+        // 최후의 수단: 해당 포지션의 모든 등급에서 첫 번째 카드 선택
+        for (const grade of ["S", "A", "B", "C", "D"] as Grade[]) {
+          const anyCard = positionGradePools[position][grade]?.[0];
+          if (anyCard) {
+            squad[position] = anyCard;
+            break;
+          }
         }
         continue;
       }
       
-      // 가중 랜덤으로 카드 선택함
-      const selectedCard = weightedPick(availableCards);
+      // STEP 5: 후보 중에서 OVR 기반 가중 랜덤 선택
+      const selectedCard = weightedPick(candidates);
       
       squad[position] = selectedCard;
       usedCardIds.add(selectedCard.id);
@@ -136,7 +175,8 @@ export function generateAITeams(
     });
   }
   
-  // 6) 생성 결과 검증함
+  // 8) 생성 결과 검증 및 통계 출력
+  console.log(`[AI 로스터] ${leagueType.toUpperCase()} 등급 분포:`, gradePickStats);
   validateRosterGeneration(aiTeams, usedCardIds, leagueType);
   
   return aiTeams;
@@ -148,44 +188,33 @@ export function generateAITeams(
 
 /**
  * 리그 타입에 맞는 후보 카드 풀을 구축함
- * - primary 등급 우선 선택
- * - 부족 시 fallback 등급 추가
+ * - 가중치에 포함된 모든 등급 + fallback 등급을 포함하는 넓은 풀 생성
+ * - minOvr 필터 적용
  */
 function buildCandidatePool(
   leagueType: LeagueType,
   allCards: LCKCard[]
 ): LCKCard[] {
-  const config = LEAGUE_GRADE_FILTERS[leagueType];
+  const config = LEAGUE_GRADE_WEIGHTS[leagueType];
   
-  // 1차: primary 등급으로 필터링함
-  let pool = allCards.filter(card => 
-    config.primary.includes(card.grade as Grade) &&
+  // 1) 가중치 > 0인 등급 추출
+  const targetGrades: Grade[] = Object.entries(config.weights)
+    .filter(([_, weight]) => weight > 0)
+    .map(([grade, _]) => grade as Grade);
+  
+  // 2) fallback 등급 추가 (중복 제거)
+  const allTargetGrades = new Set([...targetGrades, ...config.fallbackOrder]);
+  
+  // 3) 해당 등급들로 필터링
+  const pool = allCards.filter(card => 
+    allTargetGrades.has(card.grade as Grade) &&
     (config.minOvr ? card.stats.ovr >= config.minOvr : true)
   );
   
-  // 포지션별 최소 개수 확인함 (각 포지션당 최소 12장 필요: 9팀 + 여유분)
-  const positionCounts = countByPosition(pool);
-  const minRequired = 12;
-  
-  // 부족한 포지션이 있으면 fallback 추가함
-  let needsFallback = false;
-  for (const pos of ["TOP", "JGL", "MID", "ADC", "SUP"] as Position[]) {
-    if (positionCounts[pos] < minRequired) {
-      needsFallback = true;
-      break;
-    }
-  }
-  
-  if (needsFallback) {
-    console.warn(`[AI 로스터] ${leagueType} 후보 부족, fallback 등급 추가`);
-    
-    const fallbackCards = allCards.filter(card =>
-      config.fallback.includes(card.grade as Grade) &&
-      !pool.some(c => c.id === card.id) // 중복 제거
-    );
-    
-    pool = [...pool, ...fallbackCards];
-  }
+  console.log(
+    `[AI 로스터] ${leagueType.toUpperCase()} 후보 풀: ${pool.length}장 ` +
+    `(등급: ${Array.from(allTargetGrades).join(", ")})`
+  );
   
   return pool;
 }
@@ -210,30 +239,34 @@ function countByPosition(cards: LCKCard[]): Record<Position, number> {
 }
 
 // ============================================================
-// 5. 헬퍼 함수: 포지션별 분리
+// 5. 헬퍼 함수: 포지션 + 등급별 분리
 // ============================================================
 
 /**
- * 카드 풀을 포지션별로 분리함
+ * 카드 풀을 포지션 + 등급별로 분리함
+ * @returns positionGradePools[position][grade] = LCKCard[]
  */
-function splitByPosition(
+function splitByPositionAndGrade(
   cards: LCKCard[]
-): Record<Position, LCKCard[]> {
-  const pools: Record<Position, LCKCard[]> = {
-    TOP: [],
-    JGL: [],
-    MID: [],
-    ADC: [],
-    SUP: [],
+): Record<Position, Record<Grade, LCKCard[]>> {
+  const pools: Record<Position, Record<Grade, LCKCard[]>> = {
+    TOP: { S: [], A: [], B: [], C: [], D: [] },
+    JGL: { S: [], A: [], B: [], C: [], D: [] },
+    MID: { S: [], A: [], B: [], C: [], D: [] },
+    ADC: { S: [], A: [], B: [], C: [], D: [] },
+    SUP: { S: [], A: [], B: [], C: [], D: [] },
   };
   
   for (const card of cards) {
-    pools[card.position].push(card);
+    const grade = card.grade as Grade;
+    pools[card.position][grade].push(card);
   }
   
-  // 각 포지션 풀을 ovr 기준 내림차순 정렬함 (고성능 우선 배치)
+  // 각 포지션+등급 풀을 ovr 기준 내림차순 정렬함
   for (const position of Object.keys(pools) as Position[]) {
-    pools[position].sort((a, b) => b.stats.ovr - a.stats.ovr);
+    for (const grade of Object.keys(pools[position]) as Grade[]) {
+      pools[position][grade].sort((a, b) => b.stats.ovr - a.stats.ovr);
+    }
   }
   
   return pools;
@@ -242,6 +275,40 @@ function splitByPosition(
 // ============================================================
 // 6. 헬퍼 함수: 가중 랜덤 선택
 // ============================================================
+
+/**
+ * 등급 가중치 기반으로 등급을 랜덤 선택함
+ * @param weights 등급별 가중치 맵
+ * @returns 선택된 등급
+ */
+function weightedPickGrade(weights: Record<Grade, number>): Grade {
+  // 1) 가중치 > 0인 등급만 추출
+  const entries = Object.entries(weights).filter(([_, weight]) => weight > 0);
+  
+  if (entries.length === 0) {
+    throw new Error("[등급 가중 랜덤] 가중치 없음");
+  }
+  
+  // 2) 누적 가중치 계산
+  const cumulativeWeights: { grade: Grade; cumulative: number }[] = [];
+  let sum = 0;
+  for (const [grade, weight] of entries) {
+    sum += weight;
+    cumulativeWeights.push({ grade: grade as Grade, cumulative: sum });
+  }
+  
+  // 3) 랜덤 선택
+  const random = Math.random() * sum;
+  
+  for (const { grade, cumulative } of cumulativeWeights) {
+    if (random <= cumulative) {
+      return grade;
+    }
+  }
+  
+  // Fallback
+  return entries[entries.length - 1][0] as Grade;
+}
 
 /**
  * OVR 기반 가중치로 카드를 랜덤 선택함
