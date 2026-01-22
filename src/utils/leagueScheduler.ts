@@ -145,3 +145,111 @@ function calculateHeadToHead(team1Id: string, team2Id: string, matches: Match[])
   if (team2Wins > team1Wins) return -1;
   return 0;
 }
+
+/**
+ * AI 팀 간 경기 자동 시뮬레이션 (BO3 기준)
+ */
+export function simulateAIMatch(homeTeam: Team, awayTeam: Team): MatchResult {
+  // 팀 OVR 계산 (시너지 포함)
+  const getTeamOVR = (team: Team) => {
+    const teamSynergies = calculateSynergies(team.squad);
+    const teamCardBonuses = calculateCardSynergyBonuses(team.squad, teamSynergies);
+    const synergyBonus = Object.values(teamCardBonuses).reduce((sum, bonus) => sum + (bonus?.ovr || 0), 0);
+    return team.stats.totalOVR + synergyBonus;
+  };
+
+  const homeOVR = getTeamOVR(homeTeam);
+  const awayOVR = getTeamOVR(awayTeam);
+  
+  // 승률 계산 (OVR 차이 기반)
+  const ovrDiff = homeOVR - awayOVR;
+  const baseWinProb = 50 + (ovrDiff * 0.5); // OVR 1당 0.5% 승률 변화
+  const homeWinProb = Math.max(20, Math.min(80, baseWinProb)); // 20~80% 제한
+  
+  // BO3 시뮬레이션
+  let homeScore = 0;
+  let awayScore = 0;
+  const gamesToWin = 2;
+  
+  // 최대 3게임 진행
+  while (homeScore < gamesToWin && awayScore < gamesToWin) {
+    const random = Math.random() * 100;
+    if (random < homeWinProb) {
+      homeScore++;
+    } else {
+      awayScore++;
+    }
+  }
+  
+  const winnerId = homeScore > awayScore ? homeTeam.id : awayTeam.id;
+  const scoreDiff = Math.abs(homeScore - awayScore);
+  
+  // 스탯 생성 (OVR 기반 추정)
+  const avgOVR = (homeOVR + awayOVR) / 2;
+  const gameDuration = 25 + Math.random() * 15; // 25~40분
+  const totalGames = homeScore + awayScore;
+  
+  // 킬/타워/드래곤/바론 (경기 수와 OVR에 비례)
+  const baseKills = Math.floor(8 + Math.random() * 8); // 게임당 8~16킬
+  const baseTowers = Math.floor(5 + Math.random() * 6); // 게임당 5~11타워
+  const baseDragons = Math.floor(1 + Math.random() * 3); // 게임당 1~4드래곤
+  const baseBarons = Math.random() < 0.6 ? 1 : 0; // 게임당 60% 확률로 바론
+  
+  const homeKills = Math.floor(baseKills * totalGames * (homeScore / totalGames) * (1 + (homeOVR - avgOVR) / 1000));
+  const awayKills = Math.floor(baseKills * totalGames * (awayScore / totalGames) * (1 + (awayOVR - avgOVR) / 1000));
+  
+  const homeTowers = Math.floor(baseTowers * homeScore);
+  const awayTowers = Math.floor(baseTowers * awayScore);
+  
+  const homeDragons = Math.floor(baseDragons * homeScore);
+  const awayDragons = Math.floor(baseDragons * awayScore);
+  
+  const homeBarons = homeScore >= 2 ? Math.floor(baseBarons * homeScore) : 0;
+  const awayBarons = awayScore >= 2 ? Math.floor(baseBarons * awayScore) : 0;
+  
+  return {
+    homeTeamId: homeTeam.id,
+    awayTeamId: awayTeam.id,
+    homeScore,
+    awayScore,
+    winnerId,
+    scoreDiff,
+    kills: { home: homeKills, away: awayKills },
+    towers: { home: homeTowers, away: awayTowers },
+    dragons: { home: homeDragons, away: awayDragons },
+    barons: { home: homeBarons, away: awayBarons }
+  };
+}
+
+/**
+ * 플레이어 경기 완료 후 남은 라운드의 AI 경기들을 모두 시뮬레이션
+ */
+export function simulateRemainingMatches(
+  currentRound: number,
+  teams: Team[],
+  matches: Match[],
+  playerTeamId: string
+): Match[] {
+  const updatedMatches = [...matches];
+  
+  // 현재 라운드의 다른 경기들만 시뮬레이션 (플레이어 경기 제외)
+  const currentRoundMatches = updatedMatches.filter(
+    m => m.round === currentRound && 
+    !m.isCompleted && 
+    m.homeTeamId !== playerTeamId && 
+    m.awayTeamId !== playerTeamId
+  );
+  
+  for (const match of currentRoundMatches) {
+    const homeTeam = teams.find(t => t.id === match.homeTeamId);
+    const awayTeam = teams.find(t => t.id === match.awayTeamId);
+    
+    if (!homeTeam || !awayTeam) continue;
+    
+    const result = simulateAIMatch(homeTeam, awayTeam);
+    match.result = result;
+    match.isCompleted = true;
+  }
+  
+  return updatedMatches;
+}

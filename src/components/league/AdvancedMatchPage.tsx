@@ -80,7 +80,49 @@ export function AdvancedMatchPage({
           <SeriesFinishedPhase
             series={series}
             onComplete={() => {
-              // 포인트 지급 등
+              // 시리즈 결과를 MatchResult로 변환
+              const homeWins = series.setWinsHome;
+              const awayWins = series.setWinsAway;
+              const winnerId = homeWins > awayWins ? homeTeam.id : awayTeam.id;
+              
+              // 모든 세트의 통계 합산
+              const totalKills = series.sets.reduce((acc, set) => ({
+                home: acc.home + (set.finalState.objectives.kills.home || 0),
+                away: acc.away + (set.finalState.objectives.kills.away || 0)
+              }), { home: 0, away: 0 });
+              
+              const totalTowers = series.sets.reduce((acc, set) => ({
+                home: acc.home + (set.finalState.objectives.towers.home || 0),
+                away: acc.away + (set.finalState.objectives.towers.away || 0)
+              }), { home: 0, away: 0 });
+              
+              const totalDragons = series.sets.reduce((acc, set) => ({
+                home: acc.home + (set.finalState.objectives.dragons.home || 0),
+                away: acc.away + (set.finalState.objectives.dragons.away || 0)
+              }), { home: 0, away: 0 });
+              
+              const totalBarons = series.sets.reduce((acc, set) => ({
+                home: acc.home + (set.finalState.objectives.barons.home || 0),
+                away: acc.away + (set.finalState.objectives.barons.away || 0)
+              }), { home: 0, away: 0 });
+              
+              const matchResult = {
+                homeTeamId: homeTeam.id,
+                awayTeamId: awayTeam.id,
+                homeScore: homeWins,
+                awayScore: awayWins,
+                winnerId,
+                scoreDiff: Math.abs(homeWins - awayWins),
+                kills: totalKills,
+                towers: totalTowers,
+                dragons: totalDragons,
+                barons: totalBarons
+              };
+              
+              // 리그 컨텍스트에 경기 완료 알림
+              completeMatch(matchResult);
+              
+              // 화면 전환
               onMatchComplete();
             }}
           />

@@ -118,6 +118,17 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     currentMatch.result = result;
     currentMatch.isCompleted = true;
     
+    // 같은 라운드의 다른 AI 경기들도 자동 시뮬레이션
+    const currentRound = currentMatch.round;
+    // simulateRemainingMatches를 import할 수 없어서 직접 import
+    const { simulateRemainingMatches } = require("@/utils/leagueScheduler");
+    const simulatedMatches = simulateRemainingMatches(
+      currentRound,
+      currentLeague.teams,
+      updatedMatches,
+      currentLeague.playerTeamId
+    );
+    
     // 승리 포인트 지급
     let newPoints = currentLeague.currentPoints;
     if (result.winnerId === currentLeague.playerTeamId) {
@@ -125,8 +136,8 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       newPoints += config.winPoints;
     }
     
-    // 순위표 재계산
-    const newStandings = calculateStandings(currentLeague.teams, updatedMatches);
+    // 순위표 재계산 (시뮬레이션된 경기 포함)
+    const newStandings = calculateStandings(currentLeague.teams, simulatedMatches);
     
     // 정규시즌 종료 체크
     const nextMatchIndex = currentLeague.currentMatchIndex + 1;
@@ -139,7 +150,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     
     setCurrentLeague({
       ...currentLeague,
-      matches: updatedMatches,
+      matches: simulatedMatches,
       currentMatchIndex: nextMatchIndex,
       currentPoints: newPoints,
       standings: newStandings,
