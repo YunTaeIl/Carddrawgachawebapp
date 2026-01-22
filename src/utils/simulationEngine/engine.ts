@@ -20,7 +20,8 @@ import {
   EVENT_CONFIGS,
   SIMULATION_CONSTANTS,
   EVENT_MESSAGES,
-  GAME_PLAN_MODIFIERS
+  GAME_PLAN_MODIFIERS,
+  COACH_CALL_CONFIGS
 } from "./config";
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { LCKCard } from "@/types/lck";
