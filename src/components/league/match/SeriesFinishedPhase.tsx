@@ -19,9 +19,8 @@ export function SeriesFinishedPhase({
   const result = getSeriesResult(series);
   
   // 플레이어가 승리했는지 확인
-  const playerWon = result.winnerId === series.homeTeam.id 
-    ? series.homeTeam.isPlayer 
-    : series.awayTeam.isPlayer;
+  const playerWon = (result.winnerId === series.homeTeam.id && series.homeTeam.isPlayer) ||
+                    (result.winnerId === series.awayTeam.id && series.awayTeam.isPlayer);
   
   const winnerName = getKoreanTeamName(
     result.winnerId === series.homeTeam.id 

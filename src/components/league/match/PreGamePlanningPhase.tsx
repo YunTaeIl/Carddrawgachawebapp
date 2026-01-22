@@ -85,17 +85,21 @@ export function PreGamePlanningPhase({
     const aiLinks: PriorityLink[] = ["TOP_JGL", "MID_JGL", "BOT_SUP"];
     const aiLink = aiLinks[Math.floor(Math.random() * aiLinks.length)];
 
-    const homePlan: CoachPlan = {
+    const playerPlan: CoachPlan = {
       gamePlan: selectedPlans,
       riskLevel,
       priorityLink
     };
 
-    const awayPlan: CoachPlan = {
+    const aiPlan: CoachPlan = {
       gamePlan: aiPlans,
       riskLevel: aiRisk,
       priorityLink: aiLink
     };
+
+    // 플레이어가 홈팀인지 확인하고 올바르게 할당
+    const homePlan = series.homeTeam.isPlayer ? playerPlan : aiPlan;
+    const awayPlan = series.homeTeam.isPlayer ? aiPlan : playerPlan;
 
     // 시리즈에 새 세트 시작
     const newSeries = startNewSet(series, homePlan, awayPlan);

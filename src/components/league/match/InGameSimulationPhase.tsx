@@ -1,6 +1,6 @@
 // 경기 중 시뮬레이션 화면
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/app/components/ui/button";
 import { MatchSeries, CoachCallType } from "@/types/advancedSimulation";
 import { processGameTick, useCoachCall } from "@/utils/simulationEngine";
@@ -10,6 +10,7 @@ import { PlayerImage } from "@/components/PlayerImage";
 import { GRADE_COLORS } from "@/types/lck";
 import { CoachCallPanel } from "./CoachCallPanel";
 import { MatchTimeline } from "./MatchTimeline";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { 
   Play, 
   Pause, 
@@ -126,8 +127,34 @@ export function InGameSimulationPhase({
     return Math.round(gold).toString();
   };
 
-  const homeTeam = series.homeTeam;
-  const awayTeam = series.awayTeam;
+  // 시너지 계산 (홈팀)
+  const homeSynergies = useMemo(() => {
+    return calculateSynergies(game.homeTeam.squad);
+  }, [game.homeTeam.squad]);
+
+  const homeSynergyBonuses = useMemo(() => {
+    return calculateCardSynergyBonuses(game.homeTeam.squad, homeSynergies);
+  }, [game.homeTeam.squad, homeSynergies]);
+
+  // 시너지 계산 (어웨이팀)
+  const awaySynergies = useMemo(() => {
+    return calculateSynergies(game.awayTeam.squad);
+  }, [game.awayTeam.squad]);
+
+  const awaySynergyBonuses = useMemo(() => {
+    return calculateCardSynergyBonuses(game.awayTeam.squad, awaySynergies);
+  }, [game.awayTeam.squad, awaySynergies]);
+
+  // 시너지가 적용된 OVR 계산
+  const getDisplayOVR = (cardId: string, baseOVR: number, side: "home" | "away") => {
+    const bonuses = side === "home" ? homeSynergyBonuses : awaySynergyBonuses;
+    const bonus = bonuses[cardId];
+    const synergyBonus = bonus?.totalBonus || 0;
+    return baseOVR + synergyBonus;
+  };
+
+  const homeTeam = game.homeTeam;
+  const awayTeam = game.awayTeam;
   const state = game.gameState;
 
   return (
@@ -150,6 +177,8 @@ export function InGameSimulationPhase({
             const card = homeTeam.squad[pos];
             if (!card) return null;
             
+            const displayOVR = Math.round(getDisplayOVR(card.id, card.stats.ovr, "home"));
+            
             return (
               <div 
                 key={pos}
@@ -168,7 +197,7 @@ export function InGameSimulationPhase({
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{pos}</div>
                     <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
-                    <div className="text-xs text-slate-500">OVR {card.stats.ovr}</div>
+                    <div className="text-xs text-slate-500">OVR {displayOVR}</div>
                   </div>
                 </div>
               </div>
@@ -292,11 +321,11 @@ export function InGameSimulationPhase({
                 </div>
               )}
 
-              {/* 플레이어 팀 (홈) 콜 패널 */}
+              {/* 플레이어 팀 콜 패널 - 플레이어가 홈인지 어웨이인지 확인 */}
               <CoachCallPanel
                 game={game}
-                side="home"
-                onUseCall={(callType) => handleUseCall("home", callType)}
+                side={game.homeTeam.isPlayer ? "home" : "away"}
+                onUseCall={(callType) => handleUseCall(game.homeTeam.isPlayer ? "home" : "away", callType)}
                 disabled={!isPlaying || game.isFinished}
               />
             </div>
@@ -359,6 +388,8 @@ export function InGameSimulationPhase({
             const card = awayTeam.squad[pos];
             if (!card) return null;
             
+            const displayOVR = Math.round(getDisplayOVR(card.id, card.stats.ovr, "away"));
+            
             return (
               <div 
                 key={pos}
@@ -377,7 +408,7 @@ export function InGameSimulationPhase({
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{pos}</div>
                     <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
-                    <div className="text-xs text-slate-500">OVR {card.stats.ovr}</div>
+                    <div className="text-xs text-slate-500">OVR {displayOVR}</div>
                   </div>
                 </div>
               </div>
