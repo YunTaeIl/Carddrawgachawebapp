@@ -352,23 +352,33 @@ export function TeamDetailModal({ team, onClose }: TeamDetailModalProps) {
                             <div className="flex items-center gap-4 md:gap-6 text-sm flex-shrink-0">
                               <div className="text-center">
                                 <div className="text-xs text-slate-500">OVR</div>
-                                <div className="text-white font-bold text-lg">{card.stats.ovr}</div>
+                                <div className={`font-bold text-lg ${synergyBonus.ovr > 0 ? 'text-purple-400' : 'text-white'}`}>
+                                  {card.stats.ovr + synergyBonus.ovr}
+                                  {synergyBonus.ovr > 0 && (
+                                    <span className="text-xs ml-1">(+{synergyBonus.ovr})</span>
+                                  )}
+                                </div>
                               </div>
                               <div className="hidden md:grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                                <div className="text-slate-400">
-                                  <span className="text-slate-500">조작:</span> {card.stats.mechanics}
+                                <div className={synergyBonus.mec > 0 ? "text-purple-400" : "text-slate-400"}>
+                                  <span className="text-slate-500">조작:</span> {card.stats.mechanics + synergyBonus.mec}
+                                  {synergyBonus.mec > 0 && <span className="text-[10px] ml-0.5">(+{synergyBonus.mec})</span>}
                                 </div>
-                                <div className="text-slate-400">
-                                  <span className="text-slate-500">라인:</span> {card.stats.laning}
+                                <div className={synergyBonus.lan > 0 ? "text-purple-400" : "text-slate-400"}>
+                                  <span className="text-slate-500">라인:</span> {card.stats.laning + synergyBonus.lan}
+                                  {synergyBonus.lan > 0 && <span className="text-[10px] ml-0.5">(+{synergyBonus.lan})</span>}
                                 </div>
-                                <div className="text-slate-400">
-                                  <span className="text-slate-500">한타:</span> {card.stats.teamfight}
+                                <div className={synergyBonus.tf > 0 ? "text-purple-400" : "text-slate-400"}>
+                                  <span className="text-slate-500">한타:</span> {card.stats.teamfight + synergyBonus.tf}
+                                  {synergyBonus.tf > 0 && <span className="text-[10px] ml-0.5">(+{synergyBonus.tf})</span>}
                                 </div>
-                                <div className="text-slate-400">
-                                  <span className="text-slate-500">운영:</span> {card.stats.macro}
+                                <div className={synergyBonus.mac > 0 ? "text-purple-400" : "text-slate-400"}>
+                                  <span className="text-slate-500">운영:</span> {card.stats.macro + synergyBonus.mac}
+                                  {synergyBonus.mac > 0 && <span className="text-[10px] ml-0.5">(+{synergyBonus.mac})</span>}
                                 </div>
-                                <div className="text-slate-400 col-span-2">
-                                  <span className="text-slate-500">클러치:</span> {card.stats.clutch}
+                                <div className={`col-span-2 ${synergyBonus.clu > 0 ? "text-purple-400" : "text-slate-400"}`}>
+                                  <span className="text-slate-500">클러치:</span> {card.stats.clutch + synergyBonus.clu}
+                                  {synergyBonus.clu > 0 && <span className="text-[10px] ml-0.5">(+{synergyBonus.clu})</span>}
                                 </div>
                               </div>
                               {isExpanded ? (
