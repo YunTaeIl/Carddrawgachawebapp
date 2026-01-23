@@ -286,10 +286,8 @@ export function LeagueProgressPage({
                     if (roundMatches.length === 0) return null;
                     
                     const isExpanded = expandedRounds.has(round);
-                    const hasCurrentMatch = roundMatches.some((_, idx) => {
-                      const globalIndex = currentLeague.matches.findIndex(m => m.id === roundMatches[idx].id);
-                      return globalIndex === currentLeague.currentMatchIndex;
-                    });
+                    // 현재 라운드인지 확인 (다음 내 경기의 라운드)
+                    const isCurrentRound = currentMatch && currentMatch.round === round;
                     const completedCount = roundMatches.filter(m => m.isCompleted).length;
 
                     return (
@@ -298,13 +296,16 @@ export function LeagueProgressPage({
                         <button
                           onClick={() => toggleRound(round)}
                           className={`w-full flex items-center gap-3 p-3 rounded-lg text-sm font-semibold transition-colors ${
-                            hasCurrentMatch 
-                              ? 'bg-red-600/20 border border-red-600/50 text-white' 
+                            isCurrentRound
+                              ? 'bg-gradient-to-r from-amber-600/20 via-red-600/20 to-amber-600/20 border border-amber-500/50 text-white shadow-lg shadow-amber-500/20' 
                               : 'bg-slate-800/50 hover:bg-slate-800/70 text-slate-300'
                           }`}
                         >
                           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                           <span>ROUND {round}</span>
+                          {isCurrentRound && (
+                            <span className="text-xs text-amber-400 animate-pulse">● 진행중</span>
+                          )}
                           <span className="ml-auto text-xs text-slate-400">
                             {completedCount}/{roundMatches.length}
                           </span>
@@ -316,8 +317,10 @@ export function LeagueProgressPage({
                             {roundMatches.map((match) => {
                               const homeTeam = getTeamById(match.homeTeamId);
                               const awayTeam = getTeamById(match.awayTeamId);
-                              const globalIndex = currentLeague.matches.findIndex(m => m.id === match.id);
-                              const isCurrent = globalIndex === currentLeague.currentMatchIndex;
+                              // 이 경기가 다음 내 경기인지 확인
+                              const isMyNextMatch = currentMatch && 
+                                                    match.homeTeamId === currentMatch.homeTeamId && 
+                                                    match.awayTeamId === currentMatch.awayTeamId;
 
                               // 승리팀 결정
                               let winnerDisplay = null;
@@ -349,14 +352,21 @@ export function LeagueProgressPage({
                               return (
                                 <div
                                   key={match.id}
-                                  className={`flex items-center gap-3 p-2.5 rounded-lg text-sm ${
-                                    isCurrent ? 'bg-red-600/10 border border-red-600/30' : 'bg-black/10'
+                                  className={`flex items-center gap-3 p-2.5 rounded-lg text-sm transition-all ${
+                                    isMyNextMatch 
+                                      ? 'bg-gradient-to-r from-amber-600/30 via-red-600/30 to-amber-600/30 border-2 border-amber-500/70 shadow-lg shadow-amber-500/30 animate-pulse' 
+                                      : 'bg-black/10'
                                   }`}
                                 >
+                                  {isMyNextMatch && (
+                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-amber-500 rounded-full" />
+                                  )}
                                   <div className="flex-1 flex items-center justify-between">
                                     <span className={`truncate ${
                                       match.isCompleted && match.result?.winnerId === match.homeTeamId 
                                         ? 'font-bold text-white' 
+                                        : isMyNextMatch
+                                        ? 'font-bold text-white'
                                         : 'text-slate-300'
                                     }`}>
                                       {getKoreanTeamName(homeTeam?.name || "")}
@@ -366,16 +376,25 @@ export function LeagueProgressPage({
                                         {match.result.homeScore}:{match.result.awayScore}
                                       </span>
                                     ) : (
-                                      <span className="text-slate-600 mx-2">vs</span>
+                                      <span className={`mx-2 ${isMyNextMatch ? 'text-amber-400 font-bold' : 'text-slate-600'}`}>
+                                        vs
+                                      </span>
                                     )}
                                     <span className={`truncate ${
                                       match.isCompleted && match.result?.winnerId === match.awayTeamId 
                                         ? 'font-bold text-white' 
+                                        : isMyNextMatch
+                                        ? 'font-bold text-white'
                                         : 'text-slate-300'
                                     }`}>
                                       {getKoreanTeamName(awayTeam?.name || "")}
                                     </span>
                                   </div>
+                                  {isMyNextMatch && (
+                                    <span className="text-xs text-amber-400 font-bold px-2 py-0.5 bg-amber-500/20 rounded">
+                                      NEXT
+                                    </span>
+                                  )}
                                   {winnerDisplay}
                                 </div>
                               );
