@@ -144,7 +144,6 @@ export interface LeagueInstance {
   teams: Team[];
   playerTeamId: string;
   matches: Match[];
-  currentMatchIndex: number;
   standings: StandingEntry[];
   playoffBracket?: PlayoffBracket;
   championTeamId?: string;

@@ -77,7 +77,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       teams: allTeams,
       playerTeamId: playerTeam.id,
       matches,
-      currentMatchIndex: 0,
       standings,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -88,17 +87,20 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * 현재 경기 가져오기
+   * 현재 경기 가져오기 (플레이어 팀 경기만)
    */
   const getCurrentMatch = (): Match | null => {
     if (!currentLeague) return null;
     
-    // 정규시즌 완료 체크
-    if (currentLeague.currentMatchIndex >= currentLeague.matches.length) {
-      return null;
-    }
+    // 플레이어 팀의 경기만 필터링
+    const playerMatches = currentLeague.matches.filter(
+      m => m.homeTeamId === currentLeague.playerTeamId || m.awayTeamId === currentLeague.playerTeamId
+    );
     
-    return currentLeague.matches[currentLeague.currentMatchIndex] || null;
+    // 아직 완료되지 않은 첫 번째 플레이어 경기 찾기
+    const nextPlayerMatch = playerMatches.find(m => !m.isCompleted);
+    
+    return nextPlayerMatch || null;
   };
 
   /**
@@ -110,16 +112,25 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     console.log("=== 경기 완료 ===", result);
     
     const updatedMatches = [...currentLeague.matches];
-    const currentMatch = updatedMatches[currentLeague.currentMatchIndex];
     
-    if (!currentMatch) return;
+    // 완료된 경기 찾기 (result의 팀 ID로 매칭)
+    const completedMatch = updatedMatches.find(
+      m => !m.isCompleted && 
+      m.homeTeamId === result.homeTeamId && 
+      m.awayTeamId === result.awayTeamId
+    );
+    
+    if (!completedMatch) {
+      console.error("[LEAGUE] 완료된 경기를 찾을 수 없습니다:", result);
+      return;
+    }
     
     // 경기 결과 저장
-    currentMatch.result = result;
-    currentMatch.isCompleted = true;
+    completedMatch.result = result;
+    completedMatch.isCompleted = true;
     
     // 같은 라운드의 다른 AI 경기들도 자동 시뮬레이션
-    const currentRound = currentMatch.round;
+    const currentRound = completedMatch.round;
     console.log("[LEAGUE] Current round:", currentRound);
     
     const simulatedMatches = simulateRemainingMatches(
@@ -148,18 +159,20 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     const newStandings = calculateStandings(currentLeague.teams, simulatedMatches);
     
     // 정규시즌 종료 체크
-    const nextMatchIndex = currentLeague.currentMatchIndex + 1;
-    let newSeasonState = currentLeague.seasonState;
+    const playerMatches = simulatedMatches.filter(
+      m => m.homeTeamId === currentLeague.playerTeamId || m.awayTeamId === currentLeague.playerTeamId
+    );
+    const allPlayerMatchesCompleted = playerMatches.every(m => m.isCompleted);
     
-    if (nextMatchIndex >= currentLeague.matches.length && currentLeague.seasonState === "regular") {
-      // 정규시즌 18경기 모두 완료
+    let newSeasonState = currentLeague.seasonState;
+    if (allPlayerMatchesCompleted && currentLeague.seasonState === "regular") {
+      // 플레이어의 모든 경기 완료
       console.log("✅ 정규시즌 종료!");
     }
     
     const updatedLeague = {
       ...currentLeague,
       matches: simulatedMatches,
-      currentMatchIndex: nextMatchIndex,
       currentPoints: newPoints,
       standings: newStandings,
       seasonState: newSeasonState,
@@ -169,6 +182,8 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     console.log("[LEAGUE] League updated:", {
       completedMatches: simulatedMatches.filter(m => m.isCompleted).length,
       totalMatches: simulatedMatches.length,
+      playerMatchesCompleted: playerMatches.filter(m => m.isCompleted).length,
+      totalPlayerMatches: playerMatches.length,
       standings: newStandings.map(s => ({ 
         name: s.teamName, 
         wins: s.wins, 
