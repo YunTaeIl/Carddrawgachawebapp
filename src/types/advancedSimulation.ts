@@ -181,8 +181,12 @@ export interface GameState {
   // 버프 상태
   baronBuffHome: boolean;
   baronBuffAway: boolean;
+  baronBuffHomeExpiry: number; // 버프 만료 시간 (초)
+  baronBuffAwayExpiry: number;
   elderBuffHome: boolean;
   elderBuffAway: boolean;
+  elderBuffHomeExpiry: number;
+  elderBuffAwayExpiry: number;
   
   // 우세/주도권
   winProbHome: number; // 0~100

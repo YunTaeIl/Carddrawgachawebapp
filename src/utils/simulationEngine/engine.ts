@@ -252,8 +252,12 @@ function initializeGameState(): GameState {
     
     baronBuffHome: false,
     baronBuffAway: false,
+    baronBuffHomeExpiry: 0,
+    baronBuffAwayExpiry: 0,
     elderBuffHome: false,
     elderBuffAway: false,
+    elderBuffHomeExpiry: 0,
+    elderBuffAwayExpiry: 0,
     
     winProbHome: 50,
     laneControl: { top: 0, mid: 0, bot: 0 },
@@ -298,10 +302,19 @@ export function processGameTick(game: GameSimulation): GameSimulation {
   // 4. 만료된 콜 정리
   cleanupExpiredCalls(game);
   
-  // 5. 이벤트 생성 시도
+  // 5. 게임 종료 체크 (이벤트 생성 전에 체크)
+  checkGameEnd(game, newTime);
+  
+  // 게임이 종료되었으면 더 이상 이벤트 생성하지 않음
+  if (game.isFinished) {
+    game.currentTime = newTime;
+    return game;
+  }
+  
+  // 6. 이벤트 생성 시도
   const newEvents = generateEvents(game, newTime);
   
-  // 5. 이벤트 적용
+  // 7. 이벤트 적용
   newEvents.forEach(event => {
     applyEventEffects(game, event);
   });
@@ -310,15 +323,12 @@ export function processGameTick(game: GameSimulation): GameSimulation {
     game.events = [...game.events, ...newEvents];
   }
   
-  // 6. 승률 계산
+  // 8. 승률 계산
   game.gameState.winProbHome = calculateWinProbability(game, "home");
   
-  // 7. 타임라인 포인트 기록 (불변성 유지!)
+  // 9. 타임라인 포인트 기록 (불변성 유지!)
   const timelinePoint = createTimelinePoint(game, newTime);
   game.timeline = [...game.timeline, timelinePoint];
-  
-  // 8. 게임 종료 체크
-  checkGameEnd(game, newTime);
   
   game.currentTime = newTime;
   
@@ -327,6 +337,24 @@ export function processGameTick(game: GameSimulation): GameSimulation {
 
 function updateGameDynamics(game: GameSimulation): void {
   const { homeTeam, awayTeam, gameState } = game;
+  
+  // 버프 만료 체크
+  if (gameState.baronBuffHome && game.currentTime >= gameState.baronBuffHomeExpiry) {
+    gameState.baronBuffHome = false;
+    gameState.baronBuffHomeExpiry = 0;
+  }
+  if (gameState.baronBuffAway && game.currentTime >= gameState.baronBuffAwayExpiry) {
+    gameState.baronBuffAway = false;
+    gameState.baronBuffAwayExpiry = 0;
+  }
+  if (gameState.elderBuffHome && game.currentTime >= gameState.elderBuffHomeExpiry) {
+    gameState.elderBuffHome = false;
+    gameState.elderBuffHomeExpiry = 0;
+  }
+  if (gameState.elderBuffAway && game.currentTime >= gameState.elderBuffAwayExpiry) {
+    gameState.elderBuffAway = false;
+    gameState.elderBuffAwayExpiry = 0;
+  }
   
   // 라인 주도권 (laning 스탯 기반)
   const topHome = homeTeam.squad.TOP;
@@ -376,10 +404,35 @@ function generateEvents(game: GameSimulation, currentTime: number): GameEvent[] 
       return false;
     }
     
-    // 조건 체크 (dragon_alive 등)
+    // 조건 체크
     if (config.conditions) {
-      // 간단 구현: 조건은 나중에 확장 가능
-      return true;
+      for (const condition of config.conditions) {
+        if (condition === "baron_alive") {
+          // 바론이 살아있는지 = 둘 다 바론 버프가 없는 상태
+          if (game.gameState.baronBuffHome || game.gameState.baronBuffAway) {
+            return false;
+          }
+        }
+        if (condition === "dragon_alive") {
+          // 드래곤 관련 조건
+          const totalDragons = game.gameState.dragons.home + game.gameState.dragons.away;
+          if (totalDragons >= 4) return false; // 4마리 이상 잡혔으면 소울 획득
+        }
+      }
+    }
+    
+    // BARON_TAKE/STEAL은 최근에 BARON_START가 있었을 때만
+    if (config.type === "BARON_TAKE" || config.type === "BARON_STEAL") {
+      const recentBaronStart = game.events
+        .filter(e => e.type === "BARON_START")
+        .sort((a, b) => b.time - a.time)[0];
+      
+      // 바론 시작 후 30초~2분 이내에만 바론 획득 가능
+      if (!recentBaronStart || 
+          (currentTime - recentBaronStart.time) < 30 || 
+          (currentTime - recentBaronStart.time) > 120) {
+        return false;
+      }
     }
     
     return true;
@@ -652,12 +705,16 @@ function applyEventEffects(game: GameSimulation, event: GameEvent): void {
       break;
     
     case "BARON_TAKE":
+    case "BARON_STEAL":
       if (event.side !== "neutral") {
         state.barons[event.side]++;
+        const baronBuffDuration = 180; // 3분
         if (event.side === "home") {
           state.baronBuffHome = true;
+          state.baronBuffHomeExpiry = game.currentTime + baronBuffDuration;
         } else {
           state.baronBuffAway = true;
+          state.baronBuffAwayExpiry = game.currentTime + baronBuffDuration;
         }
         state.momentum += event.side === "home" ? 20 : -20;
       }
