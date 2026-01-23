@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
 import { useGame } from "@/contexts/GameContext";
 import { LEAGUE_CONFIGS } from "@/types/league";
-import { ArrowLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowLeft, ChevronRight, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { getKoreanTeamName } from "@/utils/teamNames";
@@ -25,6 +25,19 @@ export function LeagueProgressPage({
 }: LeagueProgressPageProps) {
   const { currentLeague, getCurrentMatch, getTeamById } = useLeague();
   const { userData } = useGame();
+  const [expandedRounds, setExpandedRounds] = useState<Set<number>>(new Set([1])); // 첫 라운드는 기본 열림
+
+  const toggleRound = (round: number) => {
+    setExpandedRounds(prev => {
+      const next = new Set(prev);
+      if (next.has(round)) {
+        next.delete(round);
+      } else {
+        next.add(round);
+      }
+      return next;
+    });
+  };
 
   if (!currentLeague) {
     return (
@@ -246,47 +259,110 @@ export function LeagueProgressPage({
 
             {/* 일정 & 순위 */}
             <div className="grid md:grid-cols-2 gap-6">
-              {/* 일정 */}
+              {/* 일정 - 라운드별 그룹화 */}
               <div className="bg-slate-900/30 rounded-2xl p-6 border border-white/5">
                 <h3 className="text-lg font-bold mb-4">일정</h3>
                 <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-                  {currentLeague.matches.map((match, index) => {
-                    const homeTeam = getTeamById(match.homeTeamId);
-                    const awayTeam = getTeamById(match.awayTeamId);
-                    const isCurrent = index === currentLeague.currentMatchIndex;
+                  {Array.from({ length: 18 }, (_, i) => i + 1).map(round => {
+                    const roundMatches = currentLeague.matches.filter(m => m.round === round);
+                    if (roundMatches.length === 0) return null;
+                    
+                    const isExpanded = expandedRounds.has(round);
+                    const hasCurrentMatch = roundMatches.some((_, idx) => {
+                      const globalIndex = currentLeague.matches.findIndex(m => m.id === roundMatches[idx].id);
+                      return globalIndex === currentLeague.currentMatchIndex;
+                    });
+                    const completedCount = roundMatches.filter(m => m.isCompleted).length;
 
                     return (
-                      <div
-                        key={match.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg text-sm ${
-                          isCurrent ? 'bg-red-600/20 border border-red-600/50' : 'bg-black/20'
-                        }`}
-                      >
-                        <div className="w-8 text-center text-slate-500">{match.round}</div>
-                        <div className="flex-1 flex items-center justify-between">
-                          <span className="truncate">{getKoreanTeamName(homeTeam?.name || "")}</span>
-                          {match.isCompleted && match.result ? (
-                            <span className="text-amber-400 font-mono text-xs mx-2">
-                              {match.result.homeScore}:{match.result.awayScore}
-                            </span>
-                          ) : (
-                            <span className="text-slate-600 mx-2">vs</span>
-                          )}
-                          <span className="truncate">{getKoreanTeamName(awayTeam?.name || "")}</span>
-                        </div>
-                        {match.isCompleted && match.result && (
-                          // 플레이어 팀이 참여한 경기만 W/L 표시
-                          (match.homeTeamId === currentLeague.playerTeamId || match.awayTeamId === currentLeague.playerTeamId) ? (
-                            <div className={`text-xs font-bold ${
-                              match.result.winnerId === currentLeague.playerTeamId 
-                                ? 'text-emerald-400' 
-                                : 'text-red-400'
-                            }`}>
-                              {match.result.winnerId === currentLeague.playerTeamId ? 'W' : 'L'}
-                            </div>
-                          ) : (
-                            <div className="text-xs text-slate-500">-</div>
-                          )
+                      <div key={round}>
+                        {/* 라운드 헤더 */}
+                        <button
+                          onClick={() => toggleRound(round)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg text-sm font-semibold transition-colors ${
+                            hasCurrentMatch 
+                              ? 'bg-red-600/20 border border-red-600/50 text-white' 
+                              : 'bg-slate-800/50 hover:bg-slate-800/70 text-slate-300'
+                          }`}
+                        >
+                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          <span>ROUND {round}</span>
+                          <span className="ml-auto text-xs text-slate-400">
+                            {completedCount}/{roundMatches.length}
+                          </span>
+                        </button>
+
+                        {/* 라운드 경기 목록 */}
+                        {isExpanded && (
+                          <div className="mt-1 ml-4 space-y-1">
+                            {roundMatches.map((match) => {
+                              const homeTeam = getTeamById(match.homeTeamId);
+                              const awayTeam = getTeamById(match.awayTeamId);
+                              const globalIndex = currentLeague.matches.findIndex(m => m.id === match.id);
+                              const isCurrent = globalIndex === currentLeague.currentMatchIndex;
+
+                              // 승리팀 결정
+                              let winnerDisplay = null;
+                              if (match.isCompleted && match.result) {
+                                const isPlayerInMatch = match.homeTeamId === currentLeague.playerTeamId || 
+                                                       match.awayTeamId === currentLeague.playerTeamId;
+                                
+                                if (isPlayerInMatch) {
+                                  // 플레이어 팀 관련 경기
+                                  const playerWon = match.result.winnerId === currentLeague.playerTeamId;
+                                  winnerDisplay = (
+                                    <div className={`text-xs font-bold px-2 py-0.5 rounded ${
+                                      playerWon ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                                    }`}>
+                                      {playerWon ? 'W' : 'L'}
+                                    </div>
+                                  );
+                                } else {
+                                  // AI팀끼리 경기 - 승자 표시
+                                  const homeWon = match.result.winnerId === match.homeTeamId;
+                                  winnerDisplay = (
+                                    <div className="text-xs text-slate-500">
+                                      {homeWon ? 'H' : 'A'}
+                                    </div>
+                                  );
+                                }
+                              }
+
+                              return (
+                                <div
+                                  key={match.id}
+                                  className={`flex items-center gap-3 p-2.5 rounded-lg text-sm ${
+                                    isCurrent ? 'bg-red-600/10 border border-red-600/30' : 'bg-black/10'
+                                  }`}
+                                >
+                                  <div className="flex-1 flex items-center justify-between">
+                                    <span className={`truncate ${
+                                      match.isCompleted && match.result?.winnerId === match.homeTeamId 
+                                        ? 'font-bold text-white' 
+                                        : 'text-slate-300'
+                                    }`}>
+                                      {getKoreanTeamName(homeTeam?.name || "")}
+                                    </span>
+                                    {match.isCompleted && match.result ? (
+                                      <span className="text-amber-400 font-mono text-xs mx-2 font-bold">
+                                        {match.result.homeScore}:{match.result.awayScore}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-600 mx-2">vs</span>
+                                    )}
+                                    <span className={`truncate ${
+                                      match.isCompleted && match.result?.winnerId === match.awayTeamId 
+                                        ? 'font-bold text-white' 
+                                        : 'text-slate-300'
+                                    }`}>
+                                      {getKoreanTeamName(awayTeam?.name || "")}
+                                    </span>
+                                  </div>
+                                  {winnerDisplay}
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     );
