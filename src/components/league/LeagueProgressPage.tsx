@@ -25,7 +25,26 @@ export function LeagueProgressPage({
 }: LeagueProgressPageProps) {
   const { currentLeague, getCurrentMatch, getTeamById } = useLeague();
   const { userData } = useGame();
-  const [expandedRounds, setExpandedRounds] = useState<Set<number>>(new Set([1])); // 첫 라운드는 기본 열림
+  const currentMatch = getCurrentMatch();
+  
+  // 현재 진행 중인 라운드 자동 펼치기
+  const [expandedRounds, setExpandedRounds] = useState<Set<number>>(() => {
+    if (currentMatch) {
+      return new Set([currentMatch.round]);
+    }
+    return new Set([1]);
+  });
+
+  // currentMatch가 변경되면 해당 라운드 자동 펼치기
+  React.useEffect(() => {
+    if (currentMatch) {
+      setExpandedRounds(prev => {
+        const next = new Set(prev);
+        next.add(currentMatch.round);
+        return next;
+      });
+    }
+  }, [currentMatch?.round]);
 
   const toggleRound = (round: number) => {
     setExpandedRounds(prev => {
@@ -51,7 +70,6 @@ export function LeagueProgressPage({
   }
 
   const leagueConfig = LEAGUE_CONFIGS[currentLeague.leagueType];
-  const currentMatch = getCurrentMatch();
   const playerTeam = getTeamById(currentLeague.playerTeamId);
   
   const isRegularSeasonComplete = currentLeague.currentMatchIndex >= currentLeague.matches.length;
