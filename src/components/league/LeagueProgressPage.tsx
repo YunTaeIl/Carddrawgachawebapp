@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
 import { useGame } from "@/contexts/GameContext";
@@ -26,6 +26,7 @@ export function LeagueProgressPage({
   const { currentLeague, getCurrentMatch, getTeamById } = useLeague();
   const { userData } = useGame();
   const currentMatch = getCurrentMatch();
+  const currentRoundRef = useRef<HTMLDivElement>(null);
   
   // 현재 진행 중인 라운드 자동 펼치기
   const [expandedRounds, setExpandedRounds] = useState<Set<number>>(() => {
@@ -35,14 +36,24 @@ export function LeagueProgressPage({
     return new Set([1]);
   });
 
-  // currentMatch가 변경되면 해당 라운드 자동 펼치기
-  React.useEffect(() => {
+  // currentMatch가 변경되면 해당 라운드 자동 펼치기 및 스크롤
+  useEffect(() => {
     if (currentMatch) {
       setExpandedRounds(prev => {
         const next = new Set(prev);
         next.add(currentMatch.round);
         return next;
       });
+      
+      // 현재 라운드로 스크롤
+      setTimeout(() => {
+        if (currentRoundRef.current) {
+          currentRoundRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }
+      }, 100);
     }
   }, [currentMatch?.round]);
 
@@ -291,7 +302,10 @@ export function LeagueProgressPage({
                     const completedCount = roundMatches.filter(m => m.isCompleted).length;
 
                     return (
-                      <div key={round}>
+                      <div 
+                        key={round}
+                        ref={isCurrentRound ? currentRoundRef : null}
+                      >
                         {/* 라운드 헤더 */}
                         <button
                           onClick={() => toggleRound(round)}
