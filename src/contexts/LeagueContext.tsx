@@ -167,7 +167,10 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     let newSeasonState = currentLeague.seasonState;
     if (allPlayerMatchesCompleted && currentLeague.seasonState === "regular") {
       // 플레이어의 모든 경기 완료
+      const playerRank = newStandings.findIndex(s => s.isPlayer) + 1;
       console.log("✅ 정규시즌 종료!");
+      console.log(`📊 최종 순위: ${playerRank}위`);
+      console.log(`🎯 플레이오프 진출: ${playerRank <= 5 ? "성공" : "실패"}`);
     }
     
     const updatedLeague = {

@@ -49,6 +49,17 @@ export function generateSchedule(playerTeamId: string, aiTeamIds: string[]): Mat
   console.log(`[SCHEDULE] Generated ${matches.length} matches in ${rounds} rounds`);
   console.log(`[SCHEDULE] Teams: ${allTeamIds.length}, Matches per round: ~${Math.floor(allTeamIds.length / 2)}`);
   
+  // 각 팀의 경기 수 확인
+  const teamMatchCount: Record<string, number> = {};
+  allTeamIds.forEach(teamId => {
+    teamMatchCount[teamId] = matches.filter(m => 
+      m.homeTeamId === teamId || m.awayTeamId === teamId
+    ).length;
+  });
+  
+  console.log('[SCHEDULE] Matches per team:', teamMatchCount);
+  console.log('[SCHEDULE] Expected matches per team:', (allTeamIds.length - 1) * 2); // 더블 라운드 로빈
+  
   return matches;
 }
 
@@ -64,7 +75,7 @@ function assignRounds(matches: Match[], teamCount: number): number {
   
   while (shuffledMatches.some(m => m.round === 0)) {
     const usedTeams = new Set<string>();
-    const roundMatches: Match[] = [];
+    let roundMatchCount = 0;
     
     // 현재 라운드에 배정할 경기 선택
     for (const match of shuffledMatches) {
@@ -75,13 +86,20 @@ function assignRounds(matches: Match[], teamCount: number): number {
         match.round = currentRound;
         usedTeams.add(match.homeTeamId);
         usedTeams.add(match.awayTeamId);
-        roundMatches.push(match);
-        
-        // 이번 라운드에 충분한 경기가 배정되면 중단
-        if (roundMatches.length >= matchesPerRound) {
-          break;
-        }
+        roundMatchCount++;
       }
+    }
+    
+    console.log(`[SCHEDULE] Round ${currentRound}: ${roundMatchCount} matches assigned`);
+    
+    // 이번 라운드에 경기가 하나도 배정되지 않았다면 문제가 있음
+    if (roundMatchCount === 0 && shuffledMatches.some(m => m.round === 0)) {
+      console.error("[SCHEDULE] No matches assigned in this round, forcing remaining matches");
+      // 남은 경기 강제 배정
+      shuffledMatches.filter(m => m.round === 0).forEach(m => {
+        m.round = currentRound;
+      });
+      break;
     }
     
     currentRound++;

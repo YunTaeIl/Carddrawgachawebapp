@@ -83,7 +83,15 @@ export function LeagueProgressPage({
   const leagueConfig = LEAGUE_CONFIGS[currentLeague.leagueType];
   const playerTeam = getTeamById(currentLeague.playerTeamId);
   
-  const isRegularSeasonComplete = currentLeague.currentMatchIndex >= currentLeague.matches.length;
+  // 플레이어의 모든 경기가 완료되었는지 확인
+  const playerMatches = currentLeague.matches.filter(
+    m => m.homeTeamId === currentLeague.playerTeamId || m.awayTeamId === currentLeague.playerTeamId
+  );
+  const isRegularSeasonComplete = playerMatches.every(m => m.isCompleted);
+  
+  // 최대 라운드 수 계산
+  const maxRound = Math.max(...currentLeague.matches.map(m => m.round), 0);
+  
   const playerRank = currentLeague.standings.findIndex(s => s.isPlayer) + 1;
   const isPlayoffQualified = playerRank <= 5 && isRegularSeasonComplete;
   const isEliminated = playerRank > 5 && isRegularSeasonComplete;
@@ -251,7 +259,7 @@ export function LeagueProgressPage({
             <div className="bg-gradient-to-br from-red-600/10 to-slate-900/10 rounded-2xl p-8 border border-red-600/30">
               <div className="text-center mb-6">
                 <div className="text-sm text-slate-400 mb-2">
-                  ROUND {currentMatch.round} / 18
+                  ROUND {currentMatch.round} / {maxRound}
                 </div>
                 <h2 className="text-3xl font-bold font-display">NEXT MATCH</h2>
               </div>
@@ -292,7 +300,7 @@ export function LeagueProgressPage({
               <div className="bg-slate-900/30 rounded-2xl p-6 border border-white/5">
                 <h3 className="text-lg font-bold mb-4">일정</h3>
                 <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-                  {Array.from({ length: 18 }, (_, i) => i + 1).map(round => {
+                  {Array.from({ length: maxRound }, (_, i) => i + 1).map(round => {
                     const roundMatches = currentLeague.matches.filter(m => m.round === round);
                     if (roundMatches.length === 0) return null;
                     
