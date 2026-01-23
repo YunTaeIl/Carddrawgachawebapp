@@ -40,6 +40,12 @@ export function generateSchedule(playerTeamId: string, aiTeamIds: string[]): Mat
   // 라운드별 경기 배정 (라운드 로빈 알고리즘)
   const rounds = assignRounds(matches, allTeamIds.length);
   
+  // 라운드 순으로 정렬
+  matches.sort((a, b) => {
+    if (a.round !== b.round) return a.round - b.round;
+    return a.id.localeCompare(b.id);
+  });
+  
   console.log(`[SCHEDULE] Generated ${matches.length} matches in ${rounds} rounds`);
   console.log(`[SCHEDULE] Teams: ${allTeamIds.length}, Matches per round: ~${Math.floor(allTeamIds.length / 2)}`);
   
