@@ -80,12 +80,17 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saveLeague = async () => {
       if (!currentLeague || !userData?.uid) return;
+      
+      // 초기 로딩 중에는 저장하지 않음 (무한루프 방지)
+      if (isLoading) return;
 
       try {
+        console.log("💾 리그 저장 시작...");
         // DB 저장 (비동기)
         await saveLeagueToDb(userData.uid, currentLeague);
         // localStorage 백업 (동기)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLeague));
+        console.log("✅ 리그 저장 완료 (DB + localStorage)");
       } catch (error) {
         console.error("❌ 리그 저장 오류:", error);
         // DB 저장 실패 시 최소한 localStorage에는 저장
@@ -93,9 +98,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    if (!isLoading) {
-      saveLeague();
-    }
+    saveLeague();
   }, [currentLeague, userData?.uid, isLoading]);
 
   /**
