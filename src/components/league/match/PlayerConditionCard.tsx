@@ -31,10 +31,10 @@ export function PlayerConditionCard({ card, position, playerForm, side }: Player
   
   return (
     <div 
-      className={`bg-black/40 rounded-lg p-2 border ${borderColor} transition group relative`}
+      className={`bg-black/40 rounded-lg p-3 border ${borderColor} transition group relative`}
     >
-      <div className="flex items-center gap-2">
-        <div className="w-12 h-12 rounded-lg overflow-hidden border-2" style={{ borderColor: GRADE_COLORS[card.grade] }}>
+      <div className="flex items-center gap-3">
+        <div className="w-14 h-14 rounded-lg overflow-hidden border-2" style={{ borderColor: GRADE_COLORS[card.grade] }}>
           <PlayerImage
             imageFileName={card.image}
             playerName={card.name}
@@ -46,8 +46,9 @@ export function PlayerConditionCard({ card, position, playerForm, side }: Player
         <div className="flex-1 min-w-0">
           <div className="text-xs text-slate-400">{position}</div>
           <div className="text-sm font-bold truncate">{card.ign || card.name}</div>
+          <div className="text-xs text-slate-400 mb-0.5">{card.year}</div>
           <div className="flex items-center gap-2">
-            <div className="text-xs text-slate-500">OVR {Math.round(baseOVR)}</div>
+            <div className="text-xs font-semibold text-amber-400">OVR {Math.round(baseOVR)}</div>
             <div className={`text-xs font-bold ${getConditionColor(condition)}`}>
               ⚡{Math.round(condition)}
             </div>

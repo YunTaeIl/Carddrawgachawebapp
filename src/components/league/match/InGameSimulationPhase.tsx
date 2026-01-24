@@ -145,7 +145,7 @@ export function InGameSimulationPhase({
       
       <div className="relative w-full h-full flex">
         {/* 왼쪽: 홈팀 선수 */}
-        <div className="w-64 bg-gradient-to-r from-blue-950/80 to-transparent p-4 space-y-3">
+        <div className="w-72 bg-gradient-to-r from-blue-950/80 to-transparent p-4 space-y-3">
           <div className="text-center mb-4">
             <div className="text-sm text-blue-400 mb-1">BLUE SIDE</div>
             <div className="text-lg font-bold">{getKoreanTeamName(homeTeam.name)}</div>
@@ -177,15 +177,15 @@ export function InGameSimulationPhase({
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-4xl font-bold text-blue-400">{state?.kills?.home || 0}</div>
-                <div className="text-xs text-slate-500">KILLS</div>
+                <div className="text-xs text-slate-400 font-semibold">KILLS</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-slate-300">{state?.towers?.home || 0}</div>
-                <div className="text-xs text-slate-500">TOWERS</div>
+                <div className="text-xs text-slate-400 font-semibold">TOWERS</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-slate-300">{state?.dragons?.home || 0}</div>
-                <div className="text-xs text-slate-500">DRAGONS</div>
+                <div className="text-xs text-slate-400 font-semibold">DRAGONS</div>
               </div>
             </div>
 
@@ -197,22 +197,22 @@ export function InGameSimulationPhase({
               <div className={`text-xl font-bold ${(state?.goldDiff || 0) > 0 ? 'text-blue-400' : (state?.goldDiff || 0) < 0 ? 'text-red-400' : 'text-slate-400'}`}>
                 {(state?.goldDiff || 0) > 0 ? '+' : ''}{formatGold(Math.abs(state?.goldDiff || 0))}
               </div>
-              <div className="text-xs text-slate-500">골드 차이</div>
+              <div className="text-xs text-slate-400 font-semibold">골드 차이</div>
             </div>
 
             {/* 어웨이팀 스코어 */}
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-slate-300">{state?.dragons?.away || 0}</div>
-                <div className="text-xs text-slate-500">DRAGONS</div>
+                <div className="text-xs text-slate-400 font-semibold">DRAGONS</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-slate-300">{state?.towers?.away || 0}</div>
-                <div className="text-xs text-slate-500">TOWERS</div>
+                <div className="text-xs text-slate-400 font-semibold">TOWERS</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-red-400">{state?.kills?.away || 0}</div>
-                <div className="text-xs text-slate-500">KILLS</div>
+                <div className="text-xs text-slate-400 font-semibold">KILLS</div>
               </div>
             </div>
           </div>
@@ -345,7 +345,7 @@ export function InGameSimulationPhase({
         </div>
 
         {/* 오른쪽: 어웨이팀 선수 */}
-        <div className="w-64 bg-gradient-to-l from-red-950/80 to-transparent p-4 space-y-3">
+        <div className="w-72 bg-gradient-to-l from-red-950/80 to-transparent p-4 space-y-3">
           <div className="text-center mb-4">
             <div className="text-sm text-red-400 mb-1">RED SIDE</div>
             <div className="text-lg font-bold">{getKoreanTeamName(awayTeam.name)}</div>
