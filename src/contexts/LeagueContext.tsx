@@ -104,12 +104,18 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * 경기 완료 처리
+   * 경기 완료 처리 (정규시즌 전용)
    */
   const completeMatch = (result: MatchResult) => {
     if (!currentLeague) return;
     
     console.log("=== 경기 완료 ===", result);
+    
+    // 플레이오프 경기는 completeSeries로 처리
+    if (currentLeague.seasonState === "playoffs") {
+      console.log("[LEAGUE] 플레이오프 경기는 completeSeries로 처리합니다.");
+      return;
+    }
     
     const updatedMatches = [...currentLeague.matches];
     
@@ -309,18 +315,30 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     if (team1Wins !== undefined) series.team1Wins = team1Wins;
     if (team2Wins !== undefined) series.team2Wins = team2Wins;
     
+    // 플레이어가 승리했으면 포인트 지급
+    let newPoints = currentLeague.currentPoints;
+    if (winnerId === currentLeague.playerTeamId) {
+      const config = LEAGUE_CONFIGS[currentLeague.leagueType];
+      newPoints += config.winPoints;
+      console.log(`✅ 플레이어 승리! +${config.winPoints} 포인트`);
+    }
+    
     // 다음 라운드에 승자 진출
     if (seriesType === "wildcard") {
       bracket.semifinals.team2Id = winnerId;
+      console.log("📌 와일드카드 승자가 준플레이오프로 진출");
     } else if (seriesType === "semifinals") {
       bracket.playoffs.team2Id = winnerId;
+      console.log("📌 준플레이오프 승자가 플레이오프로 진출");
     } else if (seriesType === "playoffs") {
       bracket.finals.team2Id = winnerId;
+      console.log("📌 플레이오프 승자가 결승으로 진출");
     }
     
     setCurrentLeague({
       ...currentLeague,
       playoffBracket: bracket,
+      currentPoints: newPoints,
       updatedAt: new Date().toISOString()
     });
   };

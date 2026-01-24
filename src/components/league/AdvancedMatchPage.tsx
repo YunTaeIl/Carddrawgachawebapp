@@ -22,6 +22,7 @@ interface AdvancedMatchPageProps {
   homeTeam: Team;
   awayTeam: Team;
   seriesType: SeriesType;
+  playoffSeriesType?: "wildcard" | "semifinals" | "playoffs" | "finals"; // 플레이오프 단계
   onMatchComplete: () => void;
   onBack: () => void;
 }
@@ -30,10 +31,11 @@ export function AdvancedMatchPage({
   homeTeam,
   awayTeam,
   seriesType,
+  playoffSeriesType,
   onMatchComplete,
   onBack
 }: AdvancedMatchPageProps) {
-  const { completeMatch } = useLeague();
+  const { completeMatch, completeSeries } = useLeague();
   
   // 시리즈 상태
   const [series, setSeries] = useState<MatchSeries>(() =>
@@ -123,11 +125,19 @@ export function AdvancedMatchPage({
                 home: homeTeam.name,
                 away: awayTeam.name,
                 score: `${homeWins}:${awayWins}`,
-                winner: winnerId === homeTeam.id ? homeTeam.name : awayTeam.name
+                winner: winnerId === homeTeam.id ? homeTeam.name : awayTeam.name,
+                seriesType,
+                playoffSeriesType
               });
               
-              // 리그 컨텍스트에 경기 완료 알림
-              completeMatch(matchResult);
+              // 정규시즌은 completeMatch, 플레이오프는 completeSeries 사용
+              if (playoffSeriesType) {
+                // 플레이오프: 시리즈 완료 처리
+                completeSeries(playoffSeriesType, winnerId, homeWins, awayWins);
+              } else {
+                // 정규시즌: 경기 완료 처리
+                completeMatch(matchResult);
+              }
               
               // 상태 업데이트를 위해 약간의 딜레이 후 화면 전환
               setTimeout(() => {

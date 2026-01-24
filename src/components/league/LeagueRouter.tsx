@@ -286,6 +286,7 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
           homeTeam={homeTeam}
           awayTeam={awayTeam}
           seriesType={advancedSeriesType}
+          playoffSeriesType={currentSeriesType}
           onMatchComplete={handleMatchComplete}
           onBack={handleBackToPlayoffs}
         />
