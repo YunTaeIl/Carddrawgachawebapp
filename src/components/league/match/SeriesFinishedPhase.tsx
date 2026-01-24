@@ -39,14 +39,14 @@ export function SeriesFinishedPhase({
 
   return (
     <div className="w-full h-full flex items-center justify-center p-4 md:p-8">
-      <div className="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-6 md:p-12 border border-white/10 max-h-[90vh] flex flex-col">
+      <div className="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-6 md:p-8 border border-white/10">
         {/* 승리 아이콘 */}
-        <div className="text-center mb-6 flex-shrink-0">
-          <div className="text-6xl md:text-8xl mb-4 md:mb-6">
+        <div className="text-center mb-6">
+          <div className="text-6xl md:text-7xl mb-4">
             {playerWon ? "🏆" : "💔"}
           </div>
           
-          <h1 className={`text-4xl md:text-6xl font-bold font-display mb-3 md:mb-4 ${playerWon ? 'text-yellow-400' : 'text-slate-400'}`}>
+          <h1 className={`text-4xl md:text-5xl font-bold font-display mb-3 ${playerWon ? 'text-yellow-400' : 'text-slate-400'}`}>
             {playerWon ? "VICTORY" : "DEFEAT"}
           </h1>
           
@@ -60,9 +60,9 @@ export function SeriesFinishedPhase({
         </div>
 
         {/* 세트별 결과 */}
-        <div className="mb-6 flex-shrink-0">
-          <h3 className="text-lg font-bold mb-4 text-center text-white/90">세트별 결과</h3>
-          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="mb-6">
+          <h3 className="text-lg font-bold mb-3 text-center text-white/90">세트별 결과</h3>
+          <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
             {series.sets.map((set, idx) => {
               const setHomeWon = set.winnerId === series.homeTeam.id;
               const isPlayerTeamHome = currentLeague?.playerTeamId === series.homeTeam.id;
@@ -72,7 +72,7 @@ export function SeriesFinishedPhase({
                 <div
                   key={idx}
                   className={`
-                    p-4 rounded-lg border-l-4
+                    p-3 md:p-4 rounded-lg border-l-4
                     ${setPlayerWon 
                       ? 'bg-blue-500/10 border-blue-500' 
                       : 'bg-red-500/10 border-red-500'
@@ -80,8 +80,8 @@ export function SeriesFinishedPhase({
                   `}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="text-lg font-bold text-white/70">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="text-base md:text-lg font-bold text-white/70">
                         세트 {set.setNumber}
                       </div>
                       <div className={`text-sm font-bold ${setPlayerWon ? 'text-blue-400' : 'text-red-400'}`}>
@@ -93,7 +93,7 @@ export function SeriesFinishedPhase({
                     </div>
                   </div>
                   
-                  <div className="mt-2 flex gap-6 text-xs text-slate-400">
+                  <div className="mt-2 flex gap-4 md:gap-6 text-xs text-slate-400 flex-wrap">
                     <span>킬: {set.finalState.objectives.kills.home} - {set.finalState.objectives.kills.away}</span>
                     <span>타워: {set.finalState.objectives.towers.home} - {set.finalState.objectives.towers.away}</span>
                     <span>드래곤: {set.finalState.objectives.dragons.home} - {set.finalState.objectives.dragons.away}</span>
@@ -107,7 +107,7 @@ export function SeriesFinishedPhase({
 
         {/* 보상 (승리 시) */}
         {playerWon && (
-          <div className="mb-6 p-4 md:p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex-shrink-0">
+          <div className="mb-6 p-4 md:p-5 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
             <div className="flex items-center justify-center gap-3 mb-2">
               <Trophy className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
               <h3 className="text-lg md:text-xl font-bold text-yellow-400">승리 보상</h3>
@@ -124,7 +124,7 @@ export function SeriesFinishedPhase({
         {/* 완료 버튼 */}
         <Button
           onClick={onComplete}
-          className="w-full py-4 md:py-6 text-base md:text-lg font-bold flex-shrink-0"
+          className="w-full py-4 md:py-5 text-base md:text-lg font-bold"
         >
           리그로 돌아가기
         </Button>
