@@ -26,6 +26,29 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
   const isChampion = !!currentLeague.championTeamId;
   const playerRank = currentLeague.standings.findIndex(s => s.isPlayer) + 1;
   const playerRecord = currentLeague.standings.find(s => s.isPlayer);
+  const playoffResult = currentLeague.playoffResult;
+
+  // 플레이오프 성적 텍스트
+  const getPlayoffResultText = () => {
+    if (!playoffResult || playoffResult === "eliminated") return null;
+    
+    switch (playoffResult) {
+      case "champion":
+        return "🏆 우승";
+      case "runner-up":
+        return "🥈 준우승";
+      case "playoffs":
+        return "준결승 진출";
+      case "semifinals":
+        return "준플레이오프 진출";
+      case "wildcard":
+        return "와일드카드 진출";
+      default:
+        return null;
+    }
+  };
+
+  const playoffResultText = getPlayoffResultText();
 
   const handleNewSeason = () => {
     deleteLeague();
@@ -64,16 +87,32 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
         {/* 통계 */}
         <div className="bg-black/30 rounded-2xl p-6 mb-8 space-y-4">
           <div className="flex justify-between items-baseline">
-            <span className="text-slate-400">최종 순위</span>
+            <span className="text-slate-400">정규시즌 순위</span>
             <span className="text-2xl md:text-3xl font-bold">{playerRank}위</span>
           </div>
           
           <div className="flex justify-between items-baseline">
-            <span className="text-slate-400">시즌 전적</span>
+            <span className="text-slate-400">정규시즌 전적</span>
             <span className="text-xl">
               {playerRecord?.wins || 0}승 {playerRecord?.losses || 0}패
             </span>
           </div>
+
+          {playoffResultText && (
+            <>
+              <div className="h-px bg-white/10 my-4" />
+              <div className="flex justify-between items-baseline">
+                <span className="text-slate-400">플레이오프</span>
+                <span className={`text-xl font-bold ${
+                  playoffResult === "champion" ? "text-amber-400" : 
+                  playoffResult === "runner-up" ? "text-slate-300" : 
+                  "text-slate-400"
+                }`}>
+                  {playoffResultText}
+                </span>
+              </div>
+            </>
+          )}
 
           <div className="h-px bg-white/10 my-4" />
 
@@ -98,11 +137,13 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
 
         {/* 코멘트 */}
         <div className="bg-slate-900/50 rounded-xl p-4 mb-8 text-sm text-slate-400">
-          {isChampion 
-            ? '🎉 축하합니다! 완벽한 시즌이었습니다.' 
-            : playerRank <= 5
-            ? '👍 플레이오프 진출! 다음엔 더 잘할 수 있습니다.'
-            : '아쉬운 시즌이었습니다. 스쿼드를 강화하고 다시 도전하세요!'}
+          {playoffResult === "champion" && '🎉 축하합니다! 완벽한 우승입니다!'}
+          {playoffResult === "runner-up" && '🥈 아쉽게 준우승! 다음 시즌엔 우승하실 수 있습니다.'}
+          {playoffResult === "playoffs" && '💪 준결승까지! 훌륭한 성적입니다.'}
+          {playoffResult === "semifinals" && '👏 준플레이오프 진출! 다음엔 더 멀리 갈 수 있습니다.'}
+          {playoffResult === "wildcard" && '😔 와일드카드에서 탈락. 스쿼드를 보강해보세요.'}
+          {(!playoffResult || playoffResult === "eliminated") && playerRank <= 5 && '👍 플레이오프 진출! 다음엔 더 잘할 수 있습니다.'}
+          {(!playoffResult || playoffResult === "eliminated") && playerRank > 5 && '😢 아쉬운 시즌이었습니다. 스쿼드를 강화하고 다시 도전하세요!'}
         </div>
 
         {/* 버튼 */}

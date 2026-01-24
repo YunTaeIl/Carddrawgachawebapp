@@ -14,8 +14,8 @@ interface LeagueContextType {
   completeMatch: (result: MatchResult) => void;
   getTeamById: (teamId: string) => Team | null;
   advanceToPlayoffs: () => void;
-  completeSeries: (seriesType: Series["type"], winnerId: string) => void;
-  finishSeason: (isChampion: boolean) => void;
+  completeSeries: (seriesType: Series["type"], winnerId: string, team1Wins?: number, team2Wins?: number) => void;
+  finishSeason: (isChampion: boolean, playoffResult?: "champion" | "runner-up" | "playoffs" | "semifinals" | "wildcard" | "eliminated") => void;
   deleteLeague: () => void;
 }
 
@@ -346,10 +346,10 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   /**
    * 시즌 종료
    */
-  const finishSeason = (isChampion: boolean) => {
+  const finishSeason = (isChampion: boolean, playoffResult?: "champion" | "runner-up" | "playoffs" | "semifinals" | "wildcard" | "eliminated") => {
     if (!currentLeague) return;
     
-    console.log("=== 시즌 종료 ===", isChampion);
+    console.log("=== 시즌 종료 ===", isChampion, playoffResult);
     
     let finalPoints = currentLeague.currentPoints;
     
@@ -364,6 +364,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       seasonState: "finished",
       currentPoints: finalPoints,
       championTeamId: isChampion ? currentLeague.playerTeamId : undefined,
+      playoffResult: playoffResult || (isChampion ? "champion" : "eliminated"),
       updatedAt: new Date().toISOString()
     });
   };

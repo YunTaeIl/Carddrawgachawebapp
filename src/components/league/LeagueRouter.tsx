@@ -177,14 +177,20 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       
       // 플레이어가 졌으면 탈락
       if (series.team2Id === currentLeague.playerTeamId) {
-        finishSeason(false);
+        finishSeason(false, currentSeriesType); // 탈락한 라운드 기록
         setCurrentRoute("result");
         return;
       }
       
       // 결승 우승이면 우승 처리
       if (currentSeriesType === "finals") {
-        finishSeason(true);
+        // 플레이어가 우승
+        if (series.team1Id === currentLeague.playerTeamId) {
+          finishSeason(true, "champion");
+        } else {
+          // 플레이어가 준우승
+          finishSeason(false, "runner-up");
+        }
         setCurrentRoute("result");
         return;
       }
@@ -195,14 +201,20 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       
       // 플레이어가 졌으면 탈락
       if (series.team1Id === currentLeague.playerTeamId) {
-        finishSeason(false);
+        finishSeason(false, currentSeriesType); // 탈락한 라운드 기록
         setCurrentRoute("result");
         return;
       }
       
       // 결승 우승이면 우승 처리
       if (currentSeriesType === "finals") {
-        finishSeason(true);
+        // 플레이어가 우승
+        if (series.team2Id === currentLeague.playerTeamId) {
+          finishSeason(true, "champion");
+        } else {
+          // 플레이어가 준우승
+          finishSeason(false, "runner-up");
+        }
         setCurrentRoute("result");
         return;
       }

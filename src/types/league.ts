@@ -147,6 +147,7 @@ export interface LeagueInstance {
   standings: StandingEntry[];
   playoffBracket?: PlayoffBracket;
   championTeamId?: string;
+  playoffResult?: "champion" | "runner-up" | "playoffs" | "semifinals" | "wildcard" | "eliminated"; // 플레이오프 결과
   createdAt: string;
   updatedAt: string;
 }
