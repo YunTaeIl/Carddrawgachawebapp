@@ -38,8 +38,8 @@ export function SeriesFinishedPhase({
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4 md:p-8">
-      <div className="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-6 md:p-8 border border-white/10">
+    <div className="w-full h-full overflow-y-auto flex items-center justify-center p-4 md:p-8">
+      <div className="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-6 md:p-8 border border-white/10 my-auto">
         {/* 승리 아이콘 */}
         <div className="text-center mb-6">
           <div className="text-6xl md:text-7xl mb-4">
@@ -62,7 +62,7 @@ export function SeriesFinishedPhase({
         {/* 세트별 결과 */}
         <div className="mb-6">
           <h3 className="text-lg font-bold mb-3 text-center text-white/90">세트별 결과</h3>
-          <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-2">
             {series.sets.map((set, idx) => {
               const setHomeWon = set.winnerId === series.homeTeam.id;
               const isPlayerTeamHome = currentLeague?.playerTeamId === series.homeTeam.id;
