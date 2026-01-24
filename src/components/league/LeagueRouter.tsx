@@ -42,9 +42,37 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     setCurrentRoute("progress");
   };
 
-  // 경기 시작
+  // 경기 시작 (정규시즌 또는 플레이오프)
   const handleMatchStart = () => {
-    setCurrentRoute("match");
+    if (!currentLeague) return;
+    
+    // 플레이오프 진행 중이면 플레이어의 다음 시리즈 찾기
+    if (currentLeague.seasonState === "playoffs" && currentLeague.playoffBracket) {
+      const bracket = currentLeague.playoffBracket;
+      const playerTeamId = currentLeague.playerTeamId;
+      
+      // 각 시리즈를 순서대로 확인
+      const seriesOrder: Array<Series["type"]> = ["wildcard", "semifinals", "playoffs", "finals"];
+      
+      for (const seriesType of seriesOrder) {
+        const series = bracket[seriesType];
+        
+        // 플레이어가 참여하는 시리즈인지 확인
+        const isPlayerInSeries = series.team1Id === playerTeamId || series.team2Id === playerTeamId;
+        
+        // 아직 완료되지 않았고 두 팀이 모두 정해진 시리즈
+        if (isPlayerInSeries && !series.isCompleted && series.team1Id && series.team2Id) {
+          startSeries(seriesType);
+          return;
+        }
+      }
+      
+      // 플레이어가 참여할 시리즈가 없으면 플레이오프 페이지로
+      setCurrentRoute("playoffs");
+    } else {
+      // 정규시즌
+      setCurrentRoute("match");
+    }
   };
 
   // 경기 완료

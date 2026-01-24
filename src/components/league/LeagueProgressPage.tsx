@@ -96,6 +96,33 @@ export function LeagueProgressPage({
   const isPlayoffQualified = playerRank <= 5 && isRegularSeasonComplete;
   const isEliminated = playerRank > 5 && isRegularSeasonComplete;
 
+  // 플레이오프 진행 중일 때 플레이어의 다음 시리즈 찾기
+  const getNextPlayoffSeries = () => {
+    if (currentLeague.seasonState !== "playoffs" || !currentLeague.playoffBracket) return null;
+    
+    const bracket = currentLeague.playoffBracket;
+    const playerTeamId = currentLeague.playerTeamId;
+    
+    // 각 시리즈를 순서대로 확인
+    const seriesOrder: Array<keyof typeof bracket> = ["wildcard", "semifinals", "playoffs", "finals"];
+    
+    for (const seriesType of seriesOrder) {
+      const series = bracket[seriesType];
+      
+      // 플레이어가 참여하는 시리즈인지 확인
+      const isPlayerInSeries = series.team1Id === playerTeamId || series.team2Id === playerTeamId;
+      
+      // 아직 완료되지 않았고 두 팀이 모두 정해진 시리즈
+      if (isPlayerInSeries && !series.isCompleted && series.team1Id && series.team2Id) {
+        return { seriesType, series };
+      }
+    }
+    
+    return null;
+  };
+  
+  const nextPlayoffSeries = getNextPlayoffSeries();
+
   const synergies = playerTeam ? calculateSynergies(playerTeam.squad) : [];
   const activeSynergies = synergies.filter(s => s.isActive);
 
@@ -485,6 +512,95 @@ export function LeagueProgressPage({
               플레이오프 시작
             </Button>
           </div>
+        )}
+
+        {/* 플레이오프 진행 중 - 다음 경기 */}
+        {currentLeague.seasonState === "playoffs" && nextPlayoffSeries && (
+          <>
+            <div className="bg-gradient-to-br from-red-500/20 to-slate-900/20 rounded-2xl p-8 border border-red-500/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-red-400 font-bold uppercase tracking-wider mb-2">
+                    {nextPlayoffSeries.seriesType === "wildcard" && "와일드카드 매치"}
+                    {nextPlayoffSeries.seriesType === "semifinals" && "준플레이오프"}
+                    {nextPlayoffSeries.seriesType === "playoffs" && "플레이오프"}
+                    {nextPlayoffSeries.seriesType === "finals" && "결승전"}
+                    {" · BO5"}
+                  </div>
+                  <h3 className="text-2xl font-bold font-display mb-2">
+                    {getKoreanTeamName(getTeamById(nextPlayoffSeries.series.team1Id!)?.name || "")}
+                    {" vs "}
+                    {getKoreanTeamName(getTeamById(nextPlayoffSeries.series.team2Id!)?.name || "")}
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono">OVR</span>
+                      <span className="text-amber-400 font-bold">
+                        {getTeamTotalOVR(nextPlayoffSeries.series.team1Id!)}
+                      </span>
+                    </div>
+                    <span className="text-slate-600">vs</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono">OVR</span>
+                      <span className="text-amber-400 font-bold">
+                        {getTeamTotalOVR(nextPlayoffSeries.series.team2Id!)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={onMatchStart}
+                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-6 px-10 rounded-xl flex items-center gap-2 text-lg"
+                >
+                  경기 진행
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* 플레이오프 브래킷 간단 정보 */}
+            {currentLeague.playoffBracket && (
+              <div className="bg-slate-900/30 rounded-2xl p-6 border border-white/5">
+                <h3 className="text-lg font-bold mb-4 text-center">플레이오프 진행 상황</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {(["wildcard", "semifinals", "playoffs", "finals"] as const).map((type) => {
+                    const series = currentLeague.playoffBracket![type];
+                    const team1 = series.team1Id ? getTeamById(series.team1Id) : null;
+                    const team2 = series.team2Id ? getTeamById(series.team2Id) : null;
+                    
+                    return (
+                      <div key={type} className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
+                        <div className="text-xs text-slate-500 mb-2 uppercase tracking-wider text-center">
+                          {type === "wildcard" && "와일드카드"}
+                          {type === "semifinals" && "준플레이오프"}
+                          {type === "playoffs" && "플레이오프"}
+                          {type === "finals" && "결승"}
+                        </div>
+                        {team1 && team2 ? (
+                          <div className="text-center">
+                            <div className={`text-sm ${series.winnerId === team1.id ? "font-bold text-amber-400" : "text-slate-400"}`}>
+                              {getKoreanTeamName(team1.name)}
+                            </div>
+                            <div className="text-xs text-slate-600 my-1">
+                              {series.isCompleted ? `${series.team1Wins} - ${series.team2Wins}` : "vs"}
+                            </div>
+                            <div className={`text-sm ${series.winnerId === team2.id ? "font-bold text-amber-400" : "text-slate-400"}`}>
+                              {getKoreanTeamName(team2.name)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center text-xs text-slate-600">
+                            대기중
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* 탈락 */}
