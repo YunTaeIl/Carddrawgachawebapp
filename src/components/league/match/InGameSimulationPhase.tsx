@@ -145,7 +145,7 @@ export function InGameSimulationPhase({
   const redSetScore = isBlueOriginalHome ? series.setWinsAway : series.setWinsHome;
   
   // 시리즈 타입 (BO3/BO5)
-  const seriesType = series.bestOf === 3 ? "BO3" : "BO5";
+  const seriesType = series.seriesType; // "BO3" 또는 "BO5"
   const currentSetNumber = series.currentSetIndex + 1;
 
   return (
