@@ -38,24 +38,24 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0E27] text-white flex items-center justify-center p-6">
-      <div className={`max-w-xl w-full rounded-3xl p-12 border-2 text-center ${
+    <div className="min-h-screen bg-[#0A0E27] text-white flex items-start justify-center p-6 overflow-y-auto">
+      <div className={`max-w-xl w-full rounded-3xl p-8 md:p-12 my-auto border-2 text-center ${
         isChampion 
           ? 'bg-gradient-to-br from-amber-500/20 to-slate-900/20 border-amber-500' 
           : 'bg-gradient-to-br from-slate-800/20 to-slate-900/20 border-slate-700'
       }`}>
         
         {/* 이모지 */}
-        <div className="text-8xl mb-8">
+        <div className="text-6xl md:text-8xl mb-6 md:mb-8">
           {isChampion ? '🏆' : playerRank <= 5 ? '😌' : '😔'}
         </div>
 
         {/* 타이틀 */}
-        <h1 className="text-5xl font-bold font-display mb-3">
+        <h1 className="text-4xl md:text-5xl font-bold font-display mb-3">
           {isChampion ? '우승!' : '시즌 종료'}
         </h1>
 
-        <p className="text-2xl text-slate-300 mb-12">
+        <p className="text-xl md:text-2xl text-slate-300 mb-8 md:mb-12">
           {isChampion 
             ? `${leagueConfig.name} 챔피언` 
             : `${leagueConfig.name} ${playerRank}위`}
@@ -65,7 +65,7 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
         <div className="bg-black/30 rounded-2xl p-6 mb-8 space-y-4">
           <div className="flex justify-between items-baseline">
             <span className="text-slate-400">최종 순위</span>
-            <span className="text-3xl font-bold">{playerRank}위</span>
+            <span className="text-2xl md:text-3xl font-bold">{playerRank}위</span>
           </div>
           
           <div className="flex justify-between items-baseline">
@@ -79,7 +79,7 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
 
           <div className="flex justify-between items-baseline">
             <span className="text-slate-400">획득 RP</span>
-            <span className="text-4xl font-bold text-amber-400">
+            <span className="text-3xl md:text-4xl font-bold text-amber-400">
               {currentLeague.currentPoints.toLocaleString()}
             </span>
           </div>
@@ -88,7 +88,7 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
             <div className="bg-amber-500/20 rounded-xl p-4 border border-amber-500/50 mt-4">
               <div className="flex justify-between items-baseline">
                 <span className="font-bold text-amber-400">우승 보너스</span>
-                <span className="text-2xl font-bold text-amber-400">
+                <span className="text-xl md:text-2xl font-bold text-amber-400">
                   +{leagueConfig.championBonus.toLocaleString()}
                 </span>
               </div>
