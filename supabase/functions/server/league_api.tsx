@@ -11,17 +11,21 @@ const app = new Hono();
  */
 app.post("/save", async (c) => {
   try {
+    console.log("🟢 [SERVER] 리그 저장 요청 받음");
     const { userId, league } = await c.req.json();
+    console.log("🟢 [SERVER] userId:", userId, "leagueId:", league?.id);
 
     if (!userId || !league) {
+      console.error("❌ [SERVER] 필수 파라미터 누락:", { userId: !!userId, league: !!league });
       return c.json({ error: "userId와 league 데이터가 필요합니다" }, 400);
     }
 
-    // KV Store에 저장
+    // KV Store에 저장 (JSONB 타입이므로 객체 그대로 전달)
     const key = `league:${userId}:current`;
-    await kv.set(key, JSON.stringify(league));
-
-    console.log(`✅ 리그 저장 완료: ${key}`);
+    console.log("🟢 [SERVER] KV 저장 시도:", key);
+    
+    await kv.set(key, league);  // 객체 그대로 전달!
+    console.log(`✅ [SERVER] 리그 저장 완료: ${key}`);
 
     return c.json({
       success: true,
@@ -50,15 +54,15 @@ app.get("/load", async (c) => {
 
     // KV Store에서 조회
     const key = `league:${userId}:current`;
-    const data = await kv.get(key);
+    console.log("🟢 [SERVER] KV 로드 시도:", key);
+    const league = await kv.get(key);
 
-    if (!data) {
-      console.log(`ℹ️ 리그 데이터 없음: ${key}`);
+    if (!league) {
+      console.log(`ℹ️ [SERVER] 리그 데이터 없음: ${key}`);
       return c.json({ error: "저장된 리그가 없습니다" }, 404);
     }
 
-    const league = JSON.parse(data);
-    console.log(`✅ 리그 로드 완료: ${key}`);
+    console.log(`✅ [SERVER] 리그 로드 완료: ${key}`);
 
     return c.json({
       success: true,

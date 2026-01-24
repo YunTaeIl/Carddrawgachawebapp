@@ -9,6 +9,8 @@ const SERVER_URL = `https://${projectId}.supabase.co/functions/v1/make-server-ff
  * 리그 데이터 저장
  */
 export async function saveLeagueToDb(userId: string, league: LeagueInstance): Promise<void> {
+  console.log("🔵 리그 저장 시작:", { userId, leagueId: league.id, url: `${SERVER_URL}/league/save` });
+  
   try {
     const response = await fetch(`${SERVER_URL}/league/save`, {
       method: "POST",
@@ -22,12 +24,16 @@ export async function saveLeagueToDb(userId: string, league: LeagueInstance): Pr
       }),
     });
 
+    console.log("🔵 응답 상태:", response.status, response.statusText);
+
     if (!response.ok) {
       const error = await response.text();
+      console.error("❌ 서버 응답 에러:", error);
       throw new Error(`리그 저장 실패: ${error}`);
     }
 
-    console.log("✅ 리그 DB 저장 성공");
+    const result = await response.json();
+    console.log("✅ 리그 DB 저장 성공:", result);
   } catch (error) {
     console.error("❌ 리그 DB 저장 오류:", error);
     throw error;
@@ -56,7 +62,7 @@ export async function loadLeagueFromDb(userId: string): Promise<LeagueInstance |
     }
 
     const data = await response.json();
-    console.log("✅ 리그 DB 로드 성공");
+    console.log("✅ 리그 DB 로드 성공:", data.league?.id);
     return data.league;
   } catch (error) {
     console.error("❌ 리그 DB 로드 오류:", error);
