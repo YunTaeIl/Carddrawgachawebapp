@@ -3,6 +3,7 @@ import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import * as lckCards from "./lck_cards.tsx";
 import * as userApi from "./user_api.tsx";
+import leagueApi from "./league_api.tsx";
 
 const app = new Hono();
 
@@ -217,5 +218,8 @@ app.post("/make-server-ffd115c0/user/check-in", async (c) => {
     return c.json({ success: false, error: String(error) }, 500);
   }
 });
+
+// ==================== 리그 API ====================
+app.route("/make-server-ffd115c0/league", leagueApi);
 
 Deno.serve(app.fetch);

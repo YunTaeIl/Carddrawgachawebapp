@@ -6,6 +6,7 @@ import { useGame } from "./GameContext";
 import { generateAITeams, createPlayerTeam } from "@/utils/aiTeamGenerator";
 import { generateSchedule, calculateStandings, simulateRemainingMatches } from "@/utils/leagueScheduler";
 import { LEAGUE_CONFIGS } from "@/types/league";
+import { saveLeagueToDb, loadLeagueFromDb, deleteLeagueFromDb } from "@/utils/leagueStorage";
 
 interface LeagueContextType {
   currentLeague: LeagueInstance | null;
@@ -26,26 +27,76 @@ const STORAGE_KEY = "lck_league_instance";
 export function LeagueProvider({ children }: { children: ReactNode }) {
   const { userData, allCards } = useGame();
   const [currentLeague, setCurrentLeague] = useState<LeagueInstance | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // localStorage에서 리그 불러오기
+  // DB에서 리그 불러오기 (초기 로드)
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const league = JSON.parse(stored) as LeagueInstance;
-        setCurrentLeague(league);
-      } catch (error) {
-        console.error("리그 데이터 로드 실패:", error);
+    const loadLeague = async () => {
+      if (!userData?.uid) {
+        setIsLoading(false);
+        return;
       }
-    }
-  }, []);
 
-  // 리그 상태 변경 시 localStorage 저장
+      try {
+        // 먼저 DB에서 시도
+        const dbLeague = await loadLeagueFromDb(userData.uid);
+        if (dbLeague) {
+          console.log("✅ DB에서 리그 로드 성공");
+          setCurrentLeague(dbLeague);
+          // localStorage에도 백업
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(dbLeague));
+        } else {
+          // DB에 없으면 localStorage 확인 (마이그레이션용)
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const league = JSON.parse(stored) as LeagueInstance;
+            console.log("📦 localStorage에서 리그 로드 (DB로 마이그레이션)");
+            setCurrentLeague(league);
+            // DB에 저장
+            await saveLeagueToDb(userData.uid, league);
+          }
+        }
+      } catch (error) {
+        console.error("❌ 리그 로드 오류:", error);
+        // 폴백: localStorage 사용
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          try {
+            const league = JSON.parse(stored) as LeagueInstance;
+            setCurrentLeague(league);
+          } catch (parseError) {
+            console.error("localStorage 파싱 실패:", parseError);
+          }
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadLeague();
+  }, [userData?.uid]);
+
+  // 리그 상태 변경 시 DB & localStorage 동시 저장
   useEffect(() => {
-    if (currentLeague) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLeague));
+    const saveLeague = async () => {
+      if (!currentLeague || !userData?.uid) return;
+
+      try {
+        // DB 저장 (비동기)
+        await saveLeagueToDb(userData.uid, currentLeague);
+        // localStorage 백업 (동기)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLeague));
+      } catch (error) {
+        console.error("❌ 리그 저장 오류:", error);
+        // DB 저장 실패 시 최소한 localStorage에는 저장
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLeague));
+      }
+    };
+
+    if (!isLoading) {
+      saveLeague();
     }
-  }, [currentLeague]);
+  }, [currentLeague, userData?.uid, isLoading]);
 
   /**
    * 새 리그 시작
@@ -372,9 +423,20 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   /**
    * 리그 삭제
    */
-  const deleteLeague = () => {
-    setCurrentLeague(null);
-    localStorage.removeItem(STORAGE_KEY);
+  const deleteLeague = async () => {
+    if (!userData?.uid) return;
+
+    try {
+      // DB에서 삭제
+      await deleteLeagueFromDb(userData.uid);
+      console.log("✅ DB에서 리그 삭제 완료");
+    } catch (error) {
+      console.error("❌ DB 리그 삭제 오류:", error);
+    } finally {
+      // 로컬 상태 및 localStorage 삭제
+      setCurrentLeague(null);
+      localStorage.removeItem(STORAGE_KEY);
+    }
   };
 
   return (
