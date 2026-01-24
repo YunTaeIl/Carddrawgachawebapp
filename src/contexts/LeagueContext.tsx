@@ -78,11 +78,29 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
 
   // 리그 상태 변경 시 DB & localStorage 동시 저장
   useEffect(() => {
+    console.log("🔍 [SAVE useEffect] 실행됨:", {
+      hasLeague: !!currentLeague,
+      leagueId: currentLeague?.id,
+      userId: userData?.uid,
+      isLoading
+    });
+    
     const saveLeague = async () => {
-      if (!currentLeague || !userData?.uid) return;
+      if (!currentLeague) {
+        console.log("⏭️ [SAVE] currentLeague 없음 - 스킵");
+        return;
+      }
+      
+      if (!userData?.uid) {
+        console.log("⏭️ [SAVE] userId 없음 - 스킵");
+        return;
+      }
       
       // 초기 로딩 중에는 저장하지 않음 (무한루프 방지)
-      if (isLoading) return;
+      if (isLoading) {
+        console.log("⏭️ [SAVE] 로딩 중 - 스킵");
+        return;
+      }
 
       try {
         console.log("💾 리그 저장 시작...");
