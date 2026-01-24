@@ -14,6 +14,7 @@ interface LeagueProgressPageProps {
   onViewStandings: () => void;
   onStartPlayoffs: () => void;
   onViewResult: () => void;
+  onAbandonLeague: () => void;
 }
 
 export function LeagueProgressPage({ 
@@ -21,12 +22,14 @@ export function LeagueProgressPage({
   onMatchStart, 
   onViewStandings,
   onStartPlayoffs,
-  onViewResult
+  onViewResult,
+  onAbandonLeague
 }: LeagueProgressPageProps) {
   const { currentLeague, getCurrentMatch, getTeamById } = useLeague();
   const { userData } = useGame();
   const currentMatch = getCurrentMatch();
   const currentRoundRef = useRef<HTMLDivElement>(null);
+  const [showAbandonModal, setShowAbandonModal] = useState(false);
   
   // 현재 진행 중인 라운드 자동 펼치기
   const [expandedRounds, setExpandedRounds] = useState<Set<number>>(() => {
@@ -151,15 +154,26 @@ export function LeagueProgressPage({
       {/* 헤더 */}
       <div className="border-b border-white/5 bg-[#0A0E27]/95 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <Button
-            onClick={onBack}
-            variant="ghost"
-            size="sm"
-            className="text-slate-400 hover:text-white mb-3"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            메인으로
-          </Button>
+          <div className="flex items-center justify-between mb-3">
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              size="sm"
+              className="text-slate-400 hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              메인으로
+            </Button>
+            
+            <Button
+              onClick={() => setShowAbandonModal(true)}
+              variant="ghost"
+              size="sm"
+              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            >
+              리그 포기
+            </Button>
+          </div>
           
           <div className="flex items-end justify-between">
             <div>
@@ -619,6 +633,45 @@ export function LeagueProgressPage({
           </div>
         )}
       </div>
+
+      {/* 리그 포기 확인 모달 */}
+      {showAbandonModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0A0E27] border-2 border-red-500/50 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold font-display mb-2">리그 포기</h3>
+              <p className="text-slate-400">정말로 이 리그를 포기하시겠습니까?</p>
+            </div>
+
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6">
+              <p className="text-sm text-red-300 text-center">
+                ⚠️ 현재까지의 모든 진행 상황이 삭제됩니다<br/>
+                획득한 RP는 유지되지만 복구할 수 없습니다
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowAbandonModal(false)}
+                variant="outline"
+                className="flex-1 py-6"
+              >
+                취소
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowAbandonModal(false);
+                  onAbandonLeague();
+                }}
+                className="flex-1 bg-red-600 hover:bg-red-700 py-6"
+              >
+                포기하기
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

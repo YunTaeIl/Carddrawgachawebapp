@@ -278,6 +278,12 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     setCurrentRoute("result");
   };
 
+  // 리그 포기
+  const handleAbandonLeague = () => {
+    deleteLeague();
+    setCurrentRoute("select");
+  };
+
   // 플레이오프 모두 완료 시
   const handleAllPlayoffsComplete = () => {
     if (!currentLeague || !currentLeague.playoffBracket) return;
@@ -326,6 +332,7 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
           onViewStandings={handleViewStandings}
           onStartPlayoffs={handleStartPlayoffs}
           onViewResult={handleViewResult}
+          onAbandonLeague={handleAbandonLeague}
         />
       );
 
