@@ -5,49 +5,35 @@ import { calculateSynergies, calculateCardSynergyBonuses } from "./synergyEngine
 
 /**
  * 더블 라운드 로빈 일정 생성 (전체 팀)
+ * 10팀 = 18라운드 × 5경기 = 90경기
  */
 export function generateSchedule(playerTeamId: string, aiTeamIds: string[]): Match[] {
   const allTeamIds = [playerTeamId, ...aiTeamIds];
+  const teamCount = allTeamIds.length;
   const matches: Match[] = [];
   let matchId = 0;
   
-  // 더블 라운드 로빈: 모든 팀이 서로 2번씩 경기 (홈/어웨이)
-  for (let i = 0; i < allTeamIds.length; i++) {
-    for (let j = i + 1; j < allTeamIds.length; j++) {
-      const teamA = allTeamIds[i];
-      const teamB = allTeamIds[j];
-      
-      // 첫 번째 경기: A 홈
+  // Round Robin 알고리즘 사용
+  // 팀 수가 짝수이므로 (teamCount - 1) * 2 라운드 필요
+  const totalRounds = (teamCount - 1) * 2; // 10팀 = 18라운드
+  
+  for (let round = 1; round <= totalRounds; round++) {
+    // 각 라운드에서 매칭 생성
+    const roundMatches = generateRoundMatches(allTeamIds, round, totalRounds / 2);
+    
+    roundMatches.forEach(([home, away]) => {
       matches.push({
         id: `match_${matchId++}`,
-        round: 0, // 라운드는 나중에 할당
-        homeTeamId: teamA,
-        awayTeamId: teamB,
+        round,
+        homeTeamId: home,
+        awayTeamId: away,
         isCompleted: false
       });
-      
-      // 두 번째 경기: B 홈
-      matches.push({
-        id: `match_${matchId++}`,
-        round: 0, // 라운드는 나중에 할당
-        homeTeamId: teamB,
-        awayTeamId: teamA,
-        isCompleted: false
-      });
-    }
+    });
   }
   
-  // 라운드별 경기 배정 (라운드 로빈 알고리즘)
-  const rounds = assignRounds(matches, allTeamIds.length);
-  
-  // 라운드 순으로 정렬
-  matches.sort((a, b) => {
-    if (a.round !== b.round) return a.round - b.round;
-    return a.id.localeCompare(b.id);
-  });
-  
-  console.log(`[SCHEDULE] Generated ${matches.length} matches in ${rounds} rounds`);
-  console.log(`[SCHEDULE] Teams: ${allTeamIds.length}, Matches per round: ~${Math.floor(allTeamIds.length / 2)}`);
+  console.log(`[SCHEDULE] Generated ${matches.length} matches in ${totalRounds} rounds`);
+  console.log(`[SCHEDULE] Teams: ${teamCount}, Matches per round: ${teamCount / 2}`);
   
   // 각 팀의 경기 수 확인
   const teamMatchCount: Record<string, number> = {};
@@ -58,73 +44,63 @@ export function generateSchedule(playerTeamId: string, aiTeamIds: string[]): Mat
   });
   
   console.log('[SCHEDULE] Matches per team:', teamMatchCount);
-  console.log('[SCHEDULE] Expected matches per team:', (allTeamIds.length - 1) * 2); // 더블 라운드 로빈
+  console.log('[SCHEDULE] Expected matches per team:', (teamCount - 1) * 2);
+  
+  // 라운드별 경기 수 확인
+  for (let r = 1; r <= totalRounds; r++) {
+    const roundMatchCount = matches.filter(m => m.round === r).length;
+    if (roundMatchCount !== teamCount / 2) {
+      console.error(`[SCHEDULE] Round ${r} has ${roundMatchCount} matches (expected ${teamCount / 2})`);
+    }
+  }
   
   return matches;
 }
 
 /**
- * 라운드 배정 (각 라운드에서 한 팀은 최대 1경기만)
+ * Circle Method를 사용한 Round Robin 매칭 생성
  */
-function assignRounds(matches: Match[], teamCount: number): number {
-  const matchesPerRound = Math.floor(teamCount / 2);
-  let currentRound = 1;
+function generateRoundMatches(
+  teams: string[],
+  round: number,
+  singleRoundCount: number
+): [string, string][] {
+  const n = teams.length;
+  const matches: [string, string][] = [];
   
-  // 경기를 셔플하여 랜덤성 추가
-  const shuffledMatches = shuffleArray(matches);
+  // 첫 번째 라운드 로빈인지 두 번째인지 확인
+  const isFirstHalf = round <= singleRoundCount;
+  const actualRound = isFirstHalf ? round : round - singleRoundCount;
   
-  while (shuffledMatches.some(m => m.round === 0)) {
-    const usedTeams = new Set<string>();
-    let roundMatchCount = 0;
+  // Circle Method: 한 팀을 고정하고 나머지를 회전
+  const fixed = teams[0];
+  const rotating = [...teams.slice(1)];
+  
+  // 회전 (actualRound - 1)번
+  for (let i = 0; i < actualRound - 1; i++) {
+    rotating.unshift(rotating.pop()!);
+  }
+  
+  // 매칭 생성
+  const allTeams = [fixed, ...rotating];
+  
+  for (let i = 0; i < n / 2; i++) {
+    const team1 = allTeams[i];
+    const team2 = allTeams[n - 1 - i];
     
-    // 현재 라운드에 배정할 경기 선택
-    for (const match of shuffledMatches) {
-      if (match.round !== 0) continue;
-      
-      // 두 팀 모두 이번 라운드에 아직 배정되지 않았으면 추가
-      if (!usedTeams.has(match.homeTeamId) && !usedTeams.has(match.awayTeamId)) {
-        match.round = currentRound;
-        usedTeams.add(match.homeTeamId);
-        usedTeams.add(match.awayTeamId);
-        roundMatchCount++;
-      }
-    }
-    
-    console.log(`[SCHEDULE] Round ${currentRound}: ${roundMatchCount} matches assigned`);
-    
-    // 이번 라운드에 경기가 하나도 배정되지 않았다면 문제가 있음
-    if (roundMatchCount === 0 && shuffledMatches.some(m => m.round === 0)) {
-      console.error("[SCHEDULE] No matches assigned in this round, forcing remaining matches");
-      // 남은 경기 강제 배정
-      shuffledMatches.filter(m => m.round === 0).forEach(m => {
-        m.round = currentRound;
-      });
-      break;
-    }
-    
-    currentRound++;
-    
-    // 무한 루프 방지 (최대 200라운드)
-    if (currentRound > 200) {
-      console.error("[SCHEDULE] Round assignment failed - infinite loop detected");
-      break;
+    // 첫 번째 라운드 로빈: team1 홈
+    // 두 번째 라운드 로빈: team2 홈 (홈/어웨이 반전)
+    if (isFirstHalf) {
+      matches.push([team1, team2]);
+    } else {
+      matches.push([team2, team1]);
     }
   }
   
-  return currentRound - 1;
+  return matches;
 }
 
-/**
- * 배열 셔플
- */
-function shuffleArray<T>(array: T[]): T[] {
-  const result = [...array];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
+
 
 /**
  * 순위표 계산
