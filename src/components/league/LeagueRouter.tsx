@@ -119,8 +119,8 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     
     console.log(`[PLAYOFF] Auto-sim result: ${team1.name} ${team1Wins} - ${team2Wins} ${team2.name}`);
     
-    // 시리즈 완료 처리
-    completeSeries(seriesType, winnerId!);
+    // 시리즈 완료 처리 (스코어 포함)
+    completeSeries(seriesType, winnerId!, team1Wins, team2Wins);
     
     // 플레이오프 페이지로 복귀 (결과 표시)
     setCurrentRoute("playoffs");
@@ -145,7 +145,7 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
 
     // 시리즈 승자 결정
     if (team1Wins >= winThreshold) {
-      completeSeries(currentSeriesType, series.team1Id!);
+      completeSeries(currentSeriesType, series.team1Id!, team1Wins, team2Wins);
       
       // 플레이어가 졌으면 탈락
       if (series.team2Id === currentLeague.playerTeamId) {
@@ -163,7 +163,7 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       
       setCurrentRoute("playoffs");
     } else if (team2Wins >= winThreshold) {
-      completeSeries(currentSeriesType, series.team2Id!);
+      completeSeries(currentSeriesType, series.team2Id!, team1Wins, team2Wins);
       
       // 플레이어가 졌으면 탈락
       if (series.team1Id === currentLeague.playerTeamId) {

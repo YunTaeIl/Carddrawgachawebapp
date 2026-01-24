@@ -32,7 +32,7 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
     const canStart = team1 && team2 && !series.isCompleted;
 
     return (
-      <div className={`rounded-2xl p-6 border ${
+      <div className={`rounded-2xl p-6 border min-w-[320px] ${
         isPlayerInSeries 
           ? 'bg-amber-500/10 border-amber-500/50' 
           : 'bg-slate-900/30 border-white/5'
@@ -45,25 +45,25 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
         {team1 && team2 ? (
           <>
             <div className="bg-black/20 rounded-xl p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex-1">
-                  <div className={`font-bold flex items-center gap-2 ${team1.isPlayer ? 'text-amber-400' : ''}`}>
-                    {getKoreanTeamName(team1.name)}
+              <div className="flex items-center justify-between mb-3 gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className={`font-bold flex items-center gap-2 whitespace-nowrap ${team1.isPlayer ? 'text-amber-400' : ''}`}>
+                    <span className="truncate">{getKoreanTeamName(team1.name)}</span>
                     {series.isCompleted && series.winnerId === team1.id && (
-                      <span className="text-emerald-400 text-sm">👑</span>
+                      <span className="text-emerald-400 text-sm flex-shrink-0">👑</span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-500">OVR {team1.stats.totalOVR}</div>
+                  <div className="text-xs text-slate-500 whitespace-nowrap">OVR {team1.stats.totalOVR}</div>
                 </div>
-                <div className="text-2xl font-bold text-slate-600 mx-4">VS</div>
-                <div className="flex-1 text-right">
-                  <div className={`font-bold flex items-center gap-2 justify-end ${team2.isPlayer ? 'text-amber-400' : ''}`}>
+                <div className="text-xl font-bold text-slate-600 flex-shrink-0">VS</div>
+                <div className="flex-1 text-right min-w-0">
+                  <div className={`font-bold flex items-center gap-2 justify-end whitespace-nowrap ${team2.isPlayer ? 'text-amber-400' : ''}`}>
                     {series.isCompleted && series.winnerId === team2.id && (
-                      <span className="text-emerald-400 text-sm">👑</span>
+                      <span className="text-emerald-400 text-sm flex-shrink-0">👑</span>
                     )}
-                    {getKoreanTeamName(team2.name)}
+                    <span className="truncate">{getKoreanTeamName(team2.name)}</span>
                   </div>
-                  <div className="text-xs text-slate-500">OVR {team2.stats.totalOVR}</div>
+                  <div className="text-xs text-slate-500 whitespace-nowrap">OVR {team2.stats.totalOVR}</div>
                 </div>
               </div>
 
@@ -126,7 +126,7 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
     <div className="min-h-screen bg-[#0A0E27] text-white">
       {/* 헤더 */}
       <div className="border-b border-white/5 bg-[#0A0E27]/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-6">
+        <div className="max-w-[1600px] mx-auto px-6 py-6">
           <Button onClick={onBack} variant="ghost" size="sm" className="text-slate-400 mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             돌아가기
@@ -137,8 +137,8 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
       </div>
 
       {/* 브래킷 */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="max-w-[1600px] mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
           {renderSeriesCard(bracket.wildcard, "와일드카드", "4위 vs 5위")}
           {renderSeriesCard(bracket.semifinals, "준플레이오프", "3위 vs WC 승자")}
           {renderSeriesCard(bracket.playoffs, "플레이오프", "2위 vs 준플 승자")}

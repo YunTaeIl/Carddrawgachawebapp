@@ -293,10 +293,10 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   /**
    * 시리즈 완료
    */
-  const completeSeries = (seriesType: Series["type"], winnerId: string) => {
+  const completeSeries = (seriesType: Series["type"], winnerId: string, team1Wins?: number, team2Wins?: number) => {
     if (!currentLeague || !currentLeague.playoffBracket) return;
     
-    console.log("=== 시리즈 완료 ===", seriesType, winnerId);
+    console.log("=== 시리즈 완료 ===", seriesType, winnerId, `${team1Wins}-${team2Wins}`);
     
     const bracket = { ...currentLeague.playoffBracket };
     
@@ -304,6 +304,10 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     const series = bracket[seriesType];
     series.winnerId = winnerId;
     series.isCompleted = true;
+    
+    // 스코어 저장
+    if (team1Wins !== undefined) series.team1Wins = team1Wins;
+    if (team2Wins !== undefined) series.team2Wins = team2Wins;
     
     // 다음 라운드에 승자 진출
     if (seriesType === "wildcard") {
