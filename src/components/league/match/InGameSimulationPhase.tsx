@@ -131,23 +131,22 @@ export function InGameSimulationPhase({
     return Math.round(gold).toString();
   };
 
-  const homeTeam = game.homeTeam;
-  const awayTeam = game.awayTeam;
+  // game.homeTeam과 game.awayTeam은 이미 진영 교체가 적용된 상태
+  // game.homeTeam = 항상 블루 사이드
+  // game.awayTeam = 항상 레드 사이드
+  const blueTeam = game.homeTeam;
+  const redTeam = game.awayTeam;
   const state = game.gameState;
   
-  // 세트마다 블루/레드 진영이 바뀜
-  // setNumber = currentSetIndex + 1
-  // 홀수 세트(1,3,5): 원래대로 (홈=블루, 어웨이=레드)
-  // 짝수 세트(2,4): 교체 (홈=레드, 어웨이=블루)
-  const setNumber = series.currentSetIndex + 1;
-  const isHomeBlue = setNumber % 2 === 1; // 홀수 세트면 홈이 블루
-  const blueTeam = isHomeBlue ? homeTeam : awayTeam;
-  const redTeam = isHomeBlue ? awayTeam : homeTeam;
+  // 세트 스코어는 원래 시리즈의 homeTeam/awayTeam 기준으로 계산
+  // 현재 블루팀이 원래 시리즈의 홈팀인지 확인
+  const isBlueOriginalHome = series.homeTeam.id === blueTeam.id;
+  const blueSetScore = isBlueOriginalHome ? series.setWinsHome : series.setWinsAway;
+  const redSetScore = isBlueOriginalHome ? series.setWinsAway : series.setWinsHome;
   
-  // 세트 스코어 (실제 팀 기준)
-  const homeTeamIsOriginalHome = series.homeTeam.id === homeTeam.id;
-  const homeSetScore = homeTeamIsOriginalHome ? series.setWinsHome : series.setWinsAway;
-  const awaySetScore = homeTeamIsOriginalHome ? series.setWinsAway : series.setWinsHome;
+  // 시리즈 타입 (BO3/BO5)
+  const seriesType = series.bestOf === 3 ? "BO3" : "BO5";
+  const currentSetNumber = series.currentSetIndex + 1;
 
   return (
     <div className="w-full h-full relative">
@@ -169,8 +168,7 @@ export function InGameSimulationPhase({
             const card = blueTeam?.squad?.[pos];
             if (!card) return null;
             
-            const formSide = isHomeBlue ? "home" : "away";
-            const playerForm = game.form[formSide].players[card.id];
+            const playerForm = game.form.home.players[card.id];
             
             return (
               <PlayerConditionCard
@@ -191,15 +189,15 @@ export function InGameSimulationPhase({
             {/* 블루팀 스코어 */}
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-400">{isHomeBlue ? (state?.kills?.home || 0) : (state?.kills?.away || 0)}</div>
+                <div className="text-4xl font-bold text-blue-400">{state?.kills?.home || 0}</div>
                 <div className="text-xs text-slate-400 font-semibold">KILLS</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-slate-300">{isHomeBlue ? (state?.towers?.home || 0) : (state?.towers?.away || 0)}</div>
+                <div className="text-2xl font-bold text-slate-300">{state?.towers?.home || 0}</div>
                 <div className="text-xs text-slate-400 font-semibold">TOWERS</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-slate-300">{isHomeBlue ? (state?.dragons?.home || 0) : (state?.dragons?.away || 0)}</div>
+                <div className="text-2xl font-bold text-slate-300">{state?.dragons?.home || 0}</div>
                 <div className="text-xs text-slate-400 font-semibold">DRAGONS</div>
               </div>
             </div>
@@ -207,14 +205,17 @@ export function InGameSimulationPhase({
             {/* 중앙: 세트 스코어 + 시간 + 골드 차이 */}
             <div className="text-center">
               {/* 세트 스코어 */}
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <div className="text-lg font-bold">{getKoreanTeamName(isHomeBlue ? homeTeam.name : awayTeam.name)}</div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-lg border border-white/20">
-                  <span className="text-2xl font-bold text-blue-400">{isHomeBlue ? homeSetScore : awaySetScore}</span>
-                  <span className="text-lg text-slate-500">:</span>
-                  <span className="text-2xl font-bold text-red-400">{isHomeBlue ? awaySetScore : homeSetScore}</span>
+              <div className="flex items-center justify-center gap-3 mb-1">
+                <div className="text-lg font-bold">{getKoreanTeamName(blueTeam.name)}</div>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-lg border border-white/20">
+                    <span className="text-2xl font-bold text-blue-400">{blueSetScore}</span>
+                    <span className="text-lg text-slate-500">:</span>
+                    <span className="text-2xl font-bold text-red-400">{redSetScore}</span>
+                  </div>
+                  <div className="text-xs text-white/50">{seriesType} - 세트 {currentSetNumber}</div>
                 </div>
-                <div className="text-lg font-bold">{getKoreanTeamName(isHomeBlue ? awayTeam.name : homeTeam.name)}</div>
+                <div className="text-lg font-bold">{getKoreanTeamName(redTeam.name)}</div>
               </div>
               
               {/* 시간 */}
@@ -231,15 +232,15 @@ export function InGameSimulationPhase({
             {/* 레드팀 스코어 */}
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-slate-300">{isHomeBlue ? (state?.dragons?.away || 0) : (state?.dragons?.home || 0)}</div>
+                <div className="text-2xl font-bold text-slate-300">{state?.dragons?.away || 0}</div>
                 <div className="text-xs text-slate-400 font-semibold">DRAGONS</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-slate-300">{isHomeBlue ? (state?.towers?.away || 0) : (state?.towers?.home || 0)}</div>
+                <div className="text-2xl font-bold text-slate-300">{state?.towers?.away || 0}</div>
                 <div className="text-xs text-slate-400 font-semibold">TOWERS</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-red-400">{isHomeBlue ? (state?.kills?.away || 0) : (state?.kills?.home || 0)}</div>
+                <div className="text-4xl font-bold text-red-400">{state?.kills?.away || 0}</div>
                 <div className="text-xs text-slate-400 font-semibold">KILLS</div>
               </div>
             </div>
@@ -383,8 +384,7 @@ export function InGameSimulationPhase({
             const card = redTeam?.squad?.[pos];
             if (!card) return null;
             
-            const formSide = isHomeBlue ? "away" : "home";
-            const playerForm = game.form[formSide].players[card.id];
+            const playerForm = game.form.away.players[card.id];
             
             return (
               <PlayerConditionCard

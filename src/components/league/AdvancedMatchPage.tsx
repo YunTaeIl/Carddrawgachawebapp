@@ -159,20 +159,7 @@ export function AdvancedMatchPage({
             {getKoreanTeamName(homeTeam.name)} vs {getKoreanTeamName(awayTeam.name)}
           </div>
         </div>
-        
-        <div className="flex items-center gap-6">
-          {/* 시리즈 스코어 */}
-          <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-lg border border-white/10">
-            <span className="text-blue-400 font-bold text-xl">{series.setWinsHome}</span>
-            <span className="text-white/50 text-sm">{seriesType}</span>
-            <span className="text-red-400 font-bold text-xl">{series.setWinsAway}</span>
-          </div>
-          
-          {/* 현재 세트 */}
-          <div className="text-white/70 text-sm">
-            세트 {series.currentSetIndex + 1}
-          </div>
-        </div>
+
       </div>
 
       {/* 메인 컨텐츠 */}
