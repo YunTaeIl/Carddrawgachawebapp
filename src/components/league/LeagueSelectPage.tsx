@@ -102,19 +102,30 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
             const colorClass = getLeagueColor(leagueType);
             const accentClass = getLeagueAccent(leagueType);
             const squadComplete = isSquadComplete();
+            const isLegendLeague = leagueType === "legend";
+            const isDisabled = !squadComplete || isLegendLeague;
 
             return (
               <button
                 key={leagueType}
-                onClick={() => handleStartLeague(leagueType)}
+                onClick={() => !isLegendLeague && handleStartLeague(leagueType)}
                 className={`bg-gradient-to-br ${colorClass} rounded-2xl p-8 border 
-                           transition-all duration-300 text-left
-                           ${squadComplete 
+                           transition-all duration-300 text-left relative
+                           ${!isDisabled 
                              ? 'hover:scale-[1.02] hover:shadow-2xl hover:shadow-white/5 cursor-pointer' 
                              : 'opacity-40 cursor-not-allowed'
                            } group`}
-                disabled={!squadComplete}
+                disabled={isDisabled}
               >
+                {/* 레전즈 리그 추후 공개 배지 */}
+                {isLegendLeague && (
+                  <div className="absolute top-4 right-4 bg-amber-500/20 border-2 border-amber-500/80 rounded-full px-4 py-2 z-10">
+                    <span className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                      🔒 추후 공개
+                    </span>
+                  </div>
+                )}
+
                 {/* 리그 타이틀 */}
                 <div className="mb-6">
                   <h2 className={`text-3xl font-bold font-display mb-2 ${accentClass}`}>
@@ -149,12 +160,18 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
 
                 {/* 버튼 힌트 */}
                 <div className={`text-center py-3 rounded-lg transition-colors ${
-                  squadComplete 
-                    ? 'bg-white/5 group-hover:bg-white/10' 
-                    : 'bg-red-500/20'
+                  isLegendLeague
+                    ? 'bg-amber-500/20 border border-amber-500/50'
+                    : squadComplete 
+                      ? 'bg-white/5 group-hover:bg-white/10' 
+                      : 'bg-red-500/20'
                 }`}>
                   <span className="text-sm font-semibold">
-                    {squadComplete ? '시즌 시작' : '스쿼드 필요'}
+                    {isLegendLeague 
+                      ? '🔜 Coming Soon' 
+                      : squadComplete 
+                        ? '시즌 시작' 
+                        : '스쿼드 필요'}
                   </span>
                 </div>
               </button>
