@@ -26,7 +26,7 @@ const LeagueContext = createContext<LeagueContextType | undefined>(undefined);
 const STORAGE_KEY = "lck_league_instance";
 
 export function LeagueProvider({ children }: { children: ReactNode }) {
-  const { userData, allCards } = useGame();
+  const { userData, allCards, addCurrency } = useGame();
   const { user } = useAuth();
   const [currentLeague, setCurrentLeague] = useState<LeagueInstance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -426,13 +426,23 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     if (!currentLeague) return;
     
     console.log("=== 시즌 종료 ===", isChampion, playoffResult);
+    console.log("📊 현재 누적 포인트:", currentLeague.currentPoints);
     
-    let finalPoints = currentLeague.currentPoints;
+    let additionalPoints = 0;
     
     // 우승 시 보너스 지급
     if (isChampion) {
       const config = LEAGUE_CONFIGS[currentLeague.leagueType];
-      finalPoints += config.championBonus;
+      additionalPoints = config.championBonus;
+      console.log(`🏆 우승 보너스: +${config.championBonus} RP`);
+    }
+    
+    const finalPoints = currentLeague.currentPoints + additionalPoints;
+    
+    // 🔥 실제로 포인트 지급! (누적 포인트 전부)
+    if (finalPoints > 0) {
+      console.log(`💰 총 ${finalPoints} RP를 지급합니다!`);
+      addCurrency(finalPoints);
     }
     
     setCurrentLeague({
@@ -443,6 +453,8 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       playoffResult: playoffResult || (isChampion ? "champion" : "eliminated"),
       updatedAt: new Date().toISOString()
     });
+    
+    console.log("✅ 시즌 종료 완료! 최종 포인트:", finalPoints);
   };
 
   /**

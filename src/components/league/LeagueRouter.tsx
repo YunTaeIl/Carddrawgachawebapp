@@ -37,6 +37,16 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
   const [currentSeriesType, setCurrentSeriesType] = useState<Series["type"] | null>(null);
   const [currentSeriesGameIndex, setCurrentSeriesGameIndex] = useState(0);
 
+  // 🔥 시즌이 종료되면 자동으로 결과 페이지로 이동
+  React.useEffect(() => {
+    if (currentLeague?.seasonState === "finished" && currentRoute !== "result") {
+      console.log("🏆 시즌 종료 감지! 결과 페이지로 자동 이동");
+      setTimeout(() => {
+        setCurrentRoute("result");
+      }, 500);
+    }
+  }, [currentLeague?.seasonState, currentRoute]);
+
   // 리그 선택 → 진행 페이지
   const handleLeagueStart = () => {
     setCurrentRoute("progress");
