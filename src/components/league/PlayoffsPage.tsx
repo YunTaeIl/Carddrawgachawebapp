@@ -47,14 +47,20 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
             <div className="bg-black/20 rounded-xl p-4 mb-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex-1">
-                  <div className={`font-bold ${team1.isPlayer ? 'text-amber-400' : ''}`}>
+                  <div className={`font-bold flex items-center gap-2 ${team1.isPlayer ? 'text-amber-400' : ''}`}>
                     {getKoreanTeamName(team1.name)}
+                    {series.isCompleted && series.winnerId === team1.id && (
+                      <span className="text-emerald-400 text-sm">👑</span>
+                    )}
                   </div>
                   <div className="text-xs text-slate-500">OVR {team1.stats.totalOVR}</div>
                 </div>
                 <div className="text-2xl font-bold text-slate-600 mx-4">VS</div>
                 <div className="flex-1 text-right">
-                  <div className={`font-bold ${team2.isPlayer ? 'text-amber-400' : ''}`}>
+                  <div className={`font-bold flex items-center gap-2 justify-end ${team2.isPlayer ? 'text-amber-400' : ''}`}>
+                    {series.isCompleted && series.winnerId === team2.id && (
+                      <span className="text-emerald-400 text-sm">👑</span>
+                    )}
                     {getKoreanTeamName(team2.name)}
                   </div>
                   <div className="text-xs text-slate-500">OVR {team2.stats.totalOVR}</div>
@@ -62,14 +68,22 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
               </div>
 
               {series.isCompleted && (
-                <div className="flex items-center justify-center gap-4 text-2xl font-bold">
-                  <span className={series.winnerId === team1.id ? 'text-emerald-400' : 'text-slate-600'}>
-                    {series.team1Wins}
-                  </span>
-                  <span className="text-slate-600">:</span>
-                  <span className={series.winnerId === team2.id ? 'text-emerald-400' : 'text-slate-600'}>
-                    {series.team2Wins}
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-4 text-2xl font-bold">
+                    <span className={series.winnerId === team1.id ? 'text-emerald-400' : 'text-slate-600'}>
+                      {series.team1Wins}
+                    </span>
+                    <span className="text-slate-600">:</span>
+                    <span className={series.winnerId === team2.id ? 'text-emerald-400' : 'text-slate-600'}>
+                      {series.team2Wins}
+                    </span>
+                  </div>
+                  <div className="text-center text-sm font-semibold">
+                    <span className="text-emerald-400">
+                      {series.winnerId === team1.id ? getKoreanTeamName(team1.name) : getKoreanTeamName(team2.name)}
+                    </span>
+                    <span className="text-slate-500"> 승리</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -87,8 +101,11 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
                 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             ) : series.isCompleted ? (
-              <div className="text-center py-3 bg-emerald-500/20 rounded-xl text-emerald-400 font-bold">
-                ✓ 완료 {!isPlayerInSeries && '(자동 시뮬레이션)'}
+              <div className="text-center py-3 bg-emerald-500/20 rounded-xl border border-emerald-500/30">
+                <div className="text-emerald-400 font-bold">✓ 시리즈 완료</div>
+                {!isPlayerInSeries && (
+                  <div className="text-xs text-emerald-400/70 mt-1">AI 시뮬레이션으로 진행됨</div>
+                )}
               </div>
             ) : (
               <div className="text-center py-3 bg-slate-800 rounded-xl text-slate-500">
