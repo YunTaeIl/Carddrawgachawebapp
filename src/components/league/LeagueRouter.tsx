@@ -25,7 +25,7 @@ interface LeagueRouterProps {
 }
 
 export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
-  const { currentLeague, getCurrentMatch, getTeamById, advanceToPlayoffs, completeSeries, finishSeason } = useLeague();
+  const { currentLeague, getCurrentMatch, getTeamById, advanceToPlayoffs, completeSeries, finishSeason, deleteLeague } = useLeague();
   const [currentRoute, setCurrentRoute] = useState<LeagueRoute>(() => {
     // 초기 라우트 결정
     if (!currentLeague) return "select";
