@@ -171,54 +171,84 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       team2Wins++;
     }
 
+    console.log(`[SERIES] ${currentSeriesType} 경기 완료: ${team1Wins}-${team2Wins} (필요 승수: ${winThreshold})`);
+
     // 시리즈 승자 결정
     if (team1Wins >= winThreshold) {
+      console.log(`[SERIES] Team1 승리! ${currentSeriesType} 시리즈 완료`);
       completeSeries(currentSeriesType, series.team1Id!, team1Wins, team2Wins);
       
-      // 플레이어가 졌으면 탈락
-      if (series.team2Id === currentLeague.playerTeamId) {
-        finishSeason(false, currentSeriesType); // 탈락한 라운드 기록
-        setCurrentRoute("result");
-        return;
-      }
+      const isPlayerTeam1 = series.team1Id === currentLeague.playerTeamId;
+      const isPlayerTeam2 = series.team2Id === currentLeague.playerTeamId;
       
-      // 결승 우승이면 우승 처리
+      // 결승 완료
       if (currentSeriesType === "finals") {
-        // 플레이어가 우승
-        if (series.team1Id === currentLeague.playerTeamId) {
+        console.log(`[FINALS] 결승 완료! Team1 승리 - 플레이어Team1: ${isPlayerTeam1}, 플레이어Team2: ${isPlayerTeam2}`);
+        if (isPlayerTeam1) {
+          // 플레이어 우승
+          console.log("🏆 플레이어 우승!");
           finishSeason(true, "champion");
-        } else {
-          // 플레이어가 준우승
+        } else if (isPlayerTeam2) {
+          // 플레이어 준우승
+          console.log("🥈 플레이어 준우승");
           finishSeason(false, "runner-up");
+        } else {
+          // 플레이어 불참 - 시즌 종료
+          console.log("😔 플레이어 결승 불참");
+          finishSeason(false, "eliminated");
         }
         setCurrentRoute("result");
         return;
       }
       
+      // 플레이어가 졌으면 탈락
+      if (isPlayerTeam2) {
+        console.log(`😢 플레이어 ${currentSeriesType}에서 탈락`);
+        finishSeason(false, currentSeriesType); // 탈락한 라운드 기록
+        setCurrentRoute("result");
+        return;
+      }
+      
+      // 플레이어가 이겼거나 불참 - 플레이오프 계속
+      console.log(`✅ ${currentSeriesType} 완료 - 플레이오프 페이지로 이동`);
       setCurrentRoute("playoffs");
     } else if (team2Wins >= winThreshold) {
+      console.log(`[SERIES] Team2 승리! ${currentSeriesType} 시리즈 완료`);
       completeSeries(currentSeriesType, series.team2Id!, team1Wins, team2Wins);
       
-      // 플레이어가 졌으면 탈락
-      if (series.team1Id === currentLeague.playerTeamId) {
-        finishSeason(false, currentSeriesType); // 탈락한 라운드 기록
-        setCurrentRoute("result");
-        return;
-      }
+      const isPlayerTeam1 = series.team1Id === currentLeague.playerTeamId;
+      const isPlayerTeam2 = series.team2Id === currentLeague.playerTeamId;
       
-      // 결승 우승이면 우승 처리
+      // 결승 완료
       if (currentSeriesType === "finals") {
-        // 플레이어가 우승
-        if (series.team2Id === currentLeague.playerTeamId) {
+        console.log(`[FINALS] 결승 완료! Team2 승리 - 플레이어Team1: ${isPlayerTeam1}, 플레이어Team2: ${isPlayerTeam2}`);
+        if (isPlayerTeam2) {
+          // 플레이어 우승
+          console.log("🏆 플레이어 우승!");
           finishSeason(true, "champion");
-        } else {
-          // 플레이어가 준우승
+        } else if (isPlayerTeam1) {
+          // 플레이어 준우승
+          console.log("🥈 플레이어 준우승");
           finishSeason(false, "runner-up");
+        } else {
+          // 플레이어 불참 - 시즌 종료
+          console.log("😔 플레이어 결승 불참");
+          finishSeason(false, "eliminated");
         }
         setCurrentRoute("result");
         return;
       }
       
+      // 플레이어가 졌으면 탈락
+      if (isPlayerTeam1) {
+        console.log(`😢 플레이어 ${currentSeriesType}에서 탈락`);
+        finishSeason(false, currentSeriesType); // 탈락한 라운드 기록
+        setCurrentRoute("result");
+        return;
+      }
+      
+      // 플레이어가 이겼거나 불참 - 플레이오프 계속
+      console.log(`✅ ${currentSeriesType} 완료 - 플레이오프 페이지로 이동`);
       setCurrentRoute("playoffs");
     } else {
       // 시리즈 계속
@@ -245,6 +275,36 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
   // 시즌 종료 페이지로
   const handleViewResult = () => {
     finishSeason(false);
+    setCurrentRoute("result");
+  };
+
+  // 플레이오프 모두 완료 시
+  const handleAllPlayoffsComplete = () => {
+    if (!currentLeague || !currentLeague.playoffBracket) return;
+    
+    const bracket = currentLeague.playoffBracket;
+    const playerTeamId = currentLeague.playerTeamId;
+    
+    // 결승 승자 확인
+    const finalsWinnerId = bracket.finals.winnerId;
+    
+    if (finalsWinnerId === playerTeamId) {
+      // 플레이어 우승
+      finishSeason(true, "champion");
+    } else if (bracket.finals.team1Id === playerTeamId || bracket.finals.team2Id === playerTeamId) {
+      // 플레이어 준우승
+      finishSeason(false, "runner-up");
+    } else if (bracket.playoffs.team1Id === playerTeamId || bracket.playoffs.team2Id === playerTeamId) {
+      // 플레이오프 진출
+      finishSeason(false, "playoffs");
+    } else if (bracket.semifinals.team1Id === playerTeamId || bracket.semifinals.team2Id === playerTeamId) {
+      // 준플레이오프 진출
+      finishSeason(false, "semifinals");
+    } else {
+      // 와일드카드 탈락
+      finishSeason(false, "wildcard");
+    }
+    
     setCurrentRoute("result");
   };
 
@@ -304,6 +364,7 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
         <PlayoffsPage
           onBack={handleBackToProgress}
           onSeriesStart={handleSeriesStart}
+          onAllComplete={handleAllPlayoffsComplete}
         />
       );
 

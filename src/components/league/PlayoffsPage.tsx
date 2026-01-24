@@ -1,6 +1,6 @@
 // 플레이오프 페이지
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -10,9 +10,10 @@ import { getKoreanTeamName } from "@/utils/teamNames";
 interface PlayoffsPageProps {
   onBack: () => void;
   onSeriesStart: (seriesType: Series["type"]) => void;
+  onAllComplete?: () => void; // 모든 플레이오프 완료 시 콜백
 }
 
-export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
+export function PlayoffsPage({ onBack, onSeriesStart, onAllComplete }: PlayoffsPageProps) {
   const { currentLeague, getTeamById } = useLeague();
 
   if (!currentLeague || !currentLeague.playoffBracket) {
@@ -24,6 +25,25 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
   }
 
   const bracket = currentLeague.playoffBracket;
+
+  // 모든 플레이오프 시리즈가 완료되었는지 확인
+  useEffect(() => {
+    if (!bracket) return;
+    
+    const allSeriesCompleted = 
+      bracket.wildcard.isCompleted &&
+      bracket.semifinals.isCompleted &&
+      bracket.playoffs.isCompleted &&
+      bracket.finals.isCompleted;
+    
+    if (allSeriesCompleted && onAllComplete) {
+      console.log("🏆 모든 플레이오프 시리즈 완료! 결과 페이지로 이동");
+      // 약간의 지연 후 이동 (사용자가 결과를 볼 시간)
+      setTimeout(() => {
+        onAllComplete();
+      }, 1000);
+    }
+  }, [bracket, onAllComplete]);
 
   const renderSeriesCard = (series: Series, title: string, description: string) => {
     const team1 = series.team1Id ? getTeamById(series.team1Id) : null;
