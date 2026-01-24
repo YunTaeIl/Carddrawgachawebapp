@@ -77,13 +77,18 @@ export function PlayoffsPage({ onBack, onSeriesStart }: PlayoffsPageProps) {
             {canStart ? (
               <Button
                 onClick={() => onSeriesStart(series.type)}
-                className="w-full bg-red-600 hover:bg-red-700 py-6 rounded-xl font-semibold"
+                className={`w-full py-6 rounded-xl font-semibold ${
+                  isPlayerInSeries 
+                    ? 'bg-red-600 hover:bg-red-700' 
+                    : 'bg-slate-600 hover:bg-slate-700'
+                }`}
               >
-                시리즈 시작 <ChevronRight className="w-5 h-5 ml-2" />
+                {isPlayerInSeries ? '시리즈 시작' : 'AI 경기 시뮬레이션'} 
+                <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             ) : series.isCompleted ? (
               <div className="text-center py-3 bg-emerald-500/20 rounded-xl text-emerald-400 font-bold">
-                완료
+                ✓ 완료 {!isPlayerInSeries && '(자동 시뮬레이션)'}
               </div>
             ) : (
               <div className="text-center py-3 bg-slate-800 rounded-xl text-slate-500">

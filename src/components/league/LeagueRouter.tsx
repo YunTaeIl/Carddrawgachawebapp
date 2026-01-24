@@ -65,9 +65,65 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
 
   // 시리즈 시작
   const handleSeriesStart = (seriesType: Series["type"]) => {
+    if (!currentLeague || !currentLeague.playoffBracket) return;
+    
+    const series = currentLeague.playoffBracket[seriesType];
+    const isPlayerInSeries = 
+      series.team1Id === currentLeague.playerTeamId || 
+      series.team2Id === currentLeague.playerTeamId;
+    
+    // 플레이어가 참여하지 않는 경기는 자동 시뮬레이션
+    if (!isPlayerInSeries && series.team1Id && series.team2Id) {
+      console.log(`[PLAYOFF] Auto-simulating series: ${seriesType}`);
+      autoSimulateSeries(seriesType);
+      return;
+    }
+    
+    // 플레이어가 참여하는 경기만 실제 진행
     setCurrentSeriesType(seriesType);
     setCurrentSeriesGameIndex(0);
     setCurrentRoute("series");
+  };
+  
+  // 자동 시리즈 시뮬레이션 (플레이어 불참 경기)
+  const autoSimulateSeries = (seriesType: Series["type"]) => {
+    if (!currentLeague || !currentLeague.playoffBracket) return;
+    
+    const series = currentLeague.playoffBracket[seriesType];
+    if (!series.team1Id || !series.team2Id) return;
+    
+    const team1 = getTeamById(series.team1Id);
+    const team2 = getTeamById(series.team2Id);
+    if (!team1 || !team2) return;
+    
+    // 팀 OVR 기반 승률 계산
+    const team1OVR = team1.stats.totalOVR;
+    const team2OVR = team2.stats.totalOVR;
+    const totalOVR = team1OVR + team2OVR;
+    const team1WinProb = team1OVR / totalOVR;
+    
+    const winThreshold = Math.ceil(series.bestOf / 2);
+    let team1Wins = 0;
+    let team2Wins = 0;
+    
+    // 시리즈 시뮬레이션
+    while (team1Wins < winThreshold && team2Wins < winThreshold) {
+      if (Math.random() < team1WinProb) {
+        team1Wins++;
+      } else {
+        team2Wins++;
+      }
+    }
+    
+    const winnerId = team1Wins >= winThreshold ? series.team1Id : series.team2Id;
+    
+    console.log(`[PLAYOFF] Auto-sim result: ${team1.name} ${team1Wins} - ${team2Wins} ${team2.name}`);
+    
+    // 시리즈 완료 처리
+    completeSeries(seriesType, winnerId!);
+    
+    // 플레이오프 페이지로 복귀 (결과 표시)
+    setCurrentRoute("playoffs");
   };
 
   // 시리즈 경기 완료
