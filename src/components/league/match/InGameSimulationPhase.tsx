@@ -135,8 +135,12 @@ export function InGameSimulationPhase({
   const awayTeam = game.awayTeam;
   const state = game.gameState;
   
-  // 세트마다 블루/레드 진영이 바뀜 (짝수 세트는 홈이 블루, 홀수 세트는 어웨이가 블루)
-  const isHomeBlue = series.currentSetIndex % 2 === 0;
+  // 세트마다 블루/레드 진영이 바뀜
+  // setNumber = currentSetIndex + 1
+  // 홀수 세트(1,3,5): 원래대로 (홈=블루, 어웨이=레드)
+  // 짝수 세트(2,4): 교체 (홈=레드, 어웨이=블루)
+  const setNumber = series.currentSetIndex + 1;
+  const isHomeBlue = setNumber % 2 === 1; // 홀수 세트면 홈이 블루
   const blueTeam = isHomeBlue ? homeTeam : awayTeam;
   const redTeam = isHomeBlue ? awayTeam : homeTeam;
   
