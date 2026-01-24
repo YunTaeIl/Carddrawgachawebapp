@@ -38,31 +38,31 @@ export function SeriesFinishedPhase({
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-8">
-      <div className="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-12 border border-white/10">
+    <div className="w-full h-full flex items-center justify-center p-4 md:p-8">
+      <div className="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-6 md:p-12 border border-white/10 max-h-[90vh] flex flex-col">
         {/* 승리 아이콘 */}
-        <div className="text-center mb-8">
-          <div className="text-8xl mb-6">
+        <div className="text-center mb-6 flex-shrink-0">
+          <div className="text-6xl md:text-8xl mb-4 md:mb-6">
             {playerWon ? "🏆" : "💔"}
           </div>
           
-          <h1 className={`text-6xl font-bold font-display mb-4 ${playerWon ? 'text-yellow-400' : 'text-slate-400'}`}>
+          <h1 className={`text-4xl md:text-6xl font-bold font-display mb-3 md:mb-4 ${playerWon ? 'text-yellow-400' : 'text-slate-400'}`}>
             {playerWon ? "VICTORY" : "DEFEAT"}
           </h1>
           
-          <p className="text-2xl text-slate-300 mb-2">
+          <p className="text-xl md:text-2xl text-slate-300 mb-2">
             {winnerName} 승리!
           </p>
           
-          <div className="text-xl text-slate-500">
+          <div className="text-lg md:text-xl text-slate-500">
             {series.seriesType} - {result.winnerScore}:{result.loserScore}
           </div>
         </div>
 
         {/* 세트별 결과 */}
-        <div className="mb-8">
+        <div className="mb-6 flex-shrink-0">
           <h3 className="text-lg font-bold mb-4 text-center text-white/90">세트별 결과</h3>
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
             {series.sets.map((set, idx) => {
               const setHomeWon = set.winnerId === series.homeTeam.id;
               const isPlayerTeamHome = currentLeague?.playerTeamId === series.homeTeam.id;
@@ -107,13 +107,13 @@ export function SeriesFinishedPhase({
 
         {/* 보상 (승리 시) */}
         {playerWon && (
-          <div className="mb-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+          <div className="mb-6 p-4 md:p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex-shrink-0">
             <div className="flex items-center justify-center gap-3 mb-2">
-              <Trophy className="w-6 h-6 text-yellow-400" />
-              <h3 className="text-xl font-bold text-yellow-400">승리 보상</h3>
+              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
+              <h3 className="text-lg md:text-xl font-bold text-yellow-400">승리 보상</h3>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-yellow-400 mb-1">
+              <div className="text-3xl md:text-4xl font-bold text-yellow-400 mb-1">
                 +500
               </div>
               <div className="text-sm text-slate-400">포인트 획득</div>
@@ -124,7 +124,7 @@ export function SeriesFinishedPhase({
         {/* 완료 버튼 */}
         <Button
           onClick={onComplete}
-          className="w-full py-6 text-lg font-bold"
+          className="w-full py-4 md:py-6 text-base md:text-lg font-bold flex-shrink-0"
         >
           리그로 돌아가기
         </Button>
