@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { LeagueInstance, LeagueType, Team, Match, MatchResult, SeasonState, PlayoffBracket, Series } from "@/types/league";
 import { useGame } from "./GameContext";
+import { useAuth } from "./AuthContext";
 import { generateAITeams, createPlayerTeam } from "@/utils/aiTeamGenerator";
 import { generateSchedule, calculateStandings, simulateRemainingMatches } from "@/utils/leagueScheduler";
 import { LEAGUE_CONFIGS } from "@/types/league";
@@ -26,20 +27,23 @@ const STORAGE_KEY = "lck_league_instance";
 
 export function LeagueProvider({ children }: { children: ReactNode }) {
   const { userData, allCards } = useGame();
+  const { user } = useAuth();
   const [currentLeague, setCurrentLeague] = useState<LeagueInstance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // DB에서 리그 불러오기 (초기 로드)
   useEffect(() => {
     const loadLeague = async () => {
-      if (!userData?.uid) {
+      if (!user?.id) {
+        console.log("⏭️ [LOAD] user.id 없음 - 비로그인 상태");
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log("🔵 [LOAD] DB에서 리그 불러오기 시작:", user.id);
         // 먼저 DB에서 시도
-        const dbLeague = await loadLeagueFromDb(userData.uid);
+        const dbLeague = await loadLeagueFromDb(user.id);
         if (dbLeague) {
           console.log("✅ DB에서 리그 로드 성공");
           setCurrentLeague(dbLeague);
@@ -53,7 +57,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
             console.log("📦 localStorage에서 리그 로드 (DB로 마이그레이션)");
             setCurrentLeague(league);
             // DB에 저장
-            await saveLeagueToDb(userData.uid, league);
+            await saveLeagueToDb(user.id, league);
           }
         }
       } catch (error) {
@@ -74,14 +78,14 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     };
 
     loadLeague();
-  }, [userData?.uid]);
+  }, [user?.id]);
 
   // 리그 상태 변경 시 DB & localStorage 동시 저장
   useEffect(() => {
     console.log("🔍 [SAVE useEffect] 실행됨:", {
       hasLeague: !!currentLeague,
       leagueId: currentLeague?.id,
-      userId: userData?.uid,
+      userId: user?.id,
       isLoading
     });
     
@@ -91,8 +95,8 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
         return;
       }
       
-      if (!userData?.uid) {
-        console.log("⏭️ [SAVE] userId 없음 - 스킵");
+      if (!user?.id) {
+        console.log("⏭️ [SAVE] user.id 없음 - 스킵");
         return;
       }
       
@@ -105,7 +109,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       try {
         console.log("💾 리그 저장 시작...");
         // DB 저장 (비동기)
-        await saveLeagueToDb(userData.uid, currentLeague);
+        await saveLeagueToDb(user.id, currentLeague);
         // localStorage 백업 (동기)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLeague));
         console.log("✅ 리그 저장 완료 (DB + localStorage)");
@@ -117,7 +121,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     };
 
     saveLeague();
-  }, [currentLeague, userData?.uid, isLoading]);
+  }, [currentLeague, user?.id, isLoading]);
 
   /**
    * 새 리그 시작
@@ -445,11 +449,11 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
    * 리그 삭제
    */
   const deleteLeague = async () => {
-    if (!userData?.uid) return;
+    if (!user?.id) return;
 
     try {
       // DB에서 삭제
-      await deleteLeagueFromDb(userData.uid);
+      await deleteLeagueFromDb(user.id);
       console.log("✅ DB에서 리그 삭제 완료");
     } catch (error) {
       console.error("❌ DB 리그 삭제 오류:", error);
