@@ -33,7 +33,7 @@ interface MenuItem {
   label: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
-  inDevelopment?: boolean;  // 개발중 (일반 유저는 다이얼로그, Admin은 접근 가능)
+  requiresAuth?: boolean;  // 로그인 필요
 }
 
 const menuItems: MenuItem[] = [
@@ -41,59 +41,26 @@ const menuItems: MenuItem[] = [
   { id: "collection", label: "선수관리", icon: <Users size={20} /> },
   { id: "squad", label: "팀관리", icon: <Shield size={20} /> },
   { id: "gacha", label: "선수뽑기", icon: <Zap size={20} /> },
-  { id: "league-progress", label: "리그진행", icon: <Trophy size={20} />, inDevelopment: true },
+  { id: "league-progress", label: "리그진행", icon: <Trophy size={20} />, requiresAuth: true },
 ];
 
 export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onShowAuth }: SidebarProps) {
   const { isAuthenticated, signOut } = useAuth();
-  const [showDevDialog, setShowDevDialog] = useState(false);
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [password, setPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   const handleMenuClick = (pageId: Page) => {
-    // 개발중인 페이지인지 확인
     const menuItem = menuItems.find(item => item.id === pageId);
     
-    if (menuItem?.inDevelopment) {
-      // 리그진행 페이지는 개발중 다이얼로그 먼저 표시
-      setShowDevDialog(true);
-    } else {
-      // 일반 페이지는 바로 이동
-      onNavigate(pageId);
+    // 로그인이 필요한 페이지인지 확인
+    if (menuItem?.requiresAuth && !isAuthenticated) {
+      // 로그인하지 않은 경우 로그인 요청
       onClose();
+      onShowAuth();
+      return;
     }
-  };
-
-  const handleUnlockClick = () => {
-    // 자물쇠 버튼 클릭 -> 비밀번호 입력창으로 전환
-    setShowDevDialog(false);
-    setShowPasswordDialog(true);
-    setPassword("");
-    setPasswordError("");
-  };
-
-  const handlePasswordSubmit = () => {
-    const correctPassword = "legends123!";
     
-    if (password === correctPassword) {
-      // 비밀번호 맞음 -> Admin 페이지로 이동
-      setShowPasswordDialog(false);
-      onNavigate("league-progress");
-      onClose();
-      setPassword("");
-      setPasswordError("");
-    } else {
-      // 비밀번호 틀림 -> 에러 표시
-      setPasswordError("비밀번호가 올바르지 않습니다");
-    }
-  };
-
-  const handlePasswordKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handlePasswordSubmit();
-    }
+    // 바로 이동
+    onNavigate(pageId);
+    onClose();
   };
 
   return (
@@ -162,8 +129,8 @@ export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onS
                 {item.adminOnly && !isAdmin && (
                   <span className="ml-auto text-xs">🔒</span>
                 )}
-                {item.inDevelopment && (
-                  <span className="ml-auto text-xs text-[#FFB81C]">🔜</span>
+                {item.requiresAuth && !isAuthenticated && (
+                  <span className="ml-auto text-xs text-[#FFB81C]">🔐</span>
                 )}
               </button>
             );
@@ -251,133 +218,6 @@ export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onS
         >
           <Menu size={18} />
         </button>
-      )}
-
-      {/* 개발중 다이얼로그 */}
-      {showDevDialog && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/70 z-[60] transition-opacity duration-200"
-            onClick={() => setShowDevDialog(false)}
-          />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-md p-6">
-            <div className="bg-gradient-to-br from-[#141B3D] to-[#0A0E27] border-2 border-[#FFB81C]/50 rounded-2xl p-8 shadow-2xl">
-              <div className="text-center space-y-6">
-                {/* 아이콘 (클릭하면 비밀번호 입력창으로 - 숨겨진 기능) */}
-                <div className="flex justify-center">
-                  <div 
-                    onClick={handleUnlockClick}
-                    className="w-20 h-20 rounded-full bg-[#FFB81C]/20 flex items-center justify-center cursor-pointer"
-                  >
-                    <Code2 size={40} className="text-[#FFB81C]" />
-                  </div>
-                </div>
-
-                {/* 제목 */}
-                <div>
-                  <h3 className="text-2xl font-display text-white mb-2">
-                    🚧 열심히 개발중입니다!
-                  </h3>
-                  <p className="text-[#8B95B5] text-sm">
-                    개발자가 밤낮없이 코딩하고 있어요
-                  </p>
-                </div>
-
-                {/* 메시지 */}
-                <div className="bg-[#0B0F1A]/50 rounded-lg p-4 border border-[#0047AB]/30">
-                  <p className="text-[#9AA6C3] text-sm leading-relaxed">
-                    <strong className="text-[#FFB81C]">리그진행</strong> 기능은 현재 개발 중입니다.<br />
-                    조금만 기다려주시면 곧 만나볼 수 있어요! 💪
-                  </p>
-                </div>
-
-                {/* 버튼 */}
-                <button
-                  onClick={() => setShowDevDialog(false)}
-                  className="w-full py-3 bg-[#C8102E] hover:bg-[#C8102E]/80 text-white rounded-lg
-                           font-medium transition-all duration-150 shadow-lg"
-                >
-                  알겠어요!
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* 비밀번호 입력 다이얼로그 */}
-      {showPasswordDialog && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/70 z-[60] transition-opacity duration-200"
-            onClick={() => setShowPasswordDialog(false)}
-          />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-md p-6">
-            <div className="bg-gradient-to-br from-[#141B3D] to-[#0A0E27] border-2 border-[#FFB81C]/50 rounded-2xl p-8 shadow-2xl">
-              <div className="text-center space-y-6">
-                {/* 아이콘 */}
-                <div className="flex justify-center">
-                  <div className="w-20 h-20 rounded-full bg-[#FFB81C]/20 flex items-center justify-center">
-                    <Code2 size={40} className="text-[#FFB81C]" />
-                  </div>
-                </div>
-
-                {/* 제목 */}
-                <div>
-                  <h3 className="text-2xl font-display text-white mb-2">
-                    🔐 비밀번호 입력
-                  </h3>
-                  <p className="text-[#8B95B5] text-sm">
-                    리그진행 페이지에 접근하려면 비밀번호를 입력하세요
-                  </p>
-                </div>
-
-                {/* 비밀번호 입력 필드 */}
-                <div className="bg-[#0B0F1A]/50 rounded-lg p-4 border border-[#0047AB]/30">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyPress={handlePasswordKeyPress}
-                    onPaste={(e) => {
-                      // 기본 붙여넣기 동작 방지 (중복 방지)
-                      e.preventDefault();
-                      const pastedText = e.clipboardData.getData('text');
-                      setPassword(pastedText);
-                      setPasswordError("");
-                    }}
-                    className="w-full bg-transparent text-[#9AA6C3] text-sm leading-relaxed
-                               focus:outline-none focus:ring-0"
-                    placeholder="비밀번호 입력"
-                    autoComplete="off"
-                  />
-                  {passwordError && (
-                    <p className="text-red-500 text-xs mt-1">{passwordError}</p>
-                  )}
-                </div>
-
-                {/* 비밀번호 표시 토글 */}
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-[#8B95B5] hover:text-white transition-colors"
-                  >
-                    {showPassword ? "비밀번호 숨기기" : "비밀번호 표시"}
-                  </button>
-                </div>
-
-                {/* 버튼 */}
-                <button
-                  onClick={handlePasswordSubmit}
-                  className="w-full py-3 bg-[#C8102E] hover:bg-[#C8102E]/80 text-white rounded-lg
-                           font-medium transition-all duration-150 shadow-lg"
-                >
-                  확인
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
       )}
     </>
   );

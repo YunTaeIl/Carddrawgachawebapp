@@ -22,46 +22,43 @@ export function LeagueProgressPage({ onBack, isAdmin }: LeagueProgressPageProps)
             <Trophy size={28} className="text-[#FFB81C]" />
             <div>
               <h1 className="text-xl font-display text-white">리그진행</h1>
-              <p className="text-xs text-[#8B95B5]">Admin Development Area</p>
+              <p className="text-xs text-[#8B95B5]">League Management System</p>
             </div>
-          </div>
-          <div className="ml-auto px-3 py-1 bg-[#C8102E]/20 border border-[#C8102E]/50 rounded-full">
-            <span className="text-xs text-[#C8102E] font-medium">🔑 관리자 전용</span>
           </div>
         </div>
       </div>
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* 개발중 배너 */}
+        {/* 환영 배너 */}
         <div className="mb-8 bg-gradient-to-r from-[#FFB81C]/20 to-[#C8102E]/20 border-2 border-[#FFB81C]/50 rounded-2xl p-8">
           <div className="flex items-start gap-6">
             <div className="w-16 h-16 rounded-full bg-[#FFB81C]/30 flex items-center justify-center flex-shrink-0">
-              <Code2 size={32} className="text-[#FFB81C]" />
+              <Trophy size={32} className="text-[#FFB81C]" />
             </div>
             <div className="flex-1">
               <h2 className="text-2xl font-display text-white mb-2 flex items-center gap-2">
-                🚧 Admin 개발 영역
+                🏆 리그 시스템에 오신 것을 환영합니다!
                 <Rocket size={24} className="text-[#FFB81C]" />
               </h2>
               <p className="text-[#9AA6C3] mb-4">
-                이 페이지는 실서버에 배포된 상태에서 개발을 진행하기 위한 Admin 전용 공간입니다.
+                LCK 선수 카드로 팀을 구성하고, 리그에 도전하세요! 상금과 보상이 기다립니다.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center gap-2 text-[#8B95B5]">
                   <span className="w-2 h-2 rounded-full bg-[#FFB81C]"></span>
-                  일반 유저에게는 "개발중" 다이얼로그 표시
+                  Bronze부터 Challenger까지 다양한 리그
                 </div>
                 <div className="flex items-center gap-2 text-[#8B95B5]">
                   <span className="w-2 h-2 rounded-full bg-[#C8102E]"></span>
-                  Admin만 개발중인 기능에 접근 가능
+                  실시간 경기 시뮬레이션 & 플레이오프
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 개발 영역 */}
+        {/* 주요 기능 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 리그 시뮬레이션 */}
           <div className="bg-[#141B3D]/50 border border-[#0047AB]/30 rounded-xl p-6">
@@ -71,12 +68,12 @@ export function LeagueProgressPage({ onBack, isAdmin }: LeagueProgressPageProps)
             </h3>
             <div className="space-y-3">
               <div className="bg-[#0B0F1A]/50 rounded-lg p-4 border border-[#0047AB]/20">
-                <p className="text-sm text-[#8B95B5] mb-2">계획된 기능:</p>
+                <p className="text-sm text-[#8B95B5] mb-2">주요 기능:</p>
                 <ul className="text-sm text-[#9AA6C3] space-y-1 list-disc list-inside">
                   <li>스쿼드 기반 경기 시뮬레이션</li>
-                  <li>선수 스탯 & 시너지 계산</li>
-                  <li>리그 일정 관리</li>
-                  <li>순위표 & 전적 기록</li>
+                  <li>선수 스탯 & 76개 시너지 계산</li>
+                  <li>정규시즌 18라운드 일정</li>
+                  <li>실시간 순위표 & 전적 기록</li>
                 </ul>
               </div>
             </div>
@@ -86,16 +83,16 @@ export function LeagueProgressPage({ onBack, isAdmin }: LeagueProgressPageProps)
           <div className="bg-[#141B3D]/50 border border-[#0047AB]/30 rounded-xl p-6">
             <h3 className="text-lg font-display text-white mb-4 flex items-center gap-2">
               <Rocket size={20} className="text-[#C8102E]" />
-              매치 엔진
+              고급 매치 엔진
             </h3>
             <div className="space-y-3">
               <div className="bg-[#0B0F1A]/50 rounded-lg p-4 border border-[#0047AB]/20">
-                <p className="text-sm text-[#8B95B5] mb-2">개발 예정:</p>
+                <p className="text-sm text-[#8B95B5] mb-2">구현 완료:</p>
                 <ul className="text-sm text-[#9AA6C3] space-y-1 list-disc list-inside">
-                  <li>실시간 경기 결과 생성</li>
-                  <li>이벤트 로그 시스템</li>
-                  <li>MVP & 주요 플레이어 분석</li>
-                  <li>경기 하이라이트</li>
+                  <li>25개 이벤트 타입 실시간 생성</li>
+                  <li>감독 플랜 & 콜 시스템 (8종)</li>
+                  <li>골드 차이 그래프 & 타임라인</li>
+                  <li>BO3/BO5 시리즈 & 플레이오프</li>
                 </ul>
               </div>
             </div>
