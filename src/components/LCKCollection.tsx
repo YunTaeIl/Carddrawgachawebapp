@@ -1,7 +1,7 @@
 // LCK 컬렉션 (인벤토리) 화면
 
 import React, { useState, useMemo } from "react";
-import { useGame } from "@/contexts/GameContext";
+import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
@@ -29,7 +29,7 @@ const CARDS_PER_PAGE = 20; // 한 페이지당 카드 수
 export function LCKCollection({ onBack }: LCKCollectionProps) {
   const { userData, upgradeCard, craftCardWithShards } = useGame();
   const [selectedCard, setSelectedCard] = useState<UserCard | null>(null);
-  const [craftedCard, setCraftedCard] = useState<UserCard | null>(null); // 🔥 제작된 카드 모달용
+  const [craftResult, setCraftResult] = useState<CraftResult | null>(null); // 🔥 제작 결과 모달용
   const [filterGrade, setFilterGrade] = useState<Grade | "all">("all");
   const [filterPosition, setFilterPosition] = useState<Position | "all">("all");
   const [filterTeam, setFilterTeam] = useState<string>("all");
@@ -102,9 +102,9 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   
   // 🔥 샤드로 카드 제작 핸들러
   const handleCraftCard = async (grade: "A" | "S") => {
-    const crafted = await craftCardWithShards(grade);
-    if (crafted) {
-      setCraftedCard(crafted); // 모달 열기
+    const result = await craftCardWithShards(grade);
+    if (result) {
+      setCraftResult(result); // 모달 열기
     }
   };
 
@@ -390,35 +390,47 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           </DialogContent>
         </Dialog>
 
-        {/* 🔥 제작된 카드 모달 */}
-        <Dialog open={craftedCard !== null} onOpenChange={() => setCraftedCard(null)}>
+        {/* 🔥 제작 결과 모달 */}
+        <Dialog open={craftResult !== null} onOpenChange={() => setCraftResult(null)}>
           <DialogContent className="max-w-2xl bg-[#12182A] text-[#EAF0FF] border-2 border-[#D4AF37]/50">
-            {craftedCard && (
+            {craftResult && (
               <>
                 <DialogHeader>
                   <DialogTitle className="text-2xl text-center text-[#D4AF37] flex items-center justify-center gap-2">
                     <Sparkles className="w-6 h-6" />
-                    {craftedCard.grade}등급 카드 제작 완료!
+                    {craftResult.isDupe ? "중복 카드 획득!" : `${craftResult.card.grade}등급 카드 제작 완료!`}
                   </DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-col items-center gap-6 py-4">
                   {/* 카드 */}
                   <div className="transform scale-110">
-                    <LCKHoloCard card={craftedCard} size="large" upgradeLevel={0} />
+                    <LCKHoloCard card={craftResult.card} size="large" upgradeLevel={0} />
                   </div>
 
                   {/* 카드 정보 */}
                   <div className="text-center space-y-2">
-                    <h3 className="text-2xl font-bold">{craftedCard.name}</h3>
+                    <h3 className="text-2xl font-bold">{craftResult.card.name}</h3>
                     <div className="text-[#9AA6C3]">
-                      {craftedCard.team} ({craftedCard.year}) - {craftedCard.position}
+                      {craftResult.card.team} ({craftResult.card.year}) - {craftResult.card.position}
                     </div>
-                    <div className="text-lg font-bold">OVR {craftedCard.stats.ovr}</div>
+                    <div className="text-lg font-bold">OVR {craftResult.card.stats.ovr}</div>
+                    
+                    {/* 중복 메시지 */}
+                    {craftResult.isDupe && (
+                      <div className="mt-4 px-4 py-3 bg-[#0047AB]/20 border border-[#0047AB]/50 rounded-lg">
+                        <div className="flex items-center justify-center gap-2 text-[#0047AB]">
+                          <Sparkles className="w-5 h-5" />
+                          <span className="font-bold">
+                            이미 보유한 카드! +{craftResult.shardsGained} 샤드 획득
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* 확인 버튼 */}
                   <Button
-                    onClick={() => setCraftedCard(null)}
+                    onClick={() => setCraftResult(null)}
                     className="w-full bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-[#0B0F1A] font-bold"
                   >
                     확인

@@ -16,6 +16,12 @@ import {
 } from "@/utils/supabaseDirect";
 import { toast } from "sonner";
 
+export interface CraftResult {
+  card: UserCard;
+  isDupe: boolean;
+  shardsGained: number;
+}
+
 interface GameContextType {
   userData: UserData;
   isLoading: boolean;
@@ -28,7 +34,7 @@ interface GameContextType {
   
   // 샤드
   upgradeCard: (cardInstanceId: string) => Promise<boolean>;
-  craftCardWithShards: (grade: "A" | "S") => Promise<UserCard | null>;
+  craftCardWithShards: (grade: "A" | "S") => Promise<CraftResult | null>;
   
   // 스쿼드
   setSquadCard: (position: Position, card: UserCard | null) => void;
@@ -396,7 +402,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   // 샤드로 카드 제작
-  const craftCardWithShards = async (grade: "A" | "S"): Promise<UserCard | null> => {
+  const craftCardWithShards = async (grade: "A" | "S"): Promise<CraftResult | null> => {
     const cost = GACHA_CONFIG.CRAFT_COSTS[grade];
     
     if (userData.shards < cost) {
@@ -406,6 +412,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const craftedCard = craftCard(grade);
     
+    // 🔥 중복 체크: 이미 보유한 카드인지 확인
+    const isDupe = userData.ownedCards.some(c => c.id === craftedCard.id);
+    const shardsGained = isDupe ? GACHA_CONFIG.DUPE_SHARDS[grade] : 0;
+    
     const newCard: UserCard = {
       ...craftedCard,
       instanceId: `${craftedCard.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -413,21 +423,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
       obtainedAt: Date.now()
     };
     
+    // 중복이면 카드 추가하지 않고, 샤드만 지급
+    const newCards = isDupe 
+      ? userData.ownedCards 
+      : [...userData.ownedCards, newCard];
+    
     const newData: UserData = {
       ...userData,
-      ownedCards: [...userData.ownedCards, newCard],
-      shards: userData.shards - cost
+      ownedCards: newCards,
+      shards: userData.shards - cost + shardsGained
     };
 
     setUserData(newData);
 
-    // DB 저장 (로그인 시)
-    if (isAuthenticated && accessToken) {
+    // DB 저장 (로그인 시) - 중복이 아닐 때만 카드 추가
+    if (isAuthenticated && accessToken && !isDupe) {
       addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
     }
 
-    toast.success(`${grade}등급 카드 제작 완료!`);
-    return newCard;
+    if (isDupe) {
+      toast.success(`중복 카드! +${shardsGained} 샤드 획득`, { 
+        icon: "✨",
+        duration: 3000 
+      });
+    } else {
+      toast.success(`${grade}등급 카드 제작 완료!`);
+    }
+    
+    return {
+      card: newCard,
+      isDupe,
+      shardsGained
+    };
   };
 
   // 스쿼드 설정
@@ -494,6 +521,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
     resetGame,
     addCurrency
   };
+
+  // 초기 로딩 중에는 children을 렌더링하지 않음 (Provider 체인 안정화)
+  if (isLoading && cardPool.length === 0) {
+    return (
+      <GameContext.Provider value={value}>
+        <div className="flex items-center justify-center min-h-screen bg-[#0B0F1A]">
+          <div className="text-center">
+            <div className="text-2xl font-display text-[#FFB81C] mb-4">
+              초기화 중...
+            </div>
+            <div className="text-[#9AA6C3]">
+              게임 데이터를 불러오고 있습니다
+            </div>
+          </div>
+        </div>
+      </GameContext.Provider>
+    );
+  }
 
   return (
     <GameContext.Provider value={value}>
