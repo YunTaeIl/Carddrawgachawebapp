@@ -488,9 +488,9 @@ function executeEvent(game: GameSimulation, eventType: GameEventType, time: numb
   const killCount = EVENT_KILL_COUNTS[eventType];
   if (killCount) {
     if (winSide === "home") {
-      game.state.homeKills += killCount;
+      game.gameState.kills.home += killCount;
     } else {
-      game.state.awayKills += killCount;
+      game.gameState.kills.away += killCount;
     }
   }
   
