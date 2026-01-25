@@ -487,6 +487,34 @@ export const SIMULATION_CONSTANTS = {
   }
 };
 
+// ========== 킬 수 증가 설정 ==========
+
+// 각 이벤트별 킬 수 증가량 (success 시)
+export const EVENT_KILL_COUNTS: Partial<Record<GameEventType, number>> = {
+  FIRST_BLOOD_GANK: 1,
+  FIRST_BLOOD_SOLO: 1,
+  FIRST_BLOOD_DIVE: 1,
+  TOWER_DIVE: 2, // 타워다이브 성공 시 1-2킬
+  BOT_SKIRMISH: 2, // 봇 교전 승리 시 1-2킬
+  MID_SKIRMISH: 2, // 미드 교전 승리 시 1-2킬
+  PICK_OFF: 1, // 픽 오프 1킬
+  TEAMFIGHT_SMALL: 3, // 소규모 한타 2-3킬
+  DRAGON_FIGHT: 2, // 드래곤 싸움 승리 시 1-2킬
+  ACE_TEAMFIGHT: 5, // 에이스 = 5킬
+  BARON_TAKE: 3, // 바론 획득 시 교전 발생
+  BARON_STEAL: 1, // 스틸 시 정글러 킬
+  BASE_SIEGE: 3, // 본진 공성 2-3킬
+  BACKDOOR_ATTEMPT: 1 // 백도어 성공 시 1킬
+};
+
+// fail 시 상대팀에게 주는 킬 (역관광)
+export const EVENT_FAIL_KILL_COUNTS: Partial<Record<GameEventType, number>> = {
+  TOWER_DIVE: 2, // 타워다이브 실패 시 역관광 2킬
+  FIRST_BLOOD_DIVE: 1, // 퍼블 다이브 실패 시 1킬
+  BARON_TAKE: 2, // 바론 실패 시 역관광 2킬
+  BACKDOOR_ATTEMPT: 1 // 백도어 실패 시 1킬
+};
+
 // ========== 이벤트 메시지 템플릿 ==========
 
 export const EVENT_MESSAGES: Record<GameEventType, {
@@ -498,106 +526,106 @@ export const EVENT_MESSAGES: Record<GameEventType, {
   },
   
   FIRST_BLOOD_GANK: {
-    success: (team) => `${team}이 정글 갱킹으로 퍼스트 블러드를 획득했습니다!`,
+    success: (team) => `${team}가 정글 갱킹으로 퍼스트 블러드를 획득했습니다!`,
     fail: (team) => `${team}의 갱킹 시도가 실패했습니다.`
   },
   
   FIRST_BLOOD_SOLO: {
-    success: (team) => `${team}이 솔로킬로 퍼스트 블러드를 따냈습니다!`
+    success: (team) => `${team}가 솔로킬로 퍼스트 블러드를 따냈습니다!`
   },
   
   FIRST_BLOOD_DIVE: {
-    success: (team) => `${team}이 과감한 타워다이브로 퍼스트 블러드!`,
+    success: (team) => `${team}가 과감한 타워다이브로 퍼스트 블러드!`,
     fail: (team) => `${team}의 타워다이브가 실패했습니다.`
   },
   
   LANE_PHASE: {
-    success: (team) => `${team}이 라인전에서 우위를 점하고 있습니다.`
+    success: (team) => `${team}가 라인전에서 우위를 점하고 있습니다.`
   },
   
   FIRST_DRAGON: {
-    success: (team) => `${team}이 첫 드래곤을 확보했습니다!`
+    success: (team) => `${team}가 첫 드래곤을 확보했습니다!`
   },
   
   HERALD_1: {
-    success: (team) => `${team}이 전령을 획득했습니다!`,
-    fail: (team) => `${team}이 전령 싸움에서 밀렸습니다.`
+    success: (team) => `${team}가 전령을 획득했습니다!`,
+    fail: (team) => `${team}가 전령 싸움에서 밀렸습니다.`
   },
   
   COUNTER_JUNGLE: {
-    success: (team) => `${team}이 적 정글을 침투해 이득을 봤습니다!`
+    success: (team) => `${team}가 적 정글을 침투해 이득을 봤습니다!`
   },
   
   TOWER_DIVE: {
-    success: (team) => `${team}이 타워다이브에 성공했습니다!`,
+    success: (team) => `${team}가 타워다이브에 성공했습니다!`,
     fail: (team) => `${team}의 타워다이브가 역관광당했습니다!`
   },
   
   BOT_SKIRMISH: {
-    success: (team) => `${team}이 봇 라인 교전에서 승리했습니다!`
+    success: (team) => `${team}가 봇 라인 교전에서 승리했습니다!`
   },
   
   MID_SKIRMISH: {
-    success: (team) => `${team}이 미드 교전에서 우위를 점했습니다!`
+    success: (team) => `${team}가 미드 교전에서 우위를 점했습니다!`
   },
   
   HERALD_2: {
-    success: (team) => `${team}이 두 번째 전령을 획득했습니다!`
+    success: (team) => `${team}가 두 번째 전령을 획득했습니다!`
   },
   
   TOWER_TAKEDOWN: {
-    success: (team) => `${team}이 타워를 파괴했습니다!`
+    success: (team) => `${team}가 타워를 파괴했습니다!`
   },
   
   DRAGON_FIGHT: {
-    success: (team) => `${team}이 드래곤 싸움에서 승리했습니다!`,
-    fail: (team) => `${team}이 드래곤을 뺏겼습니다!`
+    success: (team) => `${team}가 드래곤 싸움에서 승리했습니다!`,
+    fail: (team) => `${team}가 드래곤을 뺏겼습니다!`
   },
   
   PICK_OFF: {
-    success: (team) => `${team}이 시야 싸움에서 한 명을 끊었습니다!`
+    success: (team) => `${team}가 시야 싸움에서 한 명을 끊었습니다!`
   },
   
   TEAMFIGHT_SMALL: {
-    success: (team) => `${team}이 소규모 교전에서 승리했습니다!`
+    success: (team) => `${team}가 소규모 교전에서 승리했습니다!`
   },
   
   OBJECTIVE_TRADE: {
-    success: (team) => `${team}이 오브젝트 트레이드에서 이득을 봤습니다!`
+    success: (team) => `${team}가 오브젝트 트레이드에서 이득을 봤습니다!`
   },
   
   BARON_START: {
-    success: (team) => `${team}이 바론을 시작했습니다!`
+    success: (team) => `${team}가 바론을 시작했습니다!`
   },
   
   BARON_TAKE: {
-    success: (team) => `${team}이 바론을 획득했습니다!`,
+    success: (team) => `${team}가 바론을 획득했습니다!`,
     fail: (team) => `${team}의 바론 시도가 저지당했습니다!`
   },
   
   BARON_STEAL: {
-    success: (team) => `${team}이 바론을 스틸했습니다!!!`,
+    success: (team) => `${team}가 바론을 스틸했습니다!!!`,
     fail: (team) => `${team}의 바론 스틸 시도가 실패했습니다.`
   },
   
   ELDER_DRAGON: {
-    success: (team) => `${team}이 장로 드래곤을 획득했습니다!`
+    success: (team) => `${team}가 장로 드래곤을 획득했습니다!`
   },
   
   ACE_TEAMFIGHT: {
-    success: (team) => `${team}이 대규모 한타에서 에이스를 달성했습니다!`
+    success: (team) => `${team}가 대규모 한타에서 에이스를 달성했습니다!`
   },
   
   BASE_SIEGE: {
-    success: (team) => `${team}이 본진 공성에 성공했습니다!`
+    success: (team) => `${team}가 본진 공성에 성공했습니다!`
   },
   
   BACKDOOR_ATTEMPT: {
-    success: (team) => `${team}이 백도어에 성공했습니다!`,
+    success: (team) => `${team}가 백도어에 성공했습니다!`,
     fail: (team) => `${team}의 백도어 시도가 막혔습니다!`
   },
   
   NEXUS_END: {
-    success: (team) => `${team}이 넥서스를 파괴했습니다! 승리!`
+    success: (team) => `${team}가 넥서스를 파괴했습니다! 승리!`
   }
 };

@@ -20,6 +20,7 @@ import {
   EVENT_CONFIGS,
   SIMULATION_CONSTANTS,
   EVENT_MESSAGES,
+  EVENT_KILL_COUNTS,
   GAME_PLAN_MODIFIERS,
   COACH_CALL_CONFIGS
 } from "./config";
@@ -483,17 +484,28 @@ function executeEvent(game: GameSimulation, eventType: GameEventType, time: numb
   const [minGold, maxGold] = config.goldSwingRange;
   const goldSwing = minGold + Math.random() * (maxGold - minGold);
   
+  // 🔥 킬 수 증가
+  const killCount = EVENT_KILL_COUNTS[eventType];
+  if (killCount) {
+    if (winSide === "home") {
+      game.state.homeKills += killCount;
+    } else {
+      game.state.awayKills += killCount;
+    }
+  }
+  
   // 메시지
   const teamName = winSide === "home" 
     ? getKoreanTeamName(game.homeTeam.name)
     : getKoreanTeamName(game.awayTeam.name);
   
-  const text = EVENT_MESSAGES[eventType]?.success(teamName) || `${teamName}이 이벤트에서 승리했습니다!`;
+  const text = EVENT_MESSAGES[eventType]?.success(teamName) || `${teamName}가 이벤트에서 승리했습니다!`;
   
   // 영향 태그
   const impactTags: string[] = [];
   if (goldSwing > 1500) impactTags.push("huge_swing");
   if (goldSwing > 1000) impactTags.push("major");
+  if (killCount && killCount >= 3) impactTags.push("multi_kill");
   
   return {
     time,
