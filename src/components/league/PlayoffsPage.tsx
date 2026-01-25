@@ -37,7 +37,6 @@ export function PlayoffsPage({ onBack, onSeriesStart, onAllComplete }: PlayoffsP
       bracket.finals.isCompleted;
     
     if (allSeriesCompleted && onAllComplete) {
-      console.log("🏆 모든 플레이오프 시리즈 완료! 결과 페이지로 이동");
       // 약간의 지연 후 이동 (사용자가 결과를 볼 시간)
       setTimeout(() => {
         onAllComplete();

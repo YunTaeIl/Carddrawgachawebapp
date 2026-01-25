@@ -121,15 +121,6 @@ export function AdvancedMatchPage({
                 barons: totalBarons
               };
               
-              console.log("[MATCH] Match completed:", {
-                home: homeTeam.name,
-                away: awayTeam.name,
-                score: `${homeWins}:${awayWins}`,
-                winner: winnerId === homeTeam.id ? homeTeam.name : awayTeam.name,
-                seriesType,
-                playoffSeriesType
-              });
-              
               // 정규시즌은 completeMatch, 플레이오프는 completeSeries 사용
               if (playoffSeriesType) {
                 // 플레이오프: 시리즈 완료 처리

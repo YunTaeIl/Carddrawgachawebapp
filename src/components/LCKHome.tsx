@@ -124,8 +124,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       return;
     }
 
-    console.log("✅ 출석 체크 시작");
-
     try {
       // 1. 현재 게임 데이터 조회
       const { data: gameData, error: fetchError } = await supabase
@@ -187,8 +185,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
   };
 
   const handleShareSquad = async () => {
-    console.log('=== 스쿼드 공유 시작 ===');
-    
     // 현재 스쿼드의 카드 ID 수집
     const roster = {
       top: userData.squad.TOP?.id || null,
@@ -207,7 +203,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
     
     // 공유 URL 생성
     const url = generateShareURL(roster);
-    console.log('✅ 공유 URL 생성:', url);
     
     // 바로 클립보드에 복사
     try {
@@ -226,7 +221,6 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
         toast.success("공유 링크가 복사되었습니다!");
       } catch (err) {
         // 수동 복사도 실패하면 다이얼로그 표시
-        console.log('수동 복사 실패, 다이얼로그 표시');
         setShareURL(url);
         setShowShareDialog(true);
         return;

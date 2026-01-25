@@ -190,8 +190,6 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
       
       // 모바일 감지
       const mobile = isMobile();
-      console.log('모바일 여부:', mobile);
-      console.log('navigator.share 존재:', !!navigator.share);
       
       // 모바일에서 네이티브 공유 시도
       if (mobile && navigator.share) {
@@ -200,7 +198,6 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
           
           // canShare 체크
           const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
-          console.log('파일 공유 가능:', canShareFiles);
           
           if (canShareFiles) {
             await navigator.share({

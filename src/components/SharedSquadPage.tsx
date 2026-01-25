@@ -35,11 +35,8 @@ export function SharedSquadPage() {
           return;
         }
 
-        console.log('🔓 암호화된 스쿼드 데이터 복호화 시작...');
-
         // 복호화
         const roster: SquadRoster = decryptSquadRoster(encryptedRoster);
-        console.log('✅ 복호화 성공:', roster);
 
         // 카드 데이터 로드
         const loadedSquad: SharedSquadData = {
@@ -68,7 +65,6 @@ export function SharedSquadPage() {
           }
         }
 
-        console.log('✅ 스쿼드 로드 완료:', loadedSquad);
         setSquad(loadedSquad);
         setLoading(false);
 

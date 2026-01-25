@@ -32,28 +32,6 @@ export function generateSchedule(playerTeamId: string, aiTeamIds: string[]): Mat
     });
   }
   
-  console.log(`[SCHEDULE] Generated ${matches.length} matches in ${totalRounds} rounds`);
-  console.log(`[SCHEDULE] Teams: ${teamCount}, Matches per round: ${teamCount / 2}`);
-  
-  // 각 팀의 경기 수 확인
-  const teamMatchCount: Record<string, number> = {};
-  allTeamIds.forEach(teamId => {
-    teamMatchCount[teamId] = matches.filter(m => 
-      m.homeTeamId === teamId || m.awayTeamId === teamId
-    ).length;
-  });
-  
-  console.log('[SCHEDULE] Matches per team:', teamMatchCount);
-  console.log('[SCHEDULE] Expected matches per team:', (teamCount - 1) * 2);
-  
-  // 라운드별 경기 수 확인
-  for (let r = 1; r <= totalRounds; r++) {
-    const roundMatchCount = matches.filter(m => m.round === r).length;
-    if (roundMatchCount !== teamCount / 2) {
-      console.error(`[SCHEDULE] Round ${r} has ${roundMatchCount} matches (expected ${teamCount / 2})`);
-    }
-  }
-  
   return matches;
 }
 
@@ -283,15 +261,6 @@ export function simulateRemainingMatches(
 ): Match[] {
   const updatedMatches = [...matches];
   
-  // 현재 라운드의 모든 경기 확인
-  const allRoundMatches = updatedMatches.filter(m => m.round === currentRound);
-  console.log(`[SIM] Round ${currentRound} total matches:`, allRoundMatches.length);
-  console.log(`[SIM] Round ${currentRound} matches:`, allRoundMatches.map(m => ({
-    home: m.homeTeamId,
-    away: m.awayTeamId,
-    completed: m.isCompleted
-  })));
-  
   // 현재 라운드의 다른 경기들만 시뮬레이션 (플레이어 경기 제외)
   const currentRoundMatches = updatedMatches.filter(
     m => m.round === currentRound && 
@@ -299,8 +268,6 @@ export function simulateRemainingMatches(
     m.homeTeamId !== playerTeamId && 
     m.awayTeamId !== playerTeamId
   );
-  
-  console.log(`[SIM] AI matches to simulate:`, currentRoundMatches.length);
   
   for (const match of currentRoundMatches) {
     const homeTeam = teams.find(t => t.id === match.homeTeamId);

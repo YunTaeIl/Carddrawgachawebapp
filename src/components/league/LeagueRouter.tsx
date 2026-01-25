@@ -40,7 +40,6 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
   // 🔥 시즌이 종료되면 자동으로 결과 페이지로 이동
   React.useEffect(() => {
     if (currentLeague?.seasonState === "finished" && currentRoute !== "result") {
-      console.log("🏆 시즌 종료 감지! 결과 페이지로 자동 이동");
       setTimeout(() => {
         setCurrentRoute("result");
       }, 500);
@@ -112,7 +111,6 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     
     // 플레이어가 참여하지 않는 경기는 자동 시뮬레이션
     if (!isPlayerInSeries && series.team1Id && series.team2Id) {
-      console.log(`[PLAYOFF] Auto-simulating series: ${seriesType}`);
       autoSimulateSeries(seriesType);
       return;
     }
@@ -155,8 +153,6 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     
     const winnerId = team1Wins >= winThreshold ? series.team1Id : series.team2Id;
     
-    console.log(`[PLAYOFF] Auto-sim result: ${team1.name} ${team1Wins} - ${team2Wins} ${team2.name}`);
-    
     // 시리즈 완료 처리 (스코어 포함)
     completeSeries(seriesType, winnerId!, team1Wins, team2Wins);
     
@@ -181,11 +177,8 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       team2Wins++;
     }
 
-    console.log(`[SERIES] ${currentSeriesType} 경기 완료: ${team1Wins}-${team2Wins} (필요 승수: ${winThreshold})`);
-
     // 시리즈 승자 결정
     if (team1Wins >= winThreshold) {
-      console.log(`[SERIES] Team1 승리! ${currentSeriesType} 시리즈 완료`);
       completeSeries(currentSeriesType, series.team1Id!, team1Wins, team2Wins);
       
       const isPlayerTeam1 = series.team1Id === currentLeague.playerTeamId;
@@ -193,18 +186,11 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       
       // 결승 완료
       if (currentSeriesType === "finals") {
-        console.log(`[FINALS] 결승 완료! Team1 승리 - 플레이어Team1: ${isPlayerTeam1}, 플레이어Team2: ${isPlayerTeam2}`);
         if (isPlayerTeam1) {
-          // 플레이어 우승
-          console.log("🏆 플레이어 우승!");
           finishSeason(true, "champion");
         } else if (isPlayerTeam2) {
-          // 플레이어 준우승
-          console.log("🥈 플레이어 준우승");
           finishSeason(false, "runner-up");
         } else {
-          // 플레이어 불참 - 시즌 종료
-          console.log("😔 플레이어 결승 불참");
           finishSeason(false, "eliminated");
         }
         setCurrentRoute("result");
@@ -213,17 +199,14 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       
       // 플레이어가 졌으면 탈락
       if (isPlayerTeam2) {
-        console.log(`😢 플레이어 ${currentSeriesType}에서 탈락`);
-        finishSeason(false, currentSeriesType); // 탈락한 라운드 기록
+        finishSeason(false, currentSeriesType);
         setCurrentRoute("result");
         return;
       }
       
       // 플레이어가 이겼거나 불참 - 플레이오프 계속
-      console.log(`✅ ${currentSeriesType} 완료 - 플레이오프 페이지로 이동`);
       setCurrentRoute("playoffs");
     } else if (team2Wins >= winThreshold) {
-      console.log(`[SERIES] Team2 승리! ${currentSeriesType} 시리즈 완료`);
       completeSeries(currentSeriesType, series.team2Id!, team1Wins, team2Wins);
       
       const isPlayerTeam1 = series.team1Id === currentLeague.playerTeamId;
@@ -231,18 +214,11 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       
       // 결승 완료
       if (currentSeriesType === "finals") {
-        console.log(`[FINALS] 결승 완료! Team2 승리 - 플레이어Team1: ${isPlayerTeam1}, 플레이어Team2: ${isPlayerTeam2}`);
         if (isPlayerTeam2) {
-          // 플레이어 우승
-          console.log("🏆 플레이어 우승!");
           finishSeason(true, "champion");
         } else if (isPlayerTeam1) {
-          // 플레이어 준우승
-          console.log("🥈 플레이어 준우승");
           finishSeason(false, "runner-up");
         } else {
-          // 플레이어 불참 - 시즌 종료
-          console.log("😔 플레이어 결승 불참");
           finishSeason(false, "eliminated");
         }
         setCurrentRoute("result");
@@ -251,14 +227,12 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
       
       // 플레이어가 졌으면 탈락
       if (isPlayerTeam1) {
-        console.log(`😢 플레이어 ${currentSeriesType}에서 탈락`);
-        finishSeason(false, currentSeriesType); // 탈락한 라운드 기록
+        finishSeason(false, currentSeriesType);
         setCurrentRoute("result");
         return;
       }
       
       // 플레이어가 이겼거나 불참 - 플레이오프 계속
-      console.log(`✅ ${currentSeriesType} 완료 - 플레이오프 페이지로 이동`);
       setCurrentRoute("playoffs");
     } else {
       // 시리즈 계속

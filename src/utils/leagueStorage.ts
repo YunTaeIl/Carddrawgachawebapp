@@ -9,8 +9,6 @@ const SERVER_URL = `https://${projectId}.supabase.co/functions/v1/make-server-ff
  * 리그 데이터 저장
  */
 export async function saveLeagueToDb(userId: string, league: LeagueInstance): Promise<void> {
-  console.log("🔵 리그 저장 시작:", { userId, leagueId: league.id, url: `${SERVER_URL}/league/save` });
-  
   try {
     const response = await fetch(`${SERVER_URL}/league/save`, {
       method: "POST",
@@ -24,16 +22,13 @@ export async function saveLeagueToDb(userId: string, league: LeagueInstance): Pr
       }),
     });
 
-    console.log("🔵 응답 상태:", response.status, response.statusText);
-
     if (!response.ok) {
       const error = await response.text();
       console.error("❌ 서버 응답 에러:", error);
       throw new Error(`리그 저장 실패: ${error}`);
     }
 
-    const result = await response.json();
-    console.log("✅ 리그 DB 저장 성공:", result);
+    await response.json();
   } catch (error) {
     console.error("❌ 리그 DB 저장 오류:", error);
     throw error;
@@ -54,7 +49,6 @@ export async function loadLeagueFromDb(userId: string): Promise<LeagueInstance |
 
     if (!response.ok) {
       if (response.status === 404) {
-        console.log("ℹ️ 저장된 리그 없음");
         return null;
       }
       const error = await response.text();
@@ -62,7 +56,6 @@ export async function loadLeagueFromDb(userId: string): Promise<LeagueInstance |
     }
 
     const data = await response.json();
-    console.log("✅ 리그 DB 로드 성공:", data.league?.id);
     return data.league;
   } catch (error) {
     console.error("❌ 리그 DB 로드 오류:", error);
@@ -88,8 +81,6 @@ export async function deleteLeagueFromDb(userId: string): Promise<void> {
       const error = await response.text();
       throw new Error(`리그 삭제 실패: ${error}`);
     }
-
-    console.log("✅ 리그 DB 삭제 성공");
   } catch (error) {
     console.error("❌ 리그 DB 삭제 오류:", error);
     throw error;

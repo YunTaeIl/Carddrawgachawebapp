@@ -176,8 +176,7 @@ export function generateAITeams(
     });
   }
   
-  // 8) 생성 결과 검증 및 통계 출력
-  console.log(`[AI 로스터] ${leagueType.toUpperCase()} 등급 분포:`, gradePickStats);
+  // 8) 생성 결과 검증
   validateRosterGeneration(aiTeams, usedPlayerNames, leagueType);
   
   return aiTeams;
@@ -210,11 +209,6 @@ function buildCandidatePool(
   const pool = allCards.filter(card => 
     allTargetGrades.has(card.grade as Grade) &&
     (config.minOvr ? card.stats.ovr >= config.minOvr : true)
-  );
-  
-  console.log(
-    `[AI 로스터] ${leagueType.toUpperCase()} 후보 풀: ${pool.length}장 ` +
-    `(등급: ${Array.from(allTargetGrades).join(", ")})`
   );
   
   return pool;
@@ -446,12 +440,6 @@ function validateRosterGeneration(
       console.warn(`[검증] ${team.name} 포지션 부족: ${positions.length}/5`);
     }
   }
-  
-  console.log(
-    `[AI 로스터 생성 완료] ${leagueType.toUpperCase()} - ` +
-    `9팀, ${usedPlayerNames.size}명 사용, ` +
-    `중복 ${duplicateCount}건, 불완전 팀 ${incompleteTeams}개`
-  );
 }
 
 // ============================================================

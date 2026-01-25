@@ -35,17 +35,14 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadLeague = async () => {
       if (!user?.id) {
-        console.log("⏭️ [LOAD] user.id 없음 - 비로그인 상태");
         setIsLoading(false);
         return;
       }
 
       try {
-        console.log("🔵 [LOAD] DB에서 리그 불러오기 시작:", user.id);
         // 먼저 DB에서 시도
         const dbLeague = await loadLeagueFromDb(user.id);
         if (dbLeague) {
-          console.log("✅ DB에서 리그 로드 성공");
           setCurrentLeague(dbLeague);
           // localStorage에도 백업
           localStorage.setItem(STORAGE_KEY, JSON.stringify(dbLeague));
@@ -54,7 +51,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
           const stored = localStorage.getItem(STORAGE_KEY);
           if (stored) {
             const league = JSON.parse(stored) as LeagueInstance;
-            console.log("📦 localStorage에서 리그 로드 (DB로 마이그레이션)");
             setCurrentLeague(league);
             // DB에 저장
             await saveLeagueToDb(user.id, league);
@@ -82,37 +78,16 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
 
   // 리그 상태 변경 시 DB & localStorage 동시 저장
   useEffect(() => {
-    console.log("🔍 [SAVE useEffect] 실행됨:", {
-      hasLeague: !!currentLeague,
-      leagueId: currentLeague?.id,
-      userId: user?.id,
-      isLoading
-    });
-    
     const saveLeague = async () => {
-      if (!currentLeague) {
-        console.log("⏭️ [SAVE] currentLeague 없음 - 스킵");
-        return;
-      }
-      
-      if (!user?.id) {
-        console.log("⏭️ [SAVE] user.id 없음 - 스킵");
-        return;
-      }
-      
-      // 초기 로딩 중에는 저장하지 않음 (무한루프 방지)
-      if (isLoading) {
-        console.log("⏭️ [SAVE] 로딩 중 - 스킵");
-        return;
-      }
+      if (!currentLeague) return;
+      if (!user?.id) return;
+      if (isLoading) return;
 
       try {
-        console.log("💾 리그 저장 시작...");
         // DB 저장 (비동기)
         await saveLeagueToDb(user.id, currentLeague);
         // localStorage 백업 (동기)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLeague));
-        console.log("✅ 리그 저장 완료 (DB + localStorage)");
       } catch (error) {
         console.error("❌ 리그 저장 오류:", error);
         // DB 저장 실패 시 최소한 localStorage에는 저장
@@ -127,8 +102,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
    * 새 리그 시작
    */
   const startNewLeague = (leagueType: LeagueType) => {
-    console.log("=== 새 리그 시작 ===", leagueType);
-    
     // 플레이어 팀 생성
     const playerTeam = createPlayerTeam(userData.squad);
     
@@ -159,7 +132,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     };
     
     setCurrentLeague(newLeague);
-    console.log("✅ 리그 생성 완료:", newLeague);
   };
 
   /**
@@ -185,11 +157,8 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   const completeMatch = (result: MatchResult) => {
     if (!currentLeague) return;
     
-    console.log("=== 경기 완료 ===", result);
-    
     // 플레이오프 경기는 completeSeries로 처리
     if (currentLeague.seasonState === "playoffs") {
-      console.log("[LEAGUE] 플레이오프 경기는 completeSeries로 처리합니다.");
       return;
     }
     
@@ -213,7 +182,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     
     // 같은 라운드의 다른 AI 경기들도 자동 시뮬레이션
     const currentRound = completedMatch.round;
-    console.log("[LEAGUE] Current round:", currentRound);
     
     const simulatedMatches = simulateRemainingMatches(
       currentRound,
@@ -228,7 +196,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       m.homeTeamId !== currentLeague.playerTeamId && 
       m.awayTeamId !== currentLeague.playerTeamId
     );
-    console.log("[LEAGUE] AI matches simulated:", aiMatchesCompleted.length);
     
     // 승리 포인트 지급
     let newPoints = currentLeague.currentPoints;
@@ -249,10 +216,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     let newSeasonState = currentLeague.seasonState;
     if (allPlayerMatchesCompleted && currentLeague.seasonState === "regular") {
       // 플레이어의 모든 경기 완료
-      const playerRank = newStandings.findIndex(s => s.isPlayer) + 1;
-      console.log("✅ 정규시즌 종료!");
-      console.log(`📊 최종 순위: ${playerRank}위`);
-      console.log(`🎯 플레이오프 진출: ${playerRank <= 5 ? "성공" : "실패"}`);
     }
     
     const updatedLeague = {
@@ -263,19 +226,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       seasonState: newSeasonState,
       updatedAt: new Date().toISOString()
     };
-    
-    console.log("[LEAGUE] League updated:", {
-      completedMatches: simulatedMatches.filter(m => m.isCompleted).length,
-      totalMatches: simulatedMatches.length,
-      playerMatchesCompleted: playerMatches.filter(m => m.isCompleted).length,
-      totalPlayerMatches: playerMatches.length,
-      standings: newStandings.map(s => ({ 
-        name: s.teamName, 
-        wins: s.wins, 
-        losses: s.losses,
-        isPlayer: s.isPlayer 
-      }))
-    });
     
     setCurrentLeague(updatedLeague);
   };
@@ -294,8 +244,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   const advanceToPlayoffs = () => {
     if (!currentLeague || currentLeague.seasonState !== "regular") return;
     
-    console.log("=== 플레이오프 진출 ===");
-    
     // 순위 1~5위 팀 가져오기
     const top5 = currentLeague.standings.slice(0, 5);
     
@@ -307,7 +255,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     // 플레이어가 5위 안에 있는지 확인
     const playerStanding = top5.find(s => s.isPlayer);
     if (!playerStanding) {
-      console.log("플레이어 탈락 (6위 이하)");
       // 탈락 처리는 UI에서 수행
       return;
     }
@@ -378,8 +325,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   const completeSeries = (seriesType: Series["type"], winnerId: string, team1Wins?: number, team2Wins?: number) => {
     if (!currentLeague || !currentLeague.playoffBracket) return;
     
-    console.log("=== 시리즈 완료 ===", seriesType, winnerId, `${team1Wins}-${team2Wins}`);
-    
     const bracket = { ...currentLeague.playoffBracket };
     
     // 해당 시리즈 완료 처리
@@ -396,19 +341,15 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     if (winnerId === currentLeague.playerTeamId) {
       const config = LEAGUE_CONFIGS[currentLeague.leagueType];
       newPoints += config.winPoints;
-      console.log(`✅ 플레이어 승리! +${config.winPoints} 포인트`);
     }
     
     // 다음 라운드에 승자 진출
     if (seriesType === "wildcard") {
       bracket.semifinals.team2Id = winnerId;
-      console.log("📌 와일드카드 승자가 준플레이오프로 진출");
     } else if (seriesType === "semifinals") {
       bracket.playoffs.team2Id = winnerId;
-      console.log("📌 준플레이오프 승자가 플레이오프로 진출");
     } else if (seriesType === "playoffs") {
       bracket.finals.team2Id = winnerId;
-      console.log("📌 플레이오프 승자가 결승으로 진출");
     }
     
     setCurrentLeague({
@@ -425,23 +366,18 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   const finishSeason = (isChampion: boolean, playoffResult?: "champion" | "runner-up" | "playoffs" | "semifinals" | "wildcard" | "eliminated") => {
     if (!currentLeague) return;
     
-    console.log("=== 시즌 종료 ===", isChampion, playoffResult);
-    console.log("📊 현재 누적 포인트:", currentLeague.currentPoints);
-    
     let additionalPoints = 0;
     
     // 우승 시 보너스 지급
     if (isChampion) {
       const config = LEAGUE_CONFIGS[currentLeague.leagueType];
       additionalPoints = config.championBonus;
-      console.log(`🏆 우승 보너스: +${config.championBonus} RP`);
     }
     
     const finalPoints = currentLeague.currentPoints + additionalPoints;
     
     // 🔥 실제로 포인트 지급! (누적 포인트 전부)
     if (finalPoints > 0) {
-      console.log(`💰 총 ${finalPoints} RP를 지급합니다!`);
       addCurrency(finalPoints);
     }
     
@@ -453,8 +389,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       playoffResult: playoffResult || (isChampion ? "champion" : "eliminated"),
       updatedAt: new Date().toISOString()
     });
-    
-    console.log("✅ 시즌 종료 완료! 최종 포인트:", finalPoints);
   };
 
   /**
