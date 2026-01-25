@@ -414,7 +414,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     // 🔥 중복 체크: 이미 보유한 카드인지 확인
     const isDupe = userData.ownedCards.some(c => c.id === craftedCard.id);
-    const shardsGained = isDupe ? GACHA_CONFIG.DUPE_SHARDS[grade] : 0;
+    const shardsGained = isDupe ? GACHA_CONFIG.SHARD_VALUES[grade] : 0;
     
     const newCard: UserCard = {
       ...craftedCard,
