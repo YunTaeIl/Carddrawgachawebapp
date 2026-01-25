@@ -251,8 +251,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               {paginatedCards.map((card) => (
                 <div
                   key={card.instanceId}
-                  onClick={() => setSelectedCard(card)}
-                  className="cursor-pointer hover:scale-105 transition-transform flex justify-center"
+                  // onClick={() => setSelectedCard(card)} // 🔥 임시 비활성화
+                  className="hover:scale-105 transition-transform flex justify-center"
                 >
                   <LCKHoloCard card={card} size="medium" upgradeLevel={card.upgradeLevel} />
                 </div>
