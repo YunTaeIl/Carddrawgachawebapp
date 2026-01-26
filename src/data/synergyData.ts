@@ -1345,9 +1345,26 @@ export const SYNERGIES: SynergyDefinition[] = [
     team_rule: "OPTIONAL",
     team_values: "",
     min_count: "",
-    players: "CuVee|Ambition|Crown|Ruler|CoreJJ",
+    players: "CuVee|Ambition|Crown|Ruler|CoreJG",
     positions: "TOP|JGL|MID|ADC|SUP",
     effect_text: "5인: OVR+10 / Mec+7 / Lan+6 / TF+9 / Mac+8 / Clu+10",
     description: "2017 롤드컵 우승 로스터 (CuVee, Ambition, Crown, Ruler, CoreJJ)"
+  }),
+
+  // 2022 항저우 아시안게임 금메달 - ROSTER 시너지 (6명 중 3/4/5명)
+  parseCsvRow({
+    synergy_id: "ASIAN_GAMES_2022",
+    synergy_name: "2022 아시안게임 금메달",
+    type: "ROSTER",
+    priority: "138",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "",
+    players: "Zeus|제우스|Chovy|쵸비|Ruler|룰러|Faker|페이커|Keria|케리아|Kanavi|카나비",
+    positions: "",
+    effect_text: "3인: OVR+0 / Mec+2 / Lan+2 / TF+3 / Mac+2 / Clu+3 | 4인: OVR+0 / Mec+4 / Lan+3 / TF+5 / Mac+4 / Clu+5 | 5인: OVR+8 / Mec+6 / Lan+5 / TF+8 / Mac+6 / Clu+8",
+    description: "2022 항저우 아시안게임 금메달 국가대표 6명 중 3명 이상 (Zeus, Chovy, Ruler, Faker, Keria, Kanavi)"
   })
 ];
