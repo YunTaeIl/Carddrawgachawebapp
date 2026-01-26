@@ -237,7 +237,7 @@ export const SYNERGIES: SynergyDefinition[] = [
   
   parseCsvRow({
     synergy_id: "WORLDS_CHAMP_2022_DRX",
-    synergy_name: "소년만화, 중요한건 꺾이지 않는 마음(2022 DRX)",
+    synergy_name: "2022 DRX 롤드컵 우승",
     type: "THEME",
     priority: "120",
     year_rule: "EXACT",
@@ -1266,37 +1266,54 @@ export const SYNERGIES: SynergyDefinition[] = [
     description: "연도만 동일한 카드 5장"
   }),
   
-  // 반지원정대 (2019-2021 Gen.G) - synergyCalculator.ts에서 구현됨
+  // 반지원정대 (2019-2021 Gen.G) - ROSTER 시너지
   parseCsvRow({
     synergy_id: "GENG_RING_EXPEDITION_2019_2021",
     synergy_name: "반지원정대",
-    type: "THEME",
-    priority: "108",
+    type: "ROSTER",
+    priority: "130",
     year_rule: "OPTIONAL",
     year_value: "",
-    team_rule: "EXACT_TEAM",
-    team_values: "Gen.G",
-    min_count: "3",
-    players: "",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "",
+    players: "Rascal|Clid|Bdd|Ruler|Life",
     positions: "",
-    effect_text: "3인: OVR+0 / Mec+0 / Lan+0 / TF+0 / Mac+5 / Clu+4",
-    description: "2019-2021 Gen.G 로스터 카드 3장 이상 (반지원정대)"
+    effect_text: "3인: OVR+0 / Mec+0 / Lan+0 / TF+0 / Mac+5 / Clu+4 | 4인: OVR+0 / Mec+0 / Lan+0 / TF+0 / Mac+7 / Clu+6 | 5인: OVR+8 / Mec+6 / Lan+5 / TF+8 / Mac+10 / Clu+10",
+    description: "2019-2021 Gen.G 반지원정대 로스터 (Rascal, Clid, Bdd, Ruler, Life)"
   }),
   
-  // KT 슈퍼팀 (2017-2018 KT) - synergyCalculator.ts에서 구현됨
+  // KT 슈퍼팀 (2017-2018 KT) - ROSTER 시너지
   parseCsvRow({
     synergy_id: "KT_SUPER_TEAM_2017_2018",
     synergy_name: "KT 슈퍼팀",
-    type: "THEME",
-    priority: "108",
+    type: "ROSTER",
+    priority: "130",
     year_rule: "OPTIONAL",
     year_value: "",
-    team_rule: "EXACT_TEAM",
-    team_values: "KT Rolster|KT",
-    min_count: "3",
-    players: "",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "",
+    players: "Smeb|Score|PawN|Deft|Mata",
     positions: "",
-    effect_text: "3인: OVR+0 / Mec+4 / Lan+5 / TF+4 / Mac+4 / Clu+4",
-    description: "2017-2018 KT 로스터 카드 3장 이상 (KT 슈퍼팀)"
+    effect_text: "3인: OVR+0 / Mec+4 / Lan+5 / TF+4 / Mac+4 / Clu+4 | 4인: OVR+0 / Mec+6 / Lan+7 / TF+6 / Mac+6 / Clu+6 | 5인: OVR+10 / Mec+8 / Lan+10 / TF+8 / Mac+8 / Clu+8",
+    description: "2017-2018 KT 슈퍼팀 로스터 (Smeb, Score, PawN, Deft, Mata)"
+  }),
+  
+  // 소년만화 (2022 DRX) - ROSTER 시너지
+  parseCsvRow({
+    synergy_id: "DRX_2022_BOYHOOD",
+    synergy_name: "소년만화, 중요한건 꺾이지 않는 마음",
+    type: "ROSTER",
+    priority: "130",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "",
+    players: "Kingen|Pyosik|Zeka|Deft|BeryL",
+    positions: "",
+    effect_text: "3인: OVR+0 / Mec+0 / Lan+0 / TF+6 / Mac+0 / Clu+6 | 4인: OVR+0 / Mec+0 / Lan+0 / TF+8 / Mac+0 / Clu+8 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
+    description: "2022 DRX 롤드컵 우승 로스터 (Kingen, Pyosik, Zeka, Deft, BeryL)"
   })
 ];
