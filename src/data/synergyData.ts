@@ -237,7 +237,7 @@ export const SYNERGIES: SynergyDefinition[] = [
   
   parseCsvRow({
     synergy_id: "WORLDS_CHAMP_2022_DRX",
-    synergy_name: "월즈 우승 로스터(2022 DRX)",
+    synergy_name: "소년만화, 중요한건 꺾이지 않는 마음(2022 DRX)",
     type: "THEME",
     priority: "120",
     year_rule: "EXACT",
@@ -1264,5 +1264,39 @@ export const SYNERGIES: SynergyDefinition[] = [
     positions: "",
     effect_text: "5인: OVR+5 / Mec+4 / Lan+4 / TF+5 / Mac+6 / Clu+4",
     description: "연도만 동일한 카드 5장"
+  }),
+  
+  // 반지원정대 (2019-2021 Gen.G) - synergyCalculator.ts에서 구현됨
+  parseCsvRow({
+    synergy_id: "GENG_RING_EXPEDITION_2019_2021",
+    synergy_name: "반지원정대",
+    type: "THEME",
+    priority: "108",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "EXACT_TEAM",
+    team_values: "Gen.G",
+    min_count: "3",
+    players: "",
+    positions: "",
+    effect_text: "3인: OVR+0 / Mec+0 / Lan+0 / TF+0 / Mac+5 / Clu+4",
+    description: "2019-2021 Gen.G 로스터 카드 3장 이상 (반지원정대)"
+  }),
+  
+  // KT 슈퍼팀 (2017-2018 KT) - synergyCalculator.ts에서 구현됨
+  parseCsvRow({
+    synergy_id: "KT_SUPER_TEAM_2017_2018",
+    synergy_name: "KT 슈퍼팀",
+    type: "THEME",
+    priority: "108",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "EXACT_TEAM",
+    team_values: "KT Rolster|KT",
+    min_count: "3",
+    players: "",
+    positions: "",
+    effect_text: "3인: OVR+0 / Mec+4 / Lan+5 / TF+4 / Mac+4 / Clu+4",
+    description: "2017-2018 KT 로스터 카드 3장 이상 (KT 슈퍼팀)"
   })
 ];
