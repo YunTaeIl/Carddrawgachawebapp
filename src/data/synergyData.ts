@@ -448,7 +448,7 @@ export const SYNERGIES: SynergyDefinition[] = [
   
   parseCsvRow({
     synergy_id: "LCK_CHAMP_2014_Summer_KTRolsterArrows",
-    synergy_name: "LCK 우승 로스터(2014 Summer KT Rolster Arrows)",
+    synergy_name: "LCK 우승 로���터(2014 Summer KT Rolster Arrows)",
     type: "THEME",
     priority: "105",
     year_rule: "EXACT",
@@ -1366,5 +1366,22 @@ export const SYNERGIES: SynergyDefinition[] = [
     positions: "",
     effect_text: "3인: OVR+0 / Mec+2 / Lan+2 / TF+3 / Mac+2 / Clu+3 | 4인: OVR+0 / Mec+4 / Lan+3 / TF+5 / Mac+4 / Clu+5 | 5인: OVR+8 / Mec+6 / Lan+5 / TF+8 / Mac+6 / Clu+8",
     description: "2022 항저우 아시안게임 금메달 국가대표 6명 중 3명 이상 (Zeus, Chovy, Ruler, Faker, Keria, Kanavi)"
+  }),
+
+  // 슈퍼 루키 - ROSTER 시너지 (특정 년도 지정, 6명 중 3/4/5명)
+  parseCsvRow({
+    synergy_id: "SUPER_ROOKIE",
+    synergy_name: "슈퍼 루키",
+    type: "ROSTER",
+    priority: "136",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "",
+    players: "Faker_2013|페이커_2013|Chovy_2018|쵸비_2018|Calix_2025|칼릭스_2025|Keria_2020|케리아_2020|Peyz_2023|페이즈_2023|Diable_2025|디아블_2025",
+    positions: "",
+    effect_text: "3인: OVR+0 / Mec+4 / Lan+4 / TF+0 / Mac+3 / Clu+2 | 4인: OVR+0 / Mec+6 / Lan+5 / TF+0 / Mac+5 / Clu+4 | 5인: OVR+10 / Mec+8 / Lan+7 / TF+0 / Mac+7 / Clu+6",
+    description: "역대 슈퍼 루키들의 데뷔 시즌 (2013 Faker, 2018 Chovy, 2020 Keria, 2023 Peyz/도련님, 2025 Calix/신세대 미드, 2025 Diable/신세대 원딜)"
   })
 ];
