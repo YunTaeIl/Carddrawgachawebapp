@@ -1317,7 +1317,7 @@ export const SYNERGIES: SynergyDefinition[] = [
     description: "2022 DRX 롤드컵 우승 로스터 (Kingen, Pyosik, Zeka, Deft, BeryL)"
   }),
   
-  // 씨맥의 아이들 - ROSTER 시너지 (연도 무관)
+  // 씨맥의 아이들 - ROSTER 시너지 (연도 무관, 7명 중 3/4/5명)
   parseCsvRow({
     synergy_id: "CVMAX_CHILDREN",
     synergy_name: "씨맥의 아이들",
@@ -1328,10 +1328,10 @@ export const SYNERGIES: SynergyDefinition[] = [
     team_rule: "OPTIONAL",
     team_values: "",
     min_count: "",
-    players: "Chovy|Tarzan|Viper|Lehends|Doran",
+    players: "Chovy|Tarzan|Viper|Lehends|Doran|Pyosik|Keria",
     positions: "",
     effect_text: "3인: OVR+0 / Mec+3 / Lan+3 / TF+0 / Mac+3 / Clu+0 | 4인: OVR+0 / Mec+4 / Lan+4 / TF+0 / Mac+4 / Clu+0 | 5인: OVR+8 / Mec+6 / Lan+6 / TF+6 / Mac+6 / Clu+6",
-    description: "씨맥의 제자들 (Chovy, Tarzan, Viper, Lehends, Doran)"
+    description: "씨맥의 제자들 7명 중 3명 이상 (Chovy, Tarzan, Viper, Lehends, Doran, Pyosik, Keria)"
   }),
   
   // RISE (2017 Gen.G 롤드컵 우승) - ROSTER 시너지
