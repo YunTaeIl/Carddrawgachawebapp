@@ -92,7 +92,7 @@ export const SYNERGIES: SynergyDefinition[] = [
   
   parseCsvRow({
     synergy_id: "ROSTER_SKT_2015",
-    synergy_name: "마벵페뱅울",
+    synergy_name: "무적함대(마벵페뱅울)",
     type: "ROSTER",
     priority: "140",
     year_rule: "EXACT",
@@ -103,7 +103,7 @@ export const SYNERGIES: SynergyDefinition[] = [
     players: "MaRin|Bengi|Faker|Bang|Wolf",
     positions: "TOP|JGL|MID|ADC|SUP",
     effect_text: "5인: OVR+10 / Mec+8 / Lan+8 / TF+10 / Mac+10 / Clu+10",
-    description: "2015 SKT 완전체"
+    description: "2015 SKT 완전체 (MaRin, Bengi, Faker, Bang, Wolf)"
   }),
   
   parseCsvRow({
@@ -1315,5 +1315,39 @@ export const SYNERGIES: SynergyDefinition[] = [
     positions: "",
     effect_text: "3인: OVR+0 / Mec+0 / Lan+0 / TF+6 / Mac+0 / Clu+6 | 4인: OVR+0 / Mec+0 / Lan+0 / TF+8 / Mac+0 / Clu+8 | 5인: OVR+10 / Mec+6 / Lan+5 / TF+12 / Mac+8 / Clu+12",
     description: "2022 DRX 롤드컵 우승 로스터 (Kingen, Pyosik, Zeka, Deft, BeryL)"
+  }),
+  
+  // 씨맥의 아이들 - ROSTER 시너지 (연도 무관)
+  parseCsvRow({
+    synergy_id: "CVMAX_CHILDREN",
+    synergy_name: "씨맥의 아이들",
+    type: "ROSTER",
+    priority: "135",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "",
+    players: "Chovy|Tarzan|Viper|Lehends|Doran",
+    positions: "",
+    effect_text: "3인: OVR+0 / Mec+3 / Lan+3 / TF+0 / Mac+3 / Clu+0 | 4인: OVR+0 / Mec+4 / Lan+4 / TF+0 / Mac+4 / Clu+0 | 5인: OVR+8 / Mec+6 / Lan+6 / TF+6 / Mac+6 / Clu+6",
+    description: "씨맥의 제자들 (Chovy, Tarzan, Viper, Lehends, Doran)"
+  }),
+  
+  // RISE (2017 Gen.G 롤드컵 우승) - ROSTER 시너지
+  parseCsvRow({
+    synergy_id: "RISE_SSG_2017",
+    synergy_name: "RISE",
+    type: "ROSTER",
+    priority: "140",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "",
+    players: "CuVee|Ambition|Crown|Ruler|CoreJJ",
+    positions: "TOP|JGL|MID|ADC|SUP",
+    effect_text: "5인: OVR+10 / Mec+7 / Lan+6 / TF+9 / Mac+8 / Clu+10",
+    description: "2017 롤드컵 우승 로스터 (CuVee, Ambition, Crown, Ruler, CoreJJ)"
   })
 ];
