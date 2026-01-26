@@ -3,6 +3,7 @@ import { UserCard, LCKCard } from "@/types/lck";
 import { Book, Lock } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { SYNERGIES } from "@/data/synergyData";
+import { getPlayerImageUrl } from "@/utils/imageUrls";
 
 interface CardCollectionProps {
   ownedCards: UserCard[];
@@ -11,9 +12,12 @@ interface CardCollectionProps {
 
 type YearTab = "all" | number;
 
+type SortBy = "default" | "team" | "grade" | "position";
+
 export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   const [selectedYear, setSelectedYear] = useState<YearTab>("all");
   const [selectedTab, setSelectedTab] = useState<"collection" | "synergy">("collection");
+  const [sortBy, setSortBy] = useState<SortBy>("default");
 
   // 연도 목록 추출 (2013~2025)
   const years = useMemo(() => {
@@ -34,11 +38,52 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
     return Array.from(cardMap.values());
   }, [allCards]);
 
-  // 필터링된 카드 목록
-  const filteredCards = useMemo(() => {
-    if (selectedYear === "all") return uniqueCards;
-    return uniqueCards.filter(card => card.year === selectedYear);
-  }, [uniqueCards, selectedYear]);
+  // 필터링 및 정렬된 카드 목록
+  const filteredAndSortedCards = useMemo(() => {
+    let cards = selectedYear === "all" 
+      ? uniqueCards 
+      : uniqueCards.filter(card => card.year === selectedYear);
+    
+    // 정렬 적용
+    if (sortBy === "team") {
+      cards = [...cards].sort((a, b) => a.team.localeCompare(b.team));
+    } else if (sortBy === "grade") {
+      const gradeOrder = { S: 0, A: 1, B: 2, C: 3 };
+      cards = [...cards].sort((a, b) => gradeOrder[a.grade] - gradeOrder[b.grade]);
+    } else if (sortBy === "position") {
+      const positionOrder = { TOP: 0, JGL: 1, MID: 2, ADC: 3, SUP: 4 };
+      cards = [...cards].sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+    }
+    
+    return cards;
+  }, [uniqueCards, selectedYear, sortBy]);
+
+  // 카드들을 그룹별로 나누기
+  const groupedCards = useMemo(() => {
+    if (sortBy === "default") {
+      return [{ label: "전체", cards: filteredAndSortedCards }];
+    }
+    
+    const groups: { [key: string]: LCKCard[] } = {};
+    
+    filteredAndSortedCards.forEach(card => {
+      let key = "";
+      if (sortBy === "team") {
+        key = card.team;
+      } else if (sortBy === "grade") {
+        key = card.grade;
+      } else if (sortBy === "position") {
+        key = card.position;
+      }
+      
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(card);
+    });
+    
+    return Object.entries(groups).map(([label, cards]) => ({ label, cards }));
+  }, [filteredAndSortedCards, sortBy]);
 
   // 보유 여부 확인
   const isOwned = (card: LCKCard) => {
@@ -48,8 +93,8 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   };
 
   // 보유 카드 수
-  const ownedCount = filteredCards.filter(card => isOwned(card)).length;
-  const totalCount = filteredCards.length;
+  const ownedCount = filteredAndSortedCards.filter(card => isOwned(card)).length;
+  const totalCount = filteredAndSortedCards.length;
 
   // 등급별 색상
   const gradeColors: Record<string, string> = {
@@ -106,7 +151,7 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
         {selectedTab === "collection" && (
           <>
             {/* 연도 필터 */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-3">
               <button
                 onClick={() => setSelectedYear("all")}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
@@ -131,76 +176,146 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
                 </button>
               ))}
             </div>
+
+            {/* 정렬 버튼 */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-[#8B95B5] text-sm font-medium">정렬:</span>
+              <button
+                onClick={() => setSortBy("default")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  sortBy === "default"
+                    ? "bg-[#2B6CFF] text-white"
+                    : "bg-[#1A2347] text-[#8B95B5] hover:text-white"
+                }`}
+              >
+                기본
+              </button>
+              <button
+                onClick={() => setSortBy("team")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  sortBy === "team"
+                    ? "bg-[#2B6CFF] text-white"
+                    : "bg-[#1A2347] text-[#8B95B5] hover:text-white"
+                }`}
+              >
+                팀별
+              </button>
+              <button
+                onClick={() => setSortBy("grade")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  sortBy === "grade"
+                    ? "bg-[#2B6CFF] text-white"
+                    : "bg-[#1A2347] text-[#8B95B5] hover:text-white"
+                }`}
+              >
+                등급별
+              </button>
+              <button
+                onClick={() => setSortBy("position")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  sortBy === "position"
+                    ? "bg-[#2B6CFF] text-white"
+                    : "bg-[#1A2347] text-[#8B95B5] hover:text-white"
+                }`}
+              >
+                포지션별
+              </button>
+            </div>
           </>
         )}
       </div>
 
       {/* 카드 그리드 */}
       {selectedTab === "collection" && (
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {filteredCards.map((card) => {
-              const owned = isOwned(card);
-              const cardKey = `${card.id}_${card.year}_${card.team}`;
-
-              return (
-                <div
-                  key={cardKey}
-                  className={`relative rounded-xl overflow-hidden transition-all duration-200 ${
-                    owned
-                      ? "hover:scale-105 cursor-pointer"
-                      : "opacity-50"
-                  }`}
-                >
-                  {/* 카드 배경 */}
-                  <div
-                    className={`aspect-[2/3] bg-gradient-to-br ${
-                      gradeColors[card.grade] || gradeColors.C
-                    } p-0.5`}
-                  >
-                    <div className="w-full h-full bg-[#141B3D] rounded-lg overflow-hidden">
-                      {owned ? (
-                        // 보유 카드: 실제 이미지
-                        <div className="relative w-full h-full">
-                          <ImageWithFallback
-                            src={card.image}
-                            alt={card.name}
-                            className="w-full h-full object-cover"
-                          />
-                          {/* 등급 배지 */}
-                          <div
-                            className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-gradient-to-br ${
-                              gradeColors[card.grade]
-                            } flex items-center justify-center font-bold text-white text-sm shadow-lg`}
-                          >
-                            {card.grade}
-                          </div>
-                          {/* 하단 정보 */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
-                            <p className="text-white text-xs font-bold truncate">{card.name}</p>
-                            <p className="text-[#8B95B5] text-xs">
-                              {card.year} · {card.team}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        // 미보유 카드: 빈 카드 + 이름만
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-[#0A0F2C]/50 backdrop-blur-sm">
-                          <Lock className="text-[#8B95B5]/30 mb-2" size={32} />
-                          <p className="text-white text-xs font-bold text-center px-2 truncate w-full">
-                            {card.name}
-                          </p>
-                          <p className="text-[#8B95B5]/70 text-xs mt-1">
-                            {card.year} · {card.grade}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+        <div className="max-w-7xl mx-auto space-y-8">
+          {groupedCards.map((group, groupIndex) => (
+            <div key={groupIndex}>
+              {/* 그룹 헤더 (기본 정렬이 아닐 때만 표시) */}
+              {sortBy !== "default" && (
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <div className={`w-1 h-6 rounded ${
+                      sortBy === "grade" 
+                        ? `bg-gradient-to-b ${gradeColors[group.label] || gradeColors.C}`
+                        : "bg-[#2B6CFF]"
+                    }`} />
+                    {sortBy === "team" && group.label}
+                    {sortBy === "grade" && `${group.label} 등급`}
+                    {sortBy === "position" && group.label}
+                    <span className="text-sm text-[#8B95B5] font-normal ml-2">
+                      ({group.cards.length}장)
+                    </span>
+                  </h3>
                 </div>
-              );
-            })}
-          </div>
+              )}
+              
+              {/* 카드 그리드 */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {group.cards.map((card) => {
+                  const owned = isOwned(card);
+                  const cardKey = `${card.id}_${card.year}_${card.team}`;
+                  const imageUrl = getPlayerImageUrl(card.image);
+
+                  return (
+                    <div
+                      key={cardKey}
+                      className={`relative rounded-xl overflow-hidden transition-all duration-200 ${
+                        owned
+                          ? "hover:scale-105 cursor-pointer"
+                          : "opacity-50"
+                      }`}
+                    >
+                      {/* 카드 배경 */}
+                      <div
+                        className={`aspect-[2/3] bg-gradient-to-br ${
+                          gradeColors[card.grade] || gradeColors.C
+                        } p-0.5`}
+                      >
+                        <div className="w-full h-full bg-[#141B3D] rounded-lg overflow-hidden">
+                          {owned ? (
+                            // 보유 카드: 실제 이미지
+                            <div className="relative w-full h-full">
+                              <ImageWithFallback
+                                src={imageUrl || ""}
+                                alt={card.name || "Unknown Player"}
+                                className="w-full h-full object-cover"
+                              />
+                              {/* 등급 배지 */}
+                              <div
+                                className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-gradient-to-br ${
+                                  gradeColors[card.grade]
+                                } flex items-center justify-center font-bold text-white text-sm shadow-lg`}
+                              >
+                                {card.grade}
+                              </div>
+                              {/* 하단 정보 */}
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
+                                <p className="text-white text-xs font-bold truncate">{card.name}</p>
+                                <p className="text-[#8B95B5] text-xs">
+                                  {card.year} · {card.team}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            // 미보유 카드: 빈 카드 + 이름만
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-[#0A0F2C]/50 backdrop-blur-sm">
+                              <Lock className="text-[#8B95B5]/30 mb-2" size={32} />
+                              <p className="text-white text-xs font-bold text-center px-2 truncate w-full">
+                                {card.name}
+                              </p>
+                              <p className="text-[#8B95B5]/70 text-xs mt-1">
+                                {card.year} · {card.grade}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
