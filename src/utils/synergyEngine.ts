@@ -75,19 +75,18 @@ function checkPlayerSynergy(synergy: SynergyDefinition, deployedCards: UserCard[
   
   // 각 필수 선수 확인
   for (const requiredPlayer of synergy.players) {
-    // "선수명_년도" 형식 파싱 (예: Faker_2013)
-    const parts = requiredPlayer.split('_');
-    const playerName = parts[0];
-    const requiredYear = parts.length > 1 ? parts[1] : null;
+    const normalizedRequired = normalizeName(requiredPlayer);
     
-    const normalizedRequired = normalizeName(playerName);
+    // player_years에서 해당 선수의 년도 확인
+    const requiredYear = synergy.player_years?.[requiredPlayer];
+    
     const found = deployedCards.find(card => {
       const nameMatch = normalizeName(card.name) === normalizedRequired ||
                         normalizeName(card.id) === normalizedRequired;
       
-      // 년도 지정이 있으면 년도도 체크
+      // 년도 지정이 있으면 년도도 체크 (string을 number로 변환)
       if (nameMatch && requiredYear) {
-        return card.year === requiredYear;
+        return card.year === parseInt(requiredYear);
       }
       
       return nameMatch;
@@ -108,25 +107,23 @@ function checkPlayerSynergy(synergy: SynergyDefinition, deployedCards: UserCard[
   // 미달성 선수 목록
   if (matchedPlayers.length < synergy.players.length) {
     for (const requiredPlayer of synergy.players) {
-      const parts = requiredPlayer.split('_');
-      const playerName = parts[0];
-      const requiredYear = parts.length > 1 ? parts[1] : null;
+      const normalizedRequired = normalizeName(requiredPlayer);
+      const requiredYear = synergy.player_years?.[requiredPlayer];
       
-      const normalizedRequired = normalizeName(playerName);
       const found = deployedCards.find(card => {
         const nameMatch = normalizeName(card.name) === normalizedRequired ||
                           normalizeName(card.id) === normalizedRequired;
         if (nameMatch && requiredYear) {
-          return card.year === requiredYear;
+          return card.year === parseInt(requiredYear);
         }
         return nameMatch;
       });
       
       if (!found) {
         if (requiredYear) {
-          missingRequirements.push(`${playerName} (${requiredYear}) 필요`);
+          missingRequirements.push(`${requiredPlayer} (${requiredYear}) 필요`);
         } else {
-          missingRequirements.push(`${playerName} 필요`);
+          missingRequirements.push(`${requiredPlayer} 필요`);
         }
       }
     }

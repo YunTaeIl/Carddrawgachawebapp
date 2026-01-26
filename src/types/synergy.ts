@@ -28,6 +28,7 @@ export interface SynergyDefinition {
   min_count?: number;
   players: string[];
   positions: string[];
+  player_years?: Record<string, string>; // 선수별 특정 년도 지정 (예: { "Faker": "2013", "Chovy": "2018" })
   effects: SynergyEffectStage[];
   description: string;
 }

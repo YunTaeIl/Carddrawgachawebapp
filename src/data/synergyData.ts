@@ -51,9 +51,23 @@ function parseCsvRow(row: {
   min_count: string;
   players: string;
   positions: string;
+  player_years?: string; // 새 필드: "Faker:2013|Chovy:2018|..."
   effect_text: string;
   description: string;
 }): SynergyDefinition {
+  // player_years 파싱 (예: "Faker:2013|Chovy:2018" → { Faker: "2013", Chovy: "2018" })
+  let playerYearsMap: Record<string, string> | undefined;
+  if (row.player_years) {
+    playerYearsMap = {};
+    const pairs = row.player_years.split("|");
+    for (const pair of pairs) {
+      const [name, year] = pair.split(":").map(s => s.trim());
+      if (name && year) {
+        playerYearsMap[name] = year;
+      }
+    }
+  }
+  
   return {
     synergy_id: row.synergy_id,
     synergy_name: row.synergy_name,
@@ -66,6 +80,7 @@ function parseCsvRow(row: {
     min_count: row.min_count ? parseInt(row.min_count) : undefined,
     players: row.players ? row.players.split("|").map(p => p.trim()) : [],
     positions: row.positions ? row.positions.split("|").map(p => p.trim()) : [],
+    player_years: playerYearsMap,
     effects: parseEffectText(row.effect_text),
     description: row.description
   };
@@ -1376,11 +1391,12 @@ export const SYNERGIES: SynergyDefinition[] = [
     priority: "136",
     year_rule: "OPTIONAL",
     year_value: "",
-    team_rule: "OPTIONAL",
+    team_rule: "ANY",
     team_values: "",
     min_count: "",
-    players: "Faker_2013|페이커_2013|Chovy_2018|쵸비_2018|Calix_2025|칼릭스_2025|Keria_2020|케리아_2020|Peyz_2023|페이즈_2023|Diable_2025|디아블_2025",
+    players: "Faker|페이커|Chovy|쵸비|Calix|칼릭스|Keria|케리아|Peyz|페이즈|Diable|디아블",
     positions: "",
+    player_years: "Faker:2013|페이커:2013|Chovy:2018|쵸비:2018|Calix:2025|칼릭스:2025|Keria:2020|케리아:2020|Peyz:2023|페이즈:2023|Diable:2025|디아블:2025",
     effect_text: "3인: OVR+0 / Mec+4 / Lan+4 / TF+0 / Mac+3 / Clu+2 | 4인: OVR+0 / Mec+6 / Lan+5 / TF+0 / Mac+5 / Clu+4 | 5인: OVR+10 / Mec+8 / Lan+7 / TF+0 / Mac+7 / Clu+6",
     description: "역대 슈퍼 루키들의 데뷔 시즌 (2013 Faker, 2018 Chovy, 2020 Keria, 2023 Peyz/도련님, 2025 Calix/신세대 미드, 2025 Diable/신세대 원딜)"
   })
