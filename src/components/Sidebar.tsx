@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Menu, LayoutDashboard, Users, Shield, Zap, Target, Settings, ScrollText, LogIn, LogOut, FileText, Trophy, Code2, Lock, Eye, EyeOff, MessageCircle } from "lucide-react";
+import { X, Menu, LayoutDashboard, Users, Shield, Zap, Target, Settings, ScrollText, LogIn, LogOut, FileText, Trophy, Code2, Lock, Eye, EyeOff, MessageCircle, Book } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type Page = 
@@ -17,7 +17,9 @@ export type Page =
   | "league-settings"
   | "logs"
   | "league-progress"
-  | "shared-squad";
+  | "shared-squad"
+  | "card-collection"
+  | "synergy-list";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -42,6 +44,7 @@ const menuItems: MenuItem[] = [
   { id: "squad", label: "팀관리", icon: <Shield size={20} /> },
   { id: "gacha", label: "선수뽑기", icon: <Zap size={20} /> },
   { id: "league-progress", label: "리그진행", icon: <Trophy size={20} />, requiresAuth: true },
+  { id: "card-collection", label: "도감 및 시너지", icon: <Book size={20} /> },
 ];
 
 export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onShowAuth }: SidebarProps) {

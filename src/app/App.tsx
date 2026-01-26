@@ -16,10 +16,34 @@ import { ComingSoon } from "@/components/ComingSoon";
 import { LeagueProgressPage } from "@/components/LeagueProgressPage";
 import { SharedSquadPage } from "@/components/SharedSquadPage";
 import { LeagueRouter } from "@/components/league/LeagueRouter";
+import { CardCollection } from "@/pages/CardCollection";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { Toaster } from "@/app/components/ui/sonner";
 import { initializeCardPool } from "@/utils/gachaEngine";
+import { useGame } from "@/contexts/GameContext";
+import { getCardPool } from "@/data/supabaseCards";
 import "@/styles/holo-effects.css";
+
+// 도감 래퍼 (GameContext 사용)
+function CardCollectionWrapper() {
+  const { userData } = useGame();
+  const [allCards, setAllCards] = React.useState<any[]>([]);
+  
+  React.useEffect(() => {
+    const loadCards = async () => {
+      const cards = await getCardPool();
+      setAllCards(cards);
+    };
+    loadCards();
+  }, []);
+  
+  return (
+    <CardCollection 
+      ownedCards={userData?.ownedCards || []} 
+      allCards={allCards}
+    />
+  );
+}
 
 // 메인 앱 콘텐츠 (Sidebar 내부)
 function AppContent() {
@@ -99,6 +123,8 @@ function AppContent() {
         return <ComingSoon title="로그 / 히스토리" isAdminOnly isAdmin={isAdmin} />;
       case "shared-squad":
         return <SharedSquadPage />;
+      case "card-collection":
+        return <CardCollectionWrapper />;
       default:
         return <LCKHome onNavigate={handleNavigate} />;
     }
