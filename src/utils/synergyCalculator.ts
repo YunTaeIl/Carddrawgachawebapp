@@ -472,7 +472,7 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
   if (drx2022 === 5) {
     activeSynergies.push({
       id: "drx_2022_worlds",
-      name: "🏆 DRX 2022 Worlds",
+      name: "🏆 소년만화, 중요한건 꺾이지 않는 마음",
       description: "2022 DRX 우승 로스터",
       isActive: true,
       bonus: "전원 Clutch +10 (역대급 역전극)"
@@ -551,6 +551,21 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
     });
   }
 
+  // 2019, 2020, 2021 Gen.G (반지원정대)
+  const geng192021Count = cards.filter(c => {
+    const team = normalizeTeamName(c.team);
+    return team === "GenG" && (c.year === 2019 || c.year === 2020 || c.year === 2021);
+  }).length;
+  if (geng192021Count >= 3) {
+    activeSynergies.push({
+      id: "geng_2019_2021_ring",
+      name: "💍 반지원정대",
+      description: "2019-2021 Gen.G 로스터",
+      isActive: true,
+      bonus: "전원 Macro +5, Clutch +4"
+    });
+  }
+
   // 2016 ROX Tigers
   const rox2016 = cards.filter(c => normalizeTeamName(c.team) === "ROX" && c.year === 2016).length;
   if (rox2016 >= 4) {
@@ -572,6 +587,21 @@ export function calculateActiveSynergies(squad: Squad): Synergy[] {
       description: "LZ 로스터",
       isActive: true,
       bonus: "전원 Laning +4, Mechanics +4"
+    });
+  }
+
+  // 2017, 2018 KT (슈퍼팀)
+  const kt1718Count = cards.filter(c => {
+    const team = normalizeTeamName(c.team);
+    return team === "KT" && (c.year === 2017 || c.year === 2018);
+  }).length;
+  if (kt1718Count >= 3) {
+    activeSynergies.push({
+      id: "kt_2017_2018_super",
+      name: "⚡ KT 슈퍼팀",
+      description: "2017-2018 KT 로스터",
+      isActive: true,
+      bonus: "전원 모든 스탯 +4, Laning +5"
     });
   }
 
@@ -868,9 +898,22 @@ export function calculateSynergyBonus(squad: Squad, synergies: Synergy[]): Syner
         bonus.mechanicsBonus += 4;
         break;
       
+      case "kt_2017_2018_super":
+        bonus.mechanicsBonus += 4;
+        bonus.laningBonus += 5;
+        bonus.teamfightBonus += 4;
+        bonus.macroBonus += 4;
+        bonus.clutchBonus += 4;
+        break;
+      
       case "kt_2018_roster":
         bonus.ovrBonus += 6;
         bonus.clutchBonus += 8;
+        break;
+      
+      case "geng_2019_2021_ring":
+        bonus.macroBonus += 5;
+        bonus.clutchBonus += 4;
         break;
       
       case "ssg_2017_worlds":
