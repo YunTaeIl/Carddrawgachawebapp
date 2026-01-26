@@ -83,13 +83,29 @@ function checkPlayerSynergy(synergy: SynergyDefinition, deployedCards: UserCard[
     
     if (found) {
       matchedPlayers.push(found.id);
-    } else {
-      missingRequirements.push(`${requiredPlayer} 필요`);
     }
   }
   
-  // 모든 선수가 매칭되어야 발동
-  const isActive = matchedPlayers.length === synergy.players.length;
+  // 효과 단계 확인 (3인, 4인, 5인 등)
+  const effectStages = synergy.effects.map(e => e.count).sort((a, b) => a - b);
+  const minRequired = effectStages.length > 0 ? effectStages[0] : synergy.players.length;
+  
+  // 최소 인원 이상 매칭되어야 발동
+  const isActive = matchedPlayers.length >= minRequired;
+  
+  // 미달성 선수 목록
+  if (matchedPlayers.length < synergy.players.length) {
+    for (const requiredPlayer of synergy.players) {
+      const normalizedRequired = normalizeName(requiredPlayer);
+      const found = deployedCards.find(card => 
+        normalizeName(card.name) === normalizedRequired ||
+        normalizeName(card.id) === normalizedRequired
+      );
+      if (!found) {
+        missingRequirements.push(`${requiredPlayer} 필요`);
+      }
+    }
+  }
   
   if (!isActive) {
     return {

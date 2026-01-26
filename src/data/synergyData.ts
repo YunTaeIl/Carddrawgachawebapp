@@ -1328,7 +1328,7 @@ export const SYNERGIES: SynergyDefinition[] = [
     team_rule: "OPTIONAL",
     team_values: "",
     min_count: "",
-    players: "Chovy|Tarzan|Viper|Lehends|Doran|Pyosik|Keria",
+    players: "Chovy|쵸비|Tarzan|타잔|Viper|바이퍼|Lehends|리헨즈|Doran|도란|Pyosik|표식|Keria|케리아",
     positions: "",
     effect_text: "3인: OVR+0 / Mec+3 / Lan+3 / TF+0 / Mac+3 / Clu+0 | 4인: OVR+0 / Mec+4 / Lan+4 / TF+0 / Mac+4 / Clu+0 | 5인: OVR+8 / Mec+6 / Lan+6 / TF+6 / Mac+6 / Clu+6",
     description: "씨맥의 제자들 7명 중 3명 이상 (Chovy, Tarzan, Viper, Lehends, Doran, Pyosik, Keria)"
