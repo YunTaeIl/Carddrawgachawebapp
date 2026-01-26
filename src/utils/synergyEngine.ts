@@ -167,6 +167,59 @@ function checkThemeSynergy(synergy: SynergyDefinition, deployedCards: UserCard[]
   let matchedCards: UserCard[] = [];
   const missingRequirements: string[] = [];
   
+  // 0. 특수 시너지 처리 (연도 범위)
+  // 반지원정대 (2019-2021 Gen.G)
+  if (synergy.synergy_id === "GENG_RING_EXPEDITION_2019_2021") {
+    matchedCards = deployedCards.filter(card =>
+      normalizeTeamName(card.team) === "GenG" &&
+      (card.year === 2019 || card.year === 2020 || card.year === 2021)
+    );
+    
+    if (matchedCards.length < minCount) {
+      missingRequirements.push(`2019-2021 Gen.G 카드 ${minCount}장 필요 (현재 ${matchedCards.length}장)`);
+    }
+    
+    const isActive = matchedCards.length >= minCount;
+    const matchedPlayers = matchedCards.map(c => c.id);
+    const currentEffect = isActive ? findCurrentEffect(synergy.effects, matchedCards.length) : undefined;
+    
+    return {
+      synergy,
+      isActive,
+      isPrime: isActive,
+      matchedCount: matchedCards.length,
+      matchedPlayers,
+      currentEffect,
+      missingRequirements: isActive ? [] : missingRequirements
+    };
+  }
+  
+  // KT 슈퍼팀 (2017-2018 KT)
+  if (synergy.synergy_id === "KT_SUPER_TEAM_2017_2018") {
+    matchedCards = deployedCards.filter(card =>
+      (normalizeTeamName(card.team) === "KTRolster" || normalizeTeamName(card.team) === "KT") &&
+      (card.year === 2017 || card.year === 2018)
+    );
+    
+    if (matchedCards.length < minCount) {
+      missingRequirements.push(`2017-2018 KT 카드 ${minCount}장 필요 (현재 ${matchedCards.length}장)`);
+    }
+    
+    const isActive = matchedCards.length >= minCount;
+    const matchedPlayers = matchedCards.map(c => c.id);
+    const currentEffect = isActive ? findCurrentEffect(synergy.effects, matchedCards.length) : undefined;
+    
+    return {
+      synergy,
+      isActive,
+      isPrime: isActive,
+      matchedCount: matchedCards.length,
+      matchedPlayers,
+      currentEffect,
+      missingRequirements: isActive ? [] : missingRequirements
+    };
+  }
+  
   // 1. EXACT_TEAM + EXACT 년도 (예: 2020 담원 풀 로스터)
   if (synergy.team_rule === "EXACT_TEAM" && synergy.team_values.length > 0 && synergy.year_value) {
     const targetTeam = synergy.team_values[0];
