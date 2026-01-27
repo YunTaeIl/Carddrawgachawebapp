@@ -205,8 +205,21 @@ function checkThemeSynergy(synergy: SynergyDefinition, deployedCards: UserCard[]
   let matchedCards: UserCard[] = [];
   const missingRequirements: string[] = [];
   
+  // 🔥 0. EXACT 년도만 (팀 무관) - LIVE 팩 시너지용
+  if (synergy.year_rule === "EXACT" && synergy.year_value && synergy.team_rule === "OPTIONAL") {
+    const targetYear = synergy.year_value;
+    
+    matchedCards = deployedCards.filter(card =>
+      card.year === targetYear
+    );
+    
+    if (matchedCards.length < minCount) {
+      missingRequirements.push(`${targetYear}년 카드 ${minCount}장 필요 (현재 ${matchedCards.length}장)`);
+    }
+  }
+  
   // 1. EXACT_TEAM + EXACT 년도 (예: 2020 담원 풀 로스터)
-  if (synergy.team_rule === "EXACT_TEAM" && synergy.team_values.length > 0 && synergy.year_value) {
+  else if (synergy.team_rule === "EXACT_TEAM" && synergy.team_values.length > 0 && synergy.year_value) {
     const targetTeam = synergy.team_values[0];
     const targetYear = synergy.year_value;
     
