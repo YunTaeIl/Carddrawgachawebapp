@@ -1377,7 +1377,7 @@ export const SYNERGIES: SynergyDefinition[] = [
     team_rule: "OPTIONAL",
     team_values: "",
     min_count: "",
-    players: "CuVee|Ambition|Crown|Ruler|CoreJG",
+    players: "CuVee|Ambition|Crown|Ruler|CoreJJ",
     positions: "TOP|JGL|MID|ADC|SUP",
     effect_text: "5인: OVR+10 / Mec+7 / Lan+6 / TF+9 / Mac+8 / Clu+10",
     description: "2017 롤드컵 우승 로스터 (CuVee, Ambition, Crown, Ruler, CoreJJ)"
