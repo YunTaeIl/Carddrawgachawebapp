@@ -19,6 +19,8 @@ function getTeamFileName(teamName: string): string {
     "Nongshim RedForce": "NS",
     "Kwangdong Freecs": "Kwangdong_Freecs",
     "BNK FEARX": "FOX",
+    "DN SOOPers": "DNSOOPers",
+    "HANJIN BRION": "BRION",
     
     // BRION 계열
     "Fredit BRION": "Fredit_BRION",
@@ -126,7 +128,9 @@ function getTeamShortName(teamName: string): string {
     "DRX": "DRX",
     "Nongshim RedForce": "NS",
     "Kwangdong Freecs": "KDF",
-    "BNK FEARX": "FOX",
+    "BNK FEARX": "BNKFEARX",
+    "DN SOOPers": "DNSOOPers",
+    "HANJIN BRION": "BRION",
     
     // BRION 계열
     "Fredit BRION": "BRO",
