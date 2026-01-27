@@ -892,7 +892,7 @@ export const SYNERGIES: SynergyDefinition[] = [
     players: "Kiin|Canyon",
     positions: "TOP|JGL",
     effect_text: "2인: OVR+4 / Mec+5 / Lan+5 / TF+4 / Mac+3 / Clu+3",
-    description: "상체 주���권"
+    description: "상체 주도권"
   }),
   
   parseCsvRow({
