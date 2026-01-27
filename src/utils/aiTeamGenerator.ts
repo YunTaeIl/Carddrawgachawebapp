@@ -3,7 +3,7 @@
 // 리그 시스템용 - 중복 방지 + 등급 필터 + 가중 랜덤
 // ============================================================
 
-import { LCKCard, Position } from "@/types/lck";
+import { LCKCard, Position, isLiveCard } from "@/types/lck";
 import { Team, LeagueType } from "@/types/league";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
@@ -190,6 +190,7 @@ export function generateAITeams(
  * 리그 타입에 맞는 후보 카드 풀을 구축함
  * - 가중치에 포함된 모든 등급 + fallback 등급을 포함하는 넓은 풀 생성
  * - minOvr 필터 적용
+ * - 🔥 LIVE 카드 제외 (AI 팀은 LIVE 카드 사용 불가)
  */
 function buildCandidatePool(
   leagueType: LeagueType,
@@ -205,10 +206,11 @@ function buildCandidatePool(
   // 2) fallback 등급 추가 (중복 제거)
   const allTargetGrades = new Set([...targetGrades, ...config.fallbackOrder]);
   
-  // 3) 해당 등급들로 필터링
+  // 3) 해당 등급들로 필터링 + 🔥 LIVE 카드 제외
   const pool = allCards.filter(card => 
     allTargetGrades.has(card.grade as Grade) &&
-    (config.minOvr ? card.stats.ovr >= config.minOvr : true)
+    (config.minOvr ? card.stats.ovr >= config.minOvr : true) &&
+    !isLiveCard(card) // 🔥 LIVE 카드 제외
   );
   
   return pool;

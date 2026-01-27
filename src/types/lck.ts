@@ -84,7 +84,7 @@ export const GACHA_CONFIG = {
   // 10연차 가격 (팩 타입별)
   TEN_COSTS: {
     standard: 2000,      // 기본팩: 단일 10회 (할인 없음)
-    live_pack: 9500,     // 🔥 LIVE 팩: 울트라 프리미엄 (약간 할인)
+    live_pack: 190000,   // 🔥 LIVE 팩: 울트라 프리미엄 (5% 할인)
     year_2013: 3500,     // 연도별 팩: 프리미엄 가격
     year_2014: 3500,
     year_2015: 3500,
@@ -108,7 +108,7 @@ export const GACHA_CONFIG = {
   // 팩별 단일 뽑기 가격
   PACK_COSTS: {
     standard: 200,        // 기본팩
-    live_pack: 1000,      // 🔥 LIVE 팩: 5배 프리미엄 (현재 시즌 선수만)
+    live_pack: 20000,     // 🔥 LIVE 팩: 울트라 프리미엄 (100배!)
     year_2013: 400,       // 연도별 팩: 2배
     year_2014: 400,
     year_2015: 400,

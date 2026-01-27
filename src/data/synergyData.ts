@@ -88,6 +88,23 @@ function parseCsvRow(row: {
 
 // 시너지 데이터베이스
 export const SYNERGIES: SynergyDefinition[] = [
+  // 🔥 LIVE PACK 시너지 (최우선)
+  parseCsvRow({
+    synergy_id: "LIVE_PACK_2026",
+    synergy_name: "🔥 LIVE SEASON 2026",
+    type: "THEME",
+    priority: "150",
+    year_rule: "EXACT",
+    year_value: "2026",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "5",
+    players: "",
+    positions: "",
+    effect_text: "5인: OVR+15 / Mec+12 / Lan+12 / TF+15 / Mac+15 / Clu+15",
+    description: "2026 LIVE 카드로만 구성된 스쿼드 - 현재 시즌 프리미엄 시너지"
+  }),
+  
   // ROSTER 시너지
   parseCsvRow({
     synergy_id: "ROSTER_DK_2020",

@@ -242,13 +242,15 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
                 일반
               </Button>
               <Button
-                variant="ghost"
-                disabled={true}
-                className="text-[#FF1493]/50 border border-[#FF1493]/30 cursor-not-allowed opacity-60"
-                title="LIVE 카드 준비 중... 곧 출시됩니다!"
+                variant={packCategory === "live" ? "default" : "ghost"}
+                onClick={() => {
+                  setPackCategory("live");
+                  setSelectedPack("live_pack");
+                }}
+                className={packCategory === "live" ? "bg-[#FF1493] text-white animate-pulse" : "text-[#FF1493] border border-[#FF1493]/50"}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                🔴 LIVE 🔒
+                🔴 LIVE
               </Button>
               <Button
                 variant={packCategory === "year" ? "default" : "ghost"}

@@ -225,32 +225,166 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
               }}
             />
 
-            {/* 홀로그램 레이어 - 기본 */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: `
-                  radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, 
-                    ${gradeColor}dd 0%, 
-                    ${gradeColor}88 20%,
-                    ${gradeColor}44 40%,
-                    transparent 60%
-                  ),
-                  repeating-conic-gradient(
-                    from 0deg at ${glarePosition.x}% ${glarePosition.y}%,
-                    ${gradeColor}44 0deg,
-                    transparent 30deg,
-                    ${gradeColor}22 60deg,
-                    transparent 90deg
-                  )
-                `,
-                mixBlendMode: "screen",
-                opacity: card.grade === "S" ? 0.9 : card.grade === "A" ? 0.7 : 0.4
-              }}
-            />
+            {/* 🔥 LIVE 카드 전용 효과 */}
+            {isLive ? (
+              <>
+                {/* LIVE 핑크/마젠타 홀로그램 */}
+                <div
+                  className="absolute inset-0 pointer-events-none animate-pulse"
+                  style={{
+                    background: `
+                      radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, 
+                        rgba(255, 20, 147, 0.9) 0%, 
+                        rgba(192, 38, 211, 0.7) 20%,
+                        rgba(147, 51, 234, 0.5) 40%,
+                        transparent 70%
+                      )
+                    `,
+                    mixBlendMode: "screen",
+                    opacity: 0.95
+                  }}
+                />
 
-            {/* S등급: Galaxy Cosmos 효과 */}
-            {card.grade === "S" && (
+                {/* 움직이는 핑크 그라데이션 */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div
+                    className="absolute inset-0 animate-spin"
+                    style={{
+                      background: `
+                        conic-gradient(
+                          from 0deg,
+                          rgba(255, 20, 147, 0.6),
+                          rgba(192, 38, 211, 0.5),
+                          rgba(147, 51, 234, 0.6),
+                          rgba(236, 72, 153, 0.5),
+                          rgba(255, 20, 147, 0.6)
+                        )
+                      `,
+                      mixBlendMode: "overlay",
+                      opacity: 0.7,
+                      animationDuration: "8s"
+                    }}
+                  />
+                </div>
+
+                {/* 다이아몬드 파티클 */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  {[...Array(40)].map((_, i) => {
+                    const x = (i * 19) % 100;
+                    const y = (i * 27) % 100;
+                    return (
+                      <div
+                        key={i}
+                        className="absolute animate-pulse"
+                        style={{
+                          left: `${x}%`,
+                          top: `${y}%`,
+                          width: "3px",
+                          height: "3px",
+                          background: "radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 20, 147, 0.6), transparent)",
+                          boxShadow: "0 0 8px rgba(255, 20, 147, 0.9), 0 0 16px rgba(192, 38, 211, 0.6)",
+                          borderRadius: "50%",
+                          animationDelay: `${i * 0.1}s`,
+                          animationDuration: `${2 + (i % 3)}s`
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* 빛나는 레이어 */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: `
+                      repeating-linear-gradient(
+                        45deg,
+                        transparent,
+                        transparent 8px,
+                        rgba(255, 20, 147, 0.15) 8px,
+                        rgba(255, 20, 147, 0.15) 10px,
+                        transparent 10px,
+                        transparent 16px,
+                        rgba(192, 38, 211, 0.15) 16px,
+                        rgba(192, 38, 211, 0.15) 18px
+                      )
+                    `,
+                    mixBlendMode: "screen"
+                  }}
+                />
+
+                {/* 펄스 링 효과 */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: `
+                      radial-gradient(
+                        circle at ${glarePosition.x}% ${glarePosition.y}%,
+                        transparent 30%,
+                        rgba(255, 20, 147, 0.4) 35%,
+                        rgba(255, 20, 147, 0.6) 37%,
+                        rgba(255, 20, 147, 0.4) 39%,
+                        transparent 45%
+                      )
+                    `,
+                    mixBlendMode: "screen"
+                  }}
+                />
+
+                {/* 스타더스트 효과 */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  {[...Array(20)].map((_, i) => (
+                    <div
+                      key={`star-${i}`}
+                      className="absolute rounded-full"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `${Math.random() * 100}%`,
+                        width: `${4 + Math.random() * 6}px`,
+                        height: `${4 + Math.random() * 6}px`,
+                        background: `radial-gradient(circle, 
+                          rgba(255, 255, 255, ${0.6 + Math.random() * 0.4}), 
+                          rgba(255, 20, 147, 0.8),
+                          transparent
+                        )`,
+                        boxShadow: `
+                          0 0 ${8 + Math.random() * 12}px rgba(255, 20, 147, 0.9),
+                          0 0 ${16 + Math.random() * 24}px rgba(192, 38, 211, 0.6)
+                        `,
+                        opacity: 0.7
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* 홀로그램 레이어 - 기본 */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: `
+                      radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, 
+                        ${gradeColor}dd 0%, 
+                        ${gradeColor}88 20%,
+                        ${gradeColor}44 40%,
+                        transparent 60%
+                      ),
+                      repeating-conic-gradient(
+                        from 0deg at ${glarePosition.x}% ${glarePosition.y}%,
+                        ${gradeColor}44 0deg,
+                        transparent 30deg,
+                        ${gradeColor}22 60deg,
+                        transparent 90deg
+                      )
+                    `,
+                    mixBlendMode: "screen",
+                    opacity: card.grade === "S" ? 0.9 : card.grade === "A" ? 0.7 : 0.4
+                  }}
+                />
+
+                {/* S등급: Galaxy Cosmos 효과 */}
+                {card.grade === "S" && (
               <>
                 {/* 정적 성운 효과 */}
                 <div
@@ -452,24 +586,26 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
               </>
             )}
 
-            {/* C등급: Reverse Holo 효과 (정적) */}
-            {card.grade === "C" && (
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: `
-                    linear-gradient(
-                      90deg,
-                      transparent 0%,
-                      ${gradeColor}11 25%,
-                      ${gradeColor}22 50%,
-                      ${gradeColor}11 75%,
-                      transparent 100%
-                    )
-                  `,
-                  mixBlendMode: "soft-light"
-                }}
-              />
+                {/* C등급: Reverse Holo 효과 (정적) */}
+                {card.grade === "C" && (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `
+                        linear-gradient(
+                          90deg,
+                          transparent 0%,
+                          ${gradeColor}11 25%,
+                          ${gradeColor}22 50%,
+                          ${gradeColor}11 75%,
+                          transparent 100%
+                        )
+                      `,
+                      mixBlendMode: "soft-light"
+                    }}
+                  />
+                )}
+              </>
             )}
 
             {/* 카드 컨텐츠 - 정확한 레이아웃 */}
