@@ -1377,7 +1377,7 @@ export const SYNERGIES: SynergyDefinition[] = [
     team_rule: "OPTIONAL",
     team_values: "",
     min_count: "",
-    players: "Zeus|제우스|Chovy|쵸비|Ruler|룰러|Faker|페이커|Keria|케리아|Kanavi|카나비",
+    players: "Zeus|Chovy|Ruler|Faker|Keria|Kanavi",
     positions: "",
     effect_text: "3인: OVR+0 / Mec+2 / Lan+2 / TF+3 / Mac+2 / Clu+3 | 4인: OVR+0 / Mec+4 / Lan+3 / TF+5 / Mac+4 / Clu+5 | 5인: OVR+8 / Mec+6 / Lan+5 / TF+8 / Mac+6 / Clu+8",
     description: "2022 항저우 아시안게임 금메달 국가대표 6명 중 3명 이상 (Zeus, Chovy, Ruler, Faker, Keria, Kanavi)"
@@ -1394,9 +1394,9 @@ export const SYNERGIES: SynergyDefinition[] = [
     team_rule: "ANY",
     team_values: "",
     min_count: "",
-    players: "Faker|페이커|Chovy|쵸비|Calix|칼릭스|Keria|케리아|Peyz|페이즈|Diable|디아블",
+    players: "Faker|Chovy|Calix|Keria|Peyz|Diable",
     positions: "",
-    player_years: "Faker:2013|페이커:2013|Chovy:2018|쵸비:2018|Calix:2025|칼릭스:2025|Keria:2020|케리아:2020|Peyz:2023|페이즈:2023|Diable:2025|디아블:2025",
+    player_years: "Faker:2013|Chovy:2018|Calix:2025|Keria:2020|Peyz:2023|Diable:2025",
     effect_text: "3인: OVR+0 / Mec+4 / Lan+4 / TF+0 / Mac+3 / Clu+2 | 4인: OVR+0 / Mec+6 / Lan+5 / TF+0 / Mac+5 / Clu+4 | 5인: OVR+10 / Mec+8 / Lan+7 / TF+0 / Mac+7 / Clu+6",
     description: "역대 슈퍼 루키들의 데뷔 시즌 (2013 Faker, 2018 Chovy, 2020 Keria, 2023 Peyz/도련님, 2025 Calix/신세대 미드, 2025 Diable/신세대 원딜)"
   })
