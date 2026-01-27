@@ -1514,9 +1514,9 @@ export const SYNERGIES: SynergyDefinition[] = [
     team_rule: "EXACT_TEAM",
     team_values: "T1",
     min_count: "",
-    players: "Zeus|Oner|Faker|Gumayusi|Keria",
+    players: "Doran|Oner|Faker|Gumayusi|Keria",
     positions: "TOP|JGL|MID|ADC|SUP",
     effect_text: "5인: OVR+12 / Mec+10 / Lan+10 / TF+12 / Mac+12 / Clu+12",
-    description: "2025 월즈 우승, 역사적인 쓰리핏을 달성한 로스터 (Zeus, Oner, Faker, Gumayusi, Keria)"
+    description: "2025 월즈 우승, 역사적인 쓰리핏을 달성한 로스터 (Doran, Oner, Faker, Gumayusi, Keria)"
   })
 ];
