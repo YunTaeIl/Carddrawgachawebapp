@@ -1399,5 +1399,22 @@ export const SYNERGIES: SynergyDefinition[] = [
     player_years: "Faker:2013|Chovy:2018|Calix:2025|Keria:2020|Peyz:2023|Diable:2025",
     effect_text: "3인: OVR+0 / Mec+4 / Lan+4 / TF+0 / Mac+3 / Clu+2 | 4인: OVR+0 / Mec+6 / Lan+5 / TF+0 / Mac+5 / Clu+4 | 5인: OVR+10 / Mec+8 / Lan+7 / TF+0 / Mac+7 / Clu+6",
     description: "역대 슈퍼 루키들의 데뷔 시즌 (2013 Faker, 2018 Chovy, 2020 Keria, 2023 Peyz/도련님, 2025 Calix/신세대 미드, 2025 Diable/신세대 원딜)"
+  }),
+
+  // 치지직 스트리머 - ROSTER 시너지 (7명 중 3/4/5명 이상)
+  parseCsvRow({
+    synergy_id: "CHZZK_STREAMERS",
+    synergy_name: "치지직 스트리머즈",
+    type: "ROSTER",
+    priority: "135",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "OPTIONAL",
+    team_values: "",
+    min_count: "",
+    players: "Ambition|Bang|Wolf|Untara|Flame|CuVee|Cpt Jack",
+    positions: "",
+    effect_text: "3인: OVR+0 / Mec+2 / Lan+2 / TF+2 / Mac+3 / Clu+4 | 4인: OVR+0 / Mec+3 / Lan+3 / TF+4 / Mac+5 / Clu+6 | 5인: OVR+8 / Mec+5 / Lan+5 / TF+6 / Mac+7 / Clu+8",
+    description: "은퇴 후 치지직에서 활동 중인 레전드 스트리머들 (Ambition, Bang, Wolf, Untara, Flame, CuVee, Cpt Jack)"
   })
 ];
