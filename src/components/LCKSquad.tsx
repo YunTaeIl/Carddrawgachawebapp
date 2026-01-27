@@ -77,8 +77,8 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
 
   const positions: Position[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
 
-  // 모든 연도 (2013~2025)
-  const allYears = Array.from({ length: 13 }, (_, i) => 2025 - i); // [2025, 2024, ..., 2013]
+  // 모든 연도 (2013~2026)
+  const allYears = Array.from({ length: 14 }, (_, i) => 2026 - i); // [2026, 2025, 2024, ..., 2013]
 
   const handleSlotClick = (position: Position) => {
     setSelectedPosition(position);
