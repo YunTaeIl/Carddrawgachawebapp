@@ -47,6 +47,8 @@ function CardCollectionWrapper() {
 
 // 메인 앱 콘텐츠 (Sidebar 내부)
 function AppContent() {
+  console.log("📱 AppContent 컴포넌트 렌더링");
+  
   const { isAdmin } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [isInitialized, setIsInitialized] = useState(false);
@@ -67,10 +69,13 @@ function AppContent() {
   useEffect(() => {
     const init = async () => {
       try {
+        console.log("🔄 카드 풀 초기화 시작...");
         await initializeCardPool();
+        console.log("✅ 카드 풀 초기화 완료");
         setIsInitialized(true);
       } catch (error) {
-        console.error("초기화 에러:", error);
+        console.error("❌ 초기화 에러:", error);
+        // 에러가 발생해도 앱은 실행되도록
         setIsInitialized(true);
       }
     };
@@ -94,42 +99,65 @@ function AppContent() {
   };
 
   const renderPage = () => {
-    switch (currentPage) {
-      case "home":
-        return <LCKHome onNavigate={handleNavigate} />;
-      case "gacha":
-        return <LCKGacha onBack={() => handleNavigate("home")} />;
-      case "squad":
-        return <LCKSquad onBack={() => handleNavigate("home")} />;
-      case "collection":
-        return <LCKCollection onBack={() => handleNavigate("home")} />;
-      case "test":
-        return <LCKTestMode onBack={() => handleNavigate("home")} />;
-      case "terms":
-        return <LCKTerms onBack={() => handleNavigate("home")} />;
-      case "simulation":
-        return <SimulationPage onBack={() => handleNavigate("home")} isAdmin={isAdmin} />;
-      case "league-progress":
-        return <LeagueRouter onBackToMain={() => handleNavigate("home")} />;
-      case "players":
-        return <ComingSoon title="선수 관리" isAdminOnly isAdmin={isAdmin} />;
-      case "teams":
-        return <ComingSoon title="팀 관리" isAdminOnly isAdmin={isAdmin} />;
-      case "tactics":
-        return <ComingSoon title="전술 시스템" isAdminOnly isAdmin={isAdmin} />;
-      case "league-settings":
-        return <ComingSoon title="리그 설정" isAdminOnly isAdmin={isAdmin} />;
-      case "logs":
-        return <ComingSoon title="로그 / 히스토리" isAdminOnly isAdmin={isAdmin} />;
-      case "shared-squad":
-        return <SharedSquadPage />;
-      case "card-collection":
-        return <CardCollectionWrapper />;
-      default:
-        return <LCKHome onNavigate={handleNavigate} />;
+    console.log("🔄 renderPage 호출, currentPage:", currentPage);
+    
+    try {
+      switch (currentPage) {
+        case "home":
+          return <LCKHome onNavigate={handleNavigate} />;
+        case "gacha":
+          return <LCKGacha onBack={() => handleNavigate("home")} />;
+        case "squad":
+          return <LCKSquad onBack={() => handleNavigate("home")} />;
+        case "collection":
+          return <LCKCollection onBack={() => handleNavigate("home")} />;
+        case "test":
+          return <LCKTestMode onBack={() => handleNavigate("home")} />;
+        case "terms":
+          return <LCKTerms onBack={() => handleNavigate("home")} />;
+        case "simulation":
+          return <SimulationPage onBack={() => handleNavigate("home")} isAdmin={isAdmin} />;
+        case "league-progress":
+          return <LeagueRouter onBackToMain={() => handleNavigate("home")} />;
+        case "players":
+          return <ComingSoon title="선수 관리" isAdminOnly isAdmin={isAdmin} />;
+        case "teams":
+          return <ComingSoon title="팀 관리" isAdminOnly isAdmin={isAdmin} />;
+        case "tactics":
+          return <ComingSoon title="전술 시스템" isAdminOnly isAdmin={isAdmin} />;
+        case "league-settings":
+          return <ComingSoon title="리그 설정" isAdminOnly isAdmin={isAdmin} />;
+        case "logs":
+          return <ComingSoon title="로그 / 히스토리" isAdminOnly isAdmin={isAdmin} />;
+        case "shared-squad":
+          return <SharedSquadPage />;
+        case "card-collection":
+          return <CardCollectionWrapper />;
+        default:
+          console.log("⚠️ 기본 페이지로 폴백");
+          return <LCKHome onNavigate={handleNavigate} />;
+      }
+    } catch (error) {
+      console.error("❌ renderPage 에러:", error);
+      return (
+        <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-500 mb-4">렌더링 에러 발생</div>
+            <div className="text-[#9AA6C3] mb-4">{String(error)}</div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-[#FFB81C] text-[#0B0F1A] rounded font-bold"
+            >
+              새로고침
+            </button>
+          </div>
+        </div>
+      );
     }
   };
 
+  console.log("✅ AppContent return 도달, isInitialized:", isInitialized);
+  
   return (
     <>
       {/* shared-squad 페이지가 아닐 때만 사이드바 표시 */}
@@ -193,6 +221,8 @@ function AppContent() {
 
 // LCK 가챠 메인 앱
 function App() {
+  console.log("🎮 App 컴포넌트 렌더링");
+  
   return (
     <AuthProvider>
       <GameProvider>

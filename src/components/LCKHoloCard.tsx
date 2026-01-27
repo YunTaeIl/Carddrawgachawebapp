@@ -1,7 +1,7 @@
 // LCK 홀로그램 카드 (앞/뒷면 플립 + 5각형 레이더 차트)
 
 import React, { useRef, useState } from "react";
-import { LCKCard, GRADE_COLORS, POSITION_NAMES } from "@/types/lck";
+import { LCKCard, GRADE_COLORS, POSITION_NAMES, isLiveCard, LIVE_CARD_COLOR } from "@/types/lck";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { PlayerImage } from "@/components/PlayerImage";
 import { getTeamLogoUrls } from "@/utils/teamLogos";
@@ -119,6 +119,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
   const currentFontSize = fontSizes[size];
 
   const gradeColor = GRADE_COLORS[card.grade];
+  const isLive = isLiveCard(card); // 🔥 LIVE 카드 체크
   
   const displayOVR = card.stats.ovr + (upgradeLevel || 0) + (synergyBonus?.ovr || 0);
 
@@ -473,6 +474,20 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
 
             {/* 카드 컨텐츠 - 정확한 레이아웃 */}
             <div className="relative z-10 h-full flex flex-col p-3">
+              {/* 🔥 LIVE 배지 (카드 최상단) */}
+              {isLive && (
+                <div 
+                  className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full font-bold text-xs animate-pulse"
+                  style={{
+                    background: `linear-gradient(135deg, ${LIVE_CARD_COLOR}, #C026D3)`,
+                    boxShadow: `0 0 20px ${LIVE_CARD_COLOR}88, 0 4px 12px rgba(0,0,0,0.8)`,
+                    color: "white"
+                  }}
+                >
+                  🔴 LIVE
+                </div>
+              )}
+              
               {/* 상단 헤더 - 한 줄로! */}
               <div className="flex-shrink-0 mb-3 pb-2 border-b" style={{ borderColor: `${gradeColor}33` }}>
                 <div className="flex items-center justify-between gap-3">

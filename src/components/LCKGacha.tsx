@@ -15,7 +15,16 @@ interface LCKGachaProps {
 }
 
 // 카드팩 스타일 정의
-const PACK_STYLES = {
+interface PackStyle {
+  bg: string;
+  border: string;
+  glow: string;
+  title: string;
+  subtitle: string;
+  accentColor: string;
+}
+
+const PACK_STYLES: Record<CardPackType, PackStyle> = {
   standard: {
     bg: "from-[#1E3A8A] via-[#3B82F6] to-[#1E3A8A]",
     border: "border-[#3B82F6]",
@@ -23,6 +32,14 @@ const PACK_STYLES = {
     title: "LCK 2013-2025",
     subtitle: "전체 시즌",
     accentColor: "#3B82F6"
+  },
+  live_pack: {
+    bg: "from-[#C026D3] via-[#FF1493] to-[#C026D3]",
+    border: "border-[#FF1493]",
+    glow: "shadow-[0_0_40px_rgba(255,20,147,0.8)]",
+    title: "🔴 LIVE 2026",
+    subtitle: "현재 시즌",
+    accentColor: "#FF1493"
   },
   year_2013: { bg: "from-[#581C87] via-[#7C3AED] to-[#581C87]", border: "border-[#7C3AED]", glow: "shadow-[0_0_30px_rgba(124,58,237,0.5)]", title: "LCK 2013", subtitle: "전설의 시작", accentColor: "#7C3AED" },
   year_2014: { bg: "from-[#831843] via-[#BE185D] to-[#831843]", border: "border-[#BE185D]", glow: "shadow-[0_0_30px_rgba(190,24,93,0.5)]", title: "LCK 2014", subtitle: "격전의 시대", accentColor: "#BE185D" },
@@ -45,6 +62,8 @@ const PACK_STYLES = {
 };
 
 export function LCKGacha({ onBack }: LCKGachaProps) {
+  console.log("🎰 LCKGacha 컴포넌트 렌더링");
+  
   const { userData, pullSingleGacha, pullTenGacha } = useGame();
   const [isRevealing, setIsRevealing] = useState(false);
   const [currentResults, setCurrentResults] = useState<GachaResult[]>([]);
@@ -55,10 +74,14 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
 
   const currentPackStyle = PACK_STYLES[selectedPack];
   
+  console.log("📦 selectedPack:", selectedPack, "currentPackStyle:", currentPackStyle);
+  
   // 현재 선택된 팩의 가격 계산
   const singleCost = GACHA_CONFIG.PACK_COSTS[selectedPack];
   const tenCost = GACHA_CONFIG.TEN_COSTS[selectedPack];
   const discount = singleCost * 10 - tenCost;
+  
+  console.log("💰 가격:", { singleCost, tenCost, discount });
 
   const handleSinglePull = async () => {
     const result = await pullSingleGacha(selectedPack);
@@ -144,6 +167,26 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
     }
   };
 
+  console.log("✅ LCKGacha return 도달");
+  
+  if (!userData) {
+    console.error("❌ userData가 없습니다!");
+    return (
+      <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
+        <div className="text-white">데이터 로딩 중...</div>
+      </div>
+    );
+  }
+  
+  if (!currentPackStyle) {
+    console.error("❌ currentPackStyle이 없습니다! selectedPack:", selectedPack);
+    return (
+      <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
+        <div className="text-white">카드팩 스타일 로딩 중...</div>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-[#EAF0FF] p-6">
       {/* S등급 준비 중 검은 화면 */}
@@ -197,6 +240,15 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
                 className={packCategory === "standard" ? "bg-[#FFB81C] text-[#0B0F1A]" : ""}
               >
                 일반
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={true}
+                className="text-[#FF1493]/50 border border-[#FF1493]/30 cursor-not-allowed opacity-60"
+                title="LIVE 카드 준비 중... 곧 출시됩니다!"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                🔴 LIVE 🔒
               </Button>
               <Button
                 variant={packCategory === "year" ? "default" : "ghost"}
@@ -265,9 +317,21 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
             )}
 
             {/* 일반 카드팩 */}
-            {packCategory === "standard" && (
+            {packCategory === "standard" && selectedPack === "standard" && (
               <div className="text-sm text-[#9AA6C3] text-center py-4">
-                모든 선수 카드가 포함된 일반 카드팩입니다
+                2013-2025년 모든 선수 카드가 포함된 일반 카드팩입니다
+              </div>
+            )}
+            
+            {/* LIVE 카드팩 */}
+            {selectedPack === "live_pack" && (
+              <div className="text-center py-4 bg-gradient-to-r from-[#FF1493]/20 to-[#C026D3]/20 rounded-lg border border-[#FF1493]/50">
+                <div className="text-lg font-bold text-[#FF1493] mb-2 animate-pulse">
+                  🔴 LIVE 2026 전용 카드팩
+                </div>
+                <div className="text-sm text-[#9AA6C3]">
+                  현재 시즌 선수만 등장하는 프리미엄 카드팩
+                </div>
               </div>
             )}
           </div>

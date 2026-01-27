@@ -1,7 +1,15 @@
 // LCK 카드 타입 정의
 
+// 🔥 현재 LIVE 시즌 (매년 업데이트)
+export const CURRENT_LIVE_SEASON = 2026;
+
 export type Grade = "S" | "A" | "B" | "C";
 export type Position = "TOP" | "JGL" | "MID" | "ADC" | "SUP";
+
+// 카드가 LIVE 카드인지 확인하는 헬퍼 함수
+export function isLiveCard(card: { year: number }): boolean {
+  return card.year === CURRENT_LIVE_SEASON;
+}
 
 export interface CardStats {
   ovr: number;
@@ -76,6 +84,7 @@ export const GACHA_CONFIG = {
   // 10연차 가격 (팩 타입별)
   TEN_COSTS: {
     standard: 2000,      // 기본팩: 단일 10회 (할인 없음)
+    live_pack: 9500,     // 🔥 LIVE 팩: 울트라 프리미엄 (약간 할인)
     year_2013: 3500,     // 연도별 팩: 프리미엄 가격
     year_2014: 3500,
     year_2015: 3500,
@@ -94,11 +103,12 @@ export const GACHA_CONFIG = {
     position_MID: 4500,
     position_ADC: 4500,
     position_SUP: 4500
-  },
+  } as const,
   
   // 팩별 단일 뽑기 가격
   PACK_COSTS: {
     standard: 200,        // 기본팩
+    live_pack: 1000,      // 🔥 LIVE 팩: 5배 프리미엄 (현재 시즌 선수만)
     year_2013: 400,       // 연도별 팩: 2배
     year_2014: 400,
     year_2015: 400,
@@ -117,7 +127,7 @@ export const GACHA_CONFIG = {
     position_MID: 500,
     position_ADC: 500,
     position_SUP: 500
-  },
+  } as const,
   
   BASE_RATES: {
     S: 0.02,
@@ -149,6 +159,9 @@ export const GRADE_COLORS = {
   B: "#CD7F32", // 브론즈
   C: "#808080"  // 다크 그레이
 };
+
+// 🔥 LIVE 카드 전용 색상 (등급과 별개)
+export const LIVE_CARD_COLOR = "#FF1493"; // 핑크 (DeepPink)
 
 export const POSITION_NAMES = {
   TOP: "탑",

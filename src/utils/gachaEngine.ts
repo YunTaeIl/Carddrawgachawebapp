@@ -1,12 +1,13 @@
 // LCK 가챠 엔진: 확률 계산, 천장 시스템, 샤드 지급
 
-import { LCKCard, GachaState, GachaResult, GACHA_CONFIG, Grade, Position } from "@/types/lck";
+import { LCKCard, GachaState, GachaResult, GACHA_CONFIG, Grade, Position, CURRENT_LIVE_SEASON } from "@/types/lck";
 import { getCardPool, getCardsByGrade } from "@/data/supabaseCards";
 import { SAMPLE_CARDS } from "@/data/sampleCards";
 
 // 카드팩 타입
 export type CardPackType = 
   | "standard"
+  | "live_pack"       // 🔥 LIVE 전용 팩 (현재 시즌만)
   | "year_2013"
   | "year_2014"
   | "year_2015"
@@ -77,6 +78,7 @@ function initializePackPools() {
   if (!cachedCardPool) return;
   
   const packTypes: CardPackType[] = [
+    "live_pack",      // 🔥 LIVE 팩 추가
     "year_2013", "year_2014", "year_2015", "year_2016", "year_2017", 
     "year_2018", "year_2019", "year_2020", "year_2021", "year_2022", 
     "year_2023", "year_2024", "year_2025",
@@ -98,18 +100,30 @@ function initializePackPools() {
 
 // 카드팩별 필터링
 function filterCardPoolByPack(pool: LCKCard[], packType: CardPackType): LCKCard[] {
-  if (packType === "standard") return pool;
+  // 🔥 기본 팩: LIVE 시즌 제외 (과거 카드만)
+  if (packType === "standard") {
+    return pool.filter(c => c.year < CURRENT_LIVE_SEASON);
+  }
   
-  // 연도별 필터
+  // 🔥 LIVE 팩: 현재 시즌만 (2026년)
+  if (packType === "live_pack") {
+    return pool.filter(c => c.year === CURRENT_LIVE_SEASON);
+  }
+  
+  // 연도별 필터 (LIVE 시즌 제외)
   if (packType.startsWith("year_")) {
     const year = parseInt(packType.split("_")[1]);
+    // LIVE 시즌은 일반 연도팩에서 제외
+    if (year >= CURRENT_LIVE_SEASON) {
+      return [];
+    }
     return pool.filter(c => c.year === year);
   }
   
-  // 포지션별 필터
+  // 포지션별 필터 (LIVE 시즌 제외)
   if (packType.startsWith("position_")) {
     const position = packType.split("_")[1] as Position;
-    return pool.filter(c => c.position === position);
+    return pool.filter(c => c.position === position && c.year < CURRENT_LIVE_SEASON);
   }
   
   return pool;
