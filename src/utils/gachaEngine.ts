@@ -313,9 +313,15 @@ export function updateGachaState(
 }
 
 /**
- * 샤드로 카드 제작
+ * 샤드로 카드 제작 (🔥 LIVE 카드 제외)
  */
 export function craftCard(grade: "A" | "S"): LCKCard {
-  const cards = getCardsByGradeCached(grade);
+  // 🔥 LIVE 카드를 제외한 일반 풀에서만 선택 (standard 팩 사용)
+  const cards = getCardsByGradeCached(grade, "standard");
+  
+  if (cards.length === 0) {
+    throw new Error(`${grade} 등급 카드를 찾을 수 없습니다.`);
+  }
+  
   return cards[Math.floor(Math.random() * cards.length)];
 }
