@@ -875,7 +875,7 @@ export const SYNERGIES: SynergyDefinition[] = [
     players: "Kiin|Canyon",
     positions: "TOP|JGL",
     effect_text: "2인: OVR+4 / Mec+5 / Lan+5 / TF+4 / Mac+3 / Clu+3",
-    description: "상체 주도권"
+    description: "상체 주���권"
   }),
   
   parseCsvRow({
@@ -1416,5 +1416,39 @@ export const SYNERGIES: SynergyDefinition[] = [
     positions: "",
     effect_text: "3인: OVR+0 / Mec+2 / Lan+2 / TF+2 / Mac+3 / Clu+4 | 4인: OVR+0 / Mec+3 / Lan+3 / TF+4 / Mac+5 / Clu+6 | 5인: OVR+8 / Mec+5 / Lan+5 / TF+6 / Mac+7 / Clu+8",
     description: "은퇴 후 치지직에서 활동 중인 레전드 스트리머들 (Ambition, Bang, Wolf, Untara, Flame, CuVee, Cpt Jack)"
+  }),
+
+  // 2023 KT 롤스터 "기커비에리 롤러코스터" - ROSTER 시너지 (3/4/5명)
+  parseCsvRow({
+    synergy_id: "ROSTER_KT_2023_ROLLERCOASTER",
+    synergy_name: "기커비에리 롤러코스터",
+    type: "ROSTER",
+    priority: "134",
+    year_rule: "EXACT",
+    year_value: "2023",
+    team_rule: "EXACT_TEAM",
+    team_values: "KT Rolster",
+    min_count: "",
+    players: "Kiin|Cuzz|Bdd|Aiming|Lehends",
+    positions: "TOP|JGL|MID|ADC|SUP",
+    effect_text: "3인: OVR+0 / Mec+3 / Lan+2 / TF+5 / Mac+2 / Clu+6 | 4인: OVR+0 / Mec+5 / Lan+3 / TF+7 / Mac+3 / Clu+8 | 5인: OVR+10 / Mec+7 / Lan+5 / TF+10 / Mac+5 / Clu+12",
+    description: "2023 KT 롤스터 '기커비에리 롤러코스터' - 극적인 경기 운영과 클러치 플레이로 유명한 로스터 (Kiin, Cuzz, Bdd, Aiming, Lehends)"
+  }),
+
+  // 2025 KT 롤스터 "BDD의 통나무" - ROSTER 시너지 (3/4/5명)
+  parseCsvRow({
+    synergy_id: "ROSTER_KT_2025_BDD_LOG",
+    synergy_name: "BDD의 통나무",
+    type: "ROSTER",
+    priority: "133",
+    year_rule: "EXACT",
+    year_value: "2025",
+    team_rule: "EXACT_TEAM",
+    team_values: "KT Rolster",
+    min_count: "",
+    players: "Kiin|Pyosik|Bdd|Deft|Lehends",
+    positions: "TOP|JGL|MID|ADC|SUP",
+    effect_text: "3인: OVR+0 / Mec+4 / Lan+3 / TF+6 / Mac+5 / Clu+5 | 4인: OVR+0 / Mec+6 / Lan+4 / TF+8 / Mac+7 / Clu+7 | 5인: OVR+12 / Mec+8 / Lan+6 / TF+10 / Mac+9 / Clu+10",
+    description: "2025 KT 롤스터 'BDD의 통나무' - BDD를 중심으로 한 탄탄한 팀워크와 노련한 운영력 (Kiin, Pyosik, Bdd, Deft, Lehends)"
   })
 ];
