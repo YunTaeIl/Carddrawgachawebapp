@@ -7,6 +7,7 @@ import { getSeriesResult } from "@/utils/simulationEngine";
 import { getKoreanTeamName } from "@/utils/teamNames";
 import { Trophy, TrendingUp } from "lucide-react";
 import { useLeague } from "@/contexts/LeagueContext";
+import { LEAGUE_CONFIGS } from "@/types/league";
 
 interface SeriesFinishedPhaseProps {
   series: MatchSeries;
@@ -19,6 +20,11 @@ export function SeriesFinishedPhase({
 }: SeriesFinishedPhaseProps) {
   const { currentLeague } = useLeague();
   const result = getSeriesResult(series);
+  
+  // 리그별 승리 보상 가져오기
+  const matchReward = currentLeague 
+    ? LEAGUE_CONFIGS[currentLeague.leagueType].winPoints 
+    : 500;
   
   // 플레이어 팀이 승리했는지 확인 (playerTeamId 기준)
   const playerWon = currentLeague?.playerTeamId === result.winnerId;
@@ -114,7 +120,7 @@ export function SeriesFinishedPhase({
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-yellow-400 mb-1">
-                +500
+                +{matchReward.toLocaleString()}
               </div>
               <div className="text-sm text-slate-400">포인트 획득</div>
             </div>
