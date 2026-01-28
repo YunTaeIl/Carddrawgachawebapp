@@ -618,8 +618,11 @@ function decideEventWinner(game: GameSimulation, eventType: GameEventType): "hom
   console.log(`📊 확률 요소:`, factors);
   console.log(`📈 Total Score: ${totalScore.toFixed(2)}`);
   
-  // sigmoid 변환
-  const homeWinProb = 1 / (1 + Math.exp(-totalScore / 50));
+  // 🔥 스탯 차이를 승률로 변환 (스케일링)
+  // 스탯 차이 50 → 승률 약 75% (25% 차이)
+  // 스탯 차이 100 → 승률 약 88% (38% 차이)
+  const STAT_SCALE = 100; // 스탯 차이의 영향력 조절 (클수록 부드러움)
+  const homeWinProb = 1 / (1 + Math.exp(-totalScore / STAT_SCALE));
   
   // 🔥 NaN 방어
   const safeProb = Number.isFinite(homeWinProb) ? homeWinProb : 0.5;
