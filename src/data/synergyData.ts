@@ -1087,6 +1087,22 @@ export const SYNERGIES: SynergyDefinition[] = [
     description: "LCK 초창기 전설 바텀"
   }),
   
+  parseCsvRow({
+    synergy_id: "DUO_MJ_CUZZ_BDD",
+    synergy_name: "커디디",
+    type: "DUO",
+    priority: "91",
+    year_rule: "OPTIONAL",
+    year_value: "",
+    team_rule: "SAME_TEAM",
+    team_values: "",
+    min_count: "",
+    players: "Cuzz|Bdd",
+    positions: "JGL|MID",
+    effect_text: "2인: OVR+4 / Mec+4 / Lan+3 / TF+5 / Mac+5 / Clu+4",
+    description: "최고의 파트너"
+  }),
+  
   // 일반 시너지
   parseCsvRow({
     synergy_id: "GEN_SAME_TEAM_YEAR_5",
