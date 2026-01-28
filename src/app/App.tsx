@@ -48,7 +48,13 @@ function CardCollectionWrapper() {
 // 메인 앱 콘텐츠 (Sidebar 내부)
 function AppContent() {
   const { isAdmin } = useAuth();
-  const [currentPage, setCurrentPage] = useState<Page>("home");
+  
+  // 🔥 페이지 상태를 sessionStorage에서 복원 (리렌더링 시 유지)
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    const saved = sessionStorage.getItem("lck_current_page");
+    return (saved as Page) || "home";
+  });
+  
   const [isInitialized, setIsInitialized] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -91,6 +97,7 @@ function AppContent() {
 
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);
+    sessionStorage.setItem("lck_current_page", page); // 🔥 페이지 변경 시 저장
     setSidebarOpen(false);
   };
 
