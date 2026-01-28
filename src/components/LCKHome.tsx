@@ -641,7 +641,15 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-[#8B95B5]">총 뽑기</span>
-                <span className="text-xl font-display font-bold">{userData.gachaState.total_pulls}</span>
+                <span className="text-xl font-display font-bold">
+                  {Object.values(userData.packStatistics || {}).reduce((sum, stat) => sum + (stat?.pulls || 0), 0)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-[#8B95B5]">총 소비 RP</span>
+                <span className="text-xl font-display font-bold text-[#C8102E]">
+                  {Object.values(userData.packStatistics || {}).reduce((sum, stat) => sum + (stat?.rp_spent || 0), 0).toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-[#8B95B5]">S 등급</span>
