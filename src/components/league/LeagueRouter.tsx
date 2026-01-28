@@ -10,6 +10,7 @@ import { PlayoffsPage } from "./PlayoffsPage";
 import { SeasonResultPage } from "./SeasonResultPage";
 import { Series } from "@/types/league";
 import { SeriesType } from "@/types/advancedSimulation";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 type LeagueRoute = 
   | "select"
@@ -133,7 +134,6 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     if (!team1 || !team2) return;
     
     // 🔥 시너지 적용된 팀 OVR 기반 승률 계산
-    const { calculateSynergies, calculateCardSynergyBonuses } = require("@/utils/synergyEngine");
     
     const team1Synergies = calculateSynergies(team1.squad);
     const team1CardBonuses = calculateCardSynergyBonuses(team1.squad, team1Synergies);
