@@ -24,15 +24,21 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  console.log("🔐 AuthProvider 렌더링");
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("🔐 AuthProvider useEffect 시작");
     // 초기 세션 확인
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("🔐 세션 확인 완료:", session ? "로그인" : "비로그인");
       setUser(session?.user ?? null);
       setAccessToken(session?.access_token ?? null);
+      setIsLoading(false);
+    }).catch((error) => {
+      console.error("❌ 세션 확인 에러:", error);
       setIsLoading(false);
     });
 
@@ -85,6 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.clear();
   };
 
+  console.log("🔐 AuthProvider return, isLoading:", isLoading);
+  
   return (
     <AuthContext.Provider
       value={{

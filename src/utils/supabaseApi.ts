@@ -40,6 +40,7 @@ function convertServerCard(serverCard: ServerCard): LCKCard {
 // 모든 카드 가져오기
 export async function fetchAllCards(): Promise<LCKCard[]> {
   try {
+    console.log("📡 Supabase 카드 데이터 요청 중...");
     const response = await fetch(`${API_URL}/cards`, {
       headers: {
         Authorization: `Bearer ${publicAnonKey}`,
@@ -47,16 +48,20 @@ export async function fetchAllCards(): Promise<LCKCard[]> {
     });
 
     if (!response.ok) {
+      console.error("❌ 카드 fetch 실패:", response.statusText);
       throw new Error(`Failed to fetch cards: ${response.statusText}`);
     }
 
     const data = await response.json();
     if (!data.success) {
+      console.error("❌ 카드 데이터 오류:", data.error);
       throw new Error(data.error || "Failed to fetch cards");
     }
 
+    console.log("✅ Supabase 카드 로드 성공:", data.cards.length, "장");
     return data.cards.map(convertServerCard);
   } catch (error) {
+    console.error("❌ fetchAllCards 에러:", error);
     throw error;
   }
 }

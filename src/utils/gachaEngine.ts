@@ -14,18 +14,30 @@ let cachedPackPools: Map<CardPackType, Map<Grade, LCKCard[]>> = new Map();
 // 카드 풀 초기화 (앱 시작 시 한번만)
 export async function initializeCardPool() {
   if (cachedCardPool && cachedCardPool.length > 0) {
+    console.log("✅ 캐시된 카드 풀 사용:", cachedCardPool.length, "장");
     return cachedCardPool;
   }
   
   try {
+    console.log("🔄 카드 풀 가져오는 중...");
     cachedCardPool = await getCardPool();
     
     // 카드가 없으면 샘플 데이터 사용
     if (!cachedCardPool || cachedCardPool.length === 0) {
+      console.log("⚠️ 서버 카드 없음, 샘플 데이터 사용");
       cachedCardPool = SAMPLE_CARDS;
+    } else {
+      console.log("✅ 서버에서 카드 로드 성공:", cachedCardPool.length, "장");
     }
   } catch (error) {
+    console.error("❌ 카드 풀 로드 에러, 샘플 데이터 사용:", error);
     cachedCardPool = SAMPLE_CARDS;
+  }
+  
+  // 최종 검증
+  if (!cachedCardPool || cachedCardPool.length === 0) {
+    console.error("❌ 샘플 카드도 없음!");
+    cachedCardPool = [];
   }
   
   // 등급별로 분류
@@ -33,6 +45,13 @@ export async function initializeCardPool() {
   cachedGradeMap.set("A", cachedCardPool.filter(c => c.grade === "A"));
   cachedGradeMap.set("B", cachedCardPool.filter(c => c.grade === "B"));
   cachedGradeMap.set("C", cachedCardPool.filter(c => c.grade === "C"));
+  
+  console.log("📊 등급별 카드 수:", {
+    S: cachedGradeMap.get("S")?.length,
+    A: cachedGradeMap.get("A")?.length,
+    B: cachedGradeMap.get("B")?.length,
+    C: cachedGradeMap.get("C")?.length
+  });
   
   // 🔥 카드팩별 캐시도 초기화
   initializePackPools();

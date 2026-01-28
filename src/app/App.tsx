@@ -223,6 +223,29 @@ function AppContent() {
 function App() {
   console.log("🎮 App 컴포넌트 렌더링");
   
+  // 🔥 최소한의 디버그 UI를 먼저 표시
+  const [mounted, setMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    console.log("🎮 App mounted");
+    setMounted(true);
+  }, []);
+  
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-[#FFB81C] mb-4">
+            Legends Manager
+          </div>
+          <div className="text-[#9AA6C3]">
+            앱 초기화 중...
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <AuthProvider>
       <GameProvider>
