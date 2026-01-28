@@ -26,7 +26,6 @@ const LeagueContext = createContext<LeagueContextType | undefined>(undefined);
 const STORAGE_KEY = "lck_league_instance";
 
 export function LeagueProvider({ children }: { children: ReactNode }) {
-  console.log("🏆 LeagueProvider 렌더링");
   const { userData, allCards, addCurrency } = useGame();
   const { user } = useAuth();
   const [currentLeague, setCurrentLeague] = useState<LeagueInstance | null>(null);
@@ -411,8 +410,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  console.log("🏆 LeagueProvider return, isLoading:", isLoading);
-  
   return (
     <LeagueContext.Provider
       value={{

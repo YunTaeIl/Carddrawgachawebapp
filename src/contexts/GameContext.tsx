@@ -48,7 +48,6 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  console.log("🎮 GameProvider 렌더링");
   const { isAuthenticated, accessToken } = useAuth();
   const [userData, setUserData] = useState<UserData>(getDefaultUserData());
   const [isLoading, setIsLoading] = useState(true);
@@ -92,31 +91,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log("🔄 GameContext 초기화 시작");
         // 로그인 상태면 LocalStorage 로드 스킵 (DB에서 불러올 예정)
         if (isAuthenticated === true && accessToken) {
           // 기본 데이터만 설정 (DB에서 덮어씌워질 예정)
-          console.log("✅ 로그인 상태: 기본 데이터 설정");
           setUserData(getDefaultUserData());
         } else {
           // 비로그인 시 LocalStorage에서 로드
-          console.log("✅ 비로그인 상태: LocalStorage에서 로드");
           const saved = loadUserData();
           setUserData(saved);
         }
         
         // 카드 풀 초기화 (로그인 여부 상관없이 필수)
-        console.log("🔄 카드 풀 초기화 중...");
         const pool = await initializeCardPool();
-        console.log("✅ 카드 풀 초기화 완료:", pool.length, "장");
         setCardPool(pool);
         setAllCards(pool); // allCards도 동일하게 설정
       } catch (error) {
-        console.error("❌ GameContext 초기화 에러:", error);
+        console.error("GameContext init error:", error);
         // 에러가 나도 기본 데이터로 진행
         setUserData(getDefaultUserData());
       } finally {
-        console.log("✅ GameContext isLoading = false");
         setIsLoading(false);
       }
     };
@@ -597,8 +590,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     addCurrency
   };
 
-  // 항상 children을 렌더링 (Provider 체인 안정화)
-  console.log("🎮 GameProvider return, isLoading:", isLoading, "cardPool:", cardPool.length);
   return (
     <GameContext.Provider value={value}>
       {children}

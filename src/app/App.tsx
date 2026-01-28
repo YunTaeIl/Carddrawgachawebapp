@@ -47,8 +47,6 @@ function CardCollectionWrapper() {
 
 // 메인 앱 콘텐츠 (Sidebar 내부)
 function AppContent() {
-  console.log("📱 AppContent 컴포넌트 렌더링");
-  
   const { isAdmin } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [isInitialized, setIsInitialized] = useState(false);
@@ -69,12 +67,10 @@ function AppContent() {
   useEffect(() => {
     const init = async () => {
       try {
-        console.log("🔄 카드 풀 초기화 시작...");
         await initializeCardPool();
-        console.log("✅ 카드 풀 초기화 완료");
         setIsInitialized(true);
       } catch (error) {
-        console.error("❌ 초기화 에러:", error);
+        console.error("Init error:", error);
         // 에러가 발생해도 앱은 실행되도록
         setIsInitialized(true);
       }
@@ -99,8 +95,6 @@ function AppContent() {
   };
 
   const renderPage = () => {
-    console.log("🔄 renderPage 호출, currentPage:", currentPage);
-    
     try {
       switch (currentPage) {
         case "home":
@@ -134,11 +128,10 @@ function AppContent() {
         case "card-collection":
           return <CardCollectionWrapper />;
         default:
-          console.log("⚠️ 기본 페이지로 폴백");
           return <LCKHome onNavigate={handleNavigate} />;
       }
     } catch (error) {
-      console.error("❌ renderPage 에러:", error);
+      console.error("Page render error:", error);
       return (
         <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-6">
           <div className="text-center">
@@ -156,8 +149,6 @@ function AppContent() {
     }
   };
 
-  console.log("✅ AppContent return 도달, isInitialized:", isInitialized);
-  
   return (
     <>
       {/* shared-squad 페이지가 아닐 때만 사이드바 표시 */}
@@ -221,13 +212,10 @@ function AppContent() {
 
 // LCK 가챠 메인 앱
 function App() {
-  console.log("🎮 App 컴포넌트 렌더링");
-  
-  // 🔥 최소한의 디버그 UI를 먼저 표시
+  // 최소한의 디버그 UI를 먼저 표시
   const [mounted, setMounted] = React.useState(false);
   
   React.useEffect(() => {
-    console.log("🎮 App mounted");
     setMounted(true);
   }, []);
   
