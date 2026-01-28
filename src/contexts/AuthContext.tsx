@@ -55,12 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInGoogle = async () => {
     console.log("🔵 Google 로그인 시도 중...");
-    console.log("🔵 현재 URL:", window.location.origin);
+    console.log("🔵 현재 전체 URL:", window.location.href);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}`,
+        redirectTo: window.location.href, // 🔥 전체 URL 사용
       },
     });
     
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
       options: {
-        redirectTo: `${window.location.origin}`,
+        redirectTo: window.location.href, // 🔥 전체 URL 사용
       },
     });
     
