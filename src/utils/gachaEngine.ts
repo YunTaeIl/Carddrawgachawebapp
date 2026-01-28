@@ -78,6 +78,7 @@ function initializePackPools() {
   if (!cachedCardPool) return;
   
   const packTypes: CardPackType[] = [
+    "standard",       // 🔥 기본 팩 (LIVE 제외)
     "live_pack",      // 🔥 LIVE 팩 추가
     "year_2013", "year_2014", "year_2015", "year_2016", "year_2017", 
     "year_2018", "year_2019", "year_2020", "year_2021", "year_2022", 
@@ -131,12 +132,15 @@ function filterCardPoolByPack(pool: LCKCard[], packType: CardPackType): LCKCard[
 
 // 등급별 카드 가져오기 (카드팩별 캐시 사용)
 function getCardsByGradeCached(grade: Grade, packType: CardPackType = "standard"): LCKCard[] {
-  if (packType === "standard") {
-    return cachedGradeMap.get(grade) || [];
+  // 🔥 standard 팩도 캐시된 팩 풀 사용 (LIVE 제외됨)
+  const packPool = cachedPackPools.get(packType);
+  if (packPool) {
+    return packPool.get(grade) || [];
   }
   
-  const packPool = cachedPackPools.get(packType);
-  return packPool?.get(grade) || [];
+  // 폴백: 캐시된 전체 풀에서 LIVE 필터링
+  const allCards = cachedGradeMap.get(grade) || [];
+  return allCards.filter(c => c.year < CURRENT_LIVE_SEASON);
 }
 
 /**
