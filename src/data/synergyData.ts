@@ -101,7 +101,7 @@ export const SYNERGIES: SynergyDefinition[] = [
     min_count: "5",
     players: "",
     positions: "",
-    effect_text: "5인: OVR+15 / Mec+12 / Lan+12 / TF+15 / Mac+15 / Clu+15",
+    effect_text: "5인: OVR+5 / Mec+4 / Lan+4 / TF+5 / Mac+5 / Clu+5",
     description: "2026 LIVE 카드로만 구성된 스쿼드 - 현재 시즌 프리미엄 시너지"
   }),
   
