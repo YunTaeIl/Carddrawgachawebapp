@@ -3,9 +3,7 @@ import { Button } from "@/app/components/ui/button";
 import { LeagueType, LEAGUE_CONFIGS } from "@/types/league";
 import { useLeague } from "@/contexts/LeagueContext";
 import { useGame } from "@/contexts/GameContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, AlertTriangle, Lock } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 interface LeagueSelectPageProps {
   onBack: () => void;
@@ -15,7 +13,6 @@ interface LeagueSelectPageProps {
 export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProps) {
   const { startNewLeague } = useLeague();
   const { userData } = useGame();
-  const auth = useAuth();
 
   // 스쿼드 검증 - 5개 포지션 모두 채워져 있는지 확인
   const isSquadComplete = () => {
@@ -29,12 +26,6 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
 
   const handleStartLeague = (leagueType: LeagueType) => {
     if (!isSquadComplete()) {
-      return;
-    }
-    
-    // 🏆 레전드 리그는 ADMIN 전용
-    if (leagueType === "legend" && !auth?.isAdmin) {
-      toast.error("🔒 레전드 리그는 관리자만 접근할 수 있습니다");
       return;
     }
     
@@ -112,8 +103,6 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
             const colorClass = getLeagueColor(leagueType);
             const accentClass = getLeagueAccent(leagueType);
             const squadComplete = isSquadComplete();
-            const isLegend = leagueType === "legend";
-            const isLegendLocked = isLegend && !auth?.isAdmin;
             const isDisabled = !squadComplete;
 
             return (
@@ -128,16 +117,6 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
                            } group`}
                 disabled={isDisabled}
               >
-                {/* 🔐 레전드 리그 ADMIN 배지 */}
-                {isLegendLocked && (
-                  <div className="absolute top-4 right-4 bg-amber-500/20 border-2 border-amber-500/80 rounded-full px-4 py-2 z-10">
-                    <span className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
-                      <Lock className="w-3 h-3" />
-                      ADMIN
-                    </span>
-                  </div>
-                )}
-
                 {/* 리그 타이틀 */}
                 <div className="mb-6">
                   <h2 className={`text-3xl font-bold font-display mb-2 ${accentClass}`}>
