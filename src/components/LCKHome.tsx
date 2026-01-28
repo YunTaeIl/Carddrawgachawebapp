@@ -340,26 +340,26 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
               </div>
             )}
 
-            {/* S 천장 게이지 */}
+            {/* 🔥 기본 팩 S 천장 게이지 */}
             <div className="bg-[#141B3D]/80 backdrop-blur-sm rounded-lg md:rounded-xl p-2 md:p-4 border border-[#C8102E]/30">
               <div className="flex items-center justify-between mb-1 md:mb-2">
                 <div className="flex items-center gap-1 md:gap-2">
                   <Zap className="w-2.5 h-2.5 md:w-4 md:h-4 text-[#FFB81C] flex-shrink-0" />
-                  <span className="text-[9px] md:text-sm font-semibold truncate">S 천장</span>
+                  <span className="text-[9px] md:text-sm font-semibold truncate">S 천장 (기본팩)</span>
                 </div>
                 <span className="text-[9px] md:text-sm font-display text-[#FFB81C] flex-shrink-0">
-                  {userData.gachaState.s_pity_stack}/{GACHA_CONFIG.S_PITY_HARD}
+                  {userData.pityData?.standard?.s_pity_stack || 0}/{GACHA_CONFIG.S_PITY_HARD}
                 </span>
               </div>
               <div className="h-1 md:h-2 bg-[#0A0E27] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#C8102E] via-[#FFB81C] to-[#FFB81C] transition-all duration-300"
                   style={{
-                    width: `${(userData.gachaState.s_pity_stack / GACHA_CONFIG.S_PITY_HARD) * 100}%`
+                    width: `${((userData.pityData?.standard?.s_pity_stack || 0) / GACHA_CONFIG.S_PITY_HARD) * 100}%`
                   }}
                 />
               </div>
-              {userData.gachaState.s_pity_stack >= GACHA_CONFIG.S_PITY_SOFT_START && (
+              {(userData.pityData?.standard?.s_pity_stack || 0) >= GACHA_CONFIG.S_PITY_SOFT_START && (
                 <p className="text-[8px] md:text-xs text-[#FFB81C] mt-1 flex items-center gap-1">
                   <Zap className="w-2 h-2 md:w-3 md:h-3 flex-shrink-0" /> <span className="truncate">확률 상승</span>
                 </p>

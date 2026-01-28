@@ -457,11 +457,46 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
               </div>
             </div>
 
+            {/* 🔥 팩별 천장 현황 */}
             <div className="mt-4 p-4 bg-[#2B6CFF]/10 rounded-lg border border-[#2B6CFF]/30">
-              <p className="text-sm text-[#9AA6C3]">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-bold text-white">🎯 현재 팩 천장 현황</p>
+                <p className="text-xs text-[#9AA6C3]">{PACK_STYLES[selectedPack].title}</p>
+              </div>
+              <div className="flex gap-4 mb-3">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-[#D4AF37]">S 천장</span>
+                    <span className="text-[#9AA6C3]">
+                      {userData.pityData[selectedPack]?.s_pity_stack || 0} / {GACHA_CONFIG.S_PITY_HARD}
+                    </span>
+                  </div>
+                  <div className="w-full bg-[#0B0F1A] rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(((userData.pityData[selectedPack]?.s_pity_stack || 0) / GACHA_CONFIG.S_PITY_HARD) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-[#B7C2D6]">A 천장</span>
+                    <span className="text-[#9AA6C3]">
+                      {userData.pityData[selectedPack]?.a_pity_stack || 0} / {GACHA_CONFIG.A_PITY_HARD}
+                    </span>
+                  </div>
+                  <div className="w-full bg-[#0B0F1A] rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-[#B7C2D6] to-[#E0E0E0] h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(((userData.pityData[selectedPack]?.a_pity_stack || 0) / GACHA_CONFIG.A_PITY_HARD) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-[#9AA6C3] mt-3">
                 • S 천장: 60회 확정 (40회부터 확률 상승)<br />
-                • A 천장: 10회 확정<br />
-                • 10연차: A 이상 최소 1장 보장
+                • A 천장: 10회 확정 / 10연차: A 이상 최소 1장 보장<br />
+                • 팩별 천장 독립 운영 (각 팩마다 별도 천장)
               </p>
             </div>
           </div>

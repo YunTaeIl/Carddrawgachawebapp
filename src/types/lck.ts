@@ -41,9 +41,31 @@ export interface UserCard extends LCKCard {
   upgradeLevel: number;
 }
 
-export interface GachaState {
+// 🔥 팩별 천장 시스템
+export interface PackPityState {
   s_pity_stack: number; // S 천장 누적
   a_pity_stack: number; // A 천장 누적
+}
+
+// 🔥 팩별 통계
+export interface PackStatistics {
+  pulls: number; // 뽑은 횟수
+  rp_spent: number; // 소모한 RP
+}
+
+// 🔥 카드팩 타입
+export type CardPackType = 
+  | "standard"
+  | "live_pack"
+  | "year_2013" | "year_2014" | "year_2015" | "year_2016" | "year_2017"
+  | "year_2018" | "year_2019" | "year_2020" | "year_2021" | "year_2022"
+  | "year_2023" | "year_2024" | "year_2025"
+  | "position_TOP" | "position_JGL" | "position_MID" | "position_ADC" | "position_SUP";
+
+// 🔥 구버전 호환용 (deprecated)
+export interface GachaState {
+  s_pity_stack: number;
+  a_pity_stack: number;
   total_pulls: number;
 }
 
@@ -51,7 +73,9 @@ export interface UserData {
   currency: number; // RP (가챠 재화)
   shards: number; // 샤드 (중복 분해)
   ownedCards: UserCard[];
-  gachaState: GachaState;
+  gachaState: GachaState; // 🔥 deprecated - 하위 호환용
+  pityData: Record<CardPackType, PackPityState>; // 🔥 팩별 천장 데이터
+  packStatistics: Record<CardPackType, PackStatistics>; // 🔥 팩별 통계
   squad: {
     TOP: UserCard | null;
     JGL: UserCard | null;

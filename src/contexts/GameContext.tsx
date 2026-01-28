@@ -1,9 +1,9 @@
 // 게임 전역 상태 관리 (DB 동기화 포함)
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
-import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position } from "@/types/lck";
+import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position, CardPackType, PackPityState } from "@/types/lck";
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
-import { pullSingle, pullTen, updateGachaState, craftCard, initializeCardPool, CardPackType } from "@/utils/gachaEngine";
+import { pullSingle, pullTen, updatePackPityState, craftCard, initializeCardPool } from "@/utils/gachaEngine";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   updateGameDataDirect, 
@@ -58,7 +58,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // DB 저장 디바운스용
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // DB 저장 함수 (디바운스)
+  // 🔥 DB 저장 함수 (디바운스) - 팩별 천장 시스템
   const saveGameDataToDB = async (data: UserData) => {
     if (!isAuthenticated || !accessToken) {
       return;
@@ -74,6 +74,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         await updateGameDataDirect(accessToken, {
           currency: data.currency,
           shards: data.shards,
+          pity_data: data.pityData, // 🔥 JSONB
+          pack_statistics: data.packStatistics, // 🔥 JSONB
+          // deprecated (하위 호환)
           s_pity_stack: data.gachaState.s_pity_stack,
           a_pity_stack: data.gachaState.a_pity_stack,
           total_pulls: data.gachaState.total_pulls
@@ -122,16 +125,42 @@ export function GameProvider({ children }: { children: ReactNode }) {
       try {
         const gameData = await getGameDataDirect(accessToken);
         
-        // 재화 데이터만 먼저 업데이트
+        // 🔥 팩별 천장 데이터 파싱
+        let pityData = gameData.pity_data || {};
+        let packStatistics = gameData.pack_statistics || {};
+        
+        // 마이그레이션: 빈 객체면 기본값 설정
+        if (Object.keys(pityData).length === 0) {
+          const defaultData = getDefaultUserData();
+          pityData = defaultData.pityData;
+          // 기존 천장 데이터를 standard 팩으로 이전
+          pityData.standard = {
+            s_pity_stack: gameData.s_pity_stack || 0,
+            a_pity_stack: gameData.a_pity_stack || 0
+          };
+        }
+        
+        if (Object.keys(packStatistics).length === 0) {
+          const defaultData = getDefaultUserData();
+          packStatistics = defaultData.packStatistics;
+          packStatistics.standard = {
+            pulls: gameData.total_pulls || 0,
+            rp_spent: (gameData.total_pulls || 0) * 200
+          };
+        }
+        
+        // 재화 데이터 업데이트
         setUserData(prevData => ({
           ...prevData,
           currency: gameData.currency,
           shards: gameData.shards,
           lastCheckIn: gameData.last_check_in || undefined,
+          pityData,
+          packStatistics,
           gachaState: {
-            s_pity_stack: gameData.s_pity_stack,
-            a_pity_stack: gameData.a_pity_stack,
-            total_pulls: gameData.total_pulls
+            s_pity_stack: gameData.s_pity_stack || 0,
+            a_pity_stack: gameData.a_pity_stack || 0,
+            total_pulls: gameData.total_pulls || 0
           }
         }));
         
@@ -234,14 +263,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     userData.currency, 
     userData.shards, 
     userData.ownedCards.length,
-    userData.gachaState.s_pity_stack,
-    userData.gachaState.a_pity_stack,
-    userData.gachaState.total_pulls,
+    userData.pityData,
+    userData.packStatistics,
     isLoading
   ]); // 스쿼드는 의존성에서 제외 → 스쿼드 변경 시 DB 저장 안 함
 
-  // 가챠 1회 뽑기
+  // 🔥 가챠 1회 뽑기 (팩별 천장 시스템)
   const pullSingleGacha = async (packType?: CardPackType): Promise<GachaResult | null> => {
+    const pack = packType || "standard";
     const cost = packType ? GACHA_CONFIG.PACK_COSTS[packType] : GACHA_CONFIG.SINGLE_COST;
     
     if (userData.currency < cost) {
@@ -249,14 +278,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
+    // 🔥 팩별 천장 데이터 가져오기
+    const currentPityState = userData.pityData[pack] || { s_pity_stack: 0, a_pity_stack: 0 };
+    
     // 보유 카드 ID 목록
     const ownedCardIds = userData.ownedCards.map(c => c.id);
     
     // 가챠 실행
-    const result = pullSingle(userData.gachaState, ownedCardIds, packType || "standard");
+    const result = pullSingle(currentPityState, ownedCardIds, pack);
     
-    // 천장 카운터 업데이트 (배열로 감싸서 전달)
-    const updatedGachaState = updateGachaState(userData.gachaState, [result]);
+    // 🔥 팩별 천장 카운터 업데이트
+    const updatedPityState = updatePackPityState(currentPityState, [result]);
     
     // 새 카드 추가 (중복이 아닐 때만)
     const newCard: UserCard = {
@@ -270,12 +302,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ? userData.ownedCards 
       : [...userData.ownedCards, newCard];
 
+    // 🔥 팩별 통계 업데이트
+    const currentStats = userData.packStatistics[pack] || { pulls: 0, rp_spent: 0 };
+    const updatedStats = {
+      pulls: currentStats.pulls + 1,
+      rp_spent: currentStats.rp_spent + cost
+    };
+
     const newData: UserData = {
       ...userData,
       ownedCards: newCards,
       currency: userData.currency - cost,
       shards: userData.shards + result.shardsGained,
-      gachaState: updatedGachaState
+      pityData: {
+        ...userData.pityData,
+        [pack]: updatedPityState
+      },
+      packStatistics: {
+        ...userData.packStatistics,
+        [pack]: updatedStats
+      },
+      gachaState: userData.gachaState // deprecated
     };
 
     setUserData(newData);
@@ -285,11 +332,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
     }
 
-    return { ...result, card: newCard, updatedGachaState };
+    return { ...result, card: newCard };
   };
 
-  // 가챠 10연속 뽑기
+  // 🔥 가챠 10연속 뽑기 (팩별 천장 시스템)
   const pullTenGacha = async (packType?: CardPackType): Promise<GachaResult[] | null> => {
+    const pack = packType || "standard";
     const cost = packType ? GACHA_CONFIG.TEN_COSTS[packType] : GACHA_CONFIG.TEN_COSTS.standard;
     
     if (userData.currency < cost) {
@@ -297,11 +345,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
+    // 🔥 팩별 천장 데이터 가져오기
+    const currentPityState = userData.pityData[pack] || { s_pity_stack: 0, a_pity_stack: 0 };
+    
     // 보유 카드 ID 목록
     const ownedCardIds = userData.ownedCards.map(c => c.id);
     
     // 10연차 실행
-    const results = pullTen(userData.gachaState, ownedCardIds, packType || "standard");
+    const results = pullTen(currentPityState, ownedCardIds, pack);
     
     if (!results || !Array.isArray(results)) {
       toast.error("가챠 시스템 오류!");
@@ -327,15 +378,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // pullTen 내부에서 이미 천장 계산을 했으므로, 수동으로 계산
-    const finalGachaState = updateGachaState(userData.gachaState, results);
+    // 🔥 팩별 천장 카운터 업데이트
+    const finalPityState = updatePackPityState(currentPityState, results);
+
+    // 🔥 팩별 통계 업데이트
+    const currentStats = userData.packStatistics[pack] || { pulls: 0, rp_spent: 0 };
+    const updatedStats = {
+      pulls: currentStats.pulls + 10,
+      rp_spent: currentStats.rp_spent + cost
+    };
 
     const newData: UserData = {
       ...userData,
       ownedCards: newCards,
       currency: userData.currency - cost,
       shards: userData.shards + totalShards,
-      gachaState: finalGachaState
+      pityData: {
+        ...userData.pityData,
+        [pack]: finalPityState
+      },
+      packStatistics: {
+        ...userData.packStatistics,
+        [pack]: updatedStats
+      },
+      gachaState: userData.gachaState // deprecated
     };
 
     setUserData(newData);
@@ -522,24 +588,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     addCurrency
   };
 
-  // 초기 로딩 중에는 children을 렌더링하지 않음 (Provider 체인 안정화)
-  if (isLoading && cardPool.length === 0) {
-    return (
-      <GameContext.Provider value={value}>
-        <div className="flex items-center justify-center min-h-screen bg-[#0B0F1A]">
-          <div className="text-center">
-            <div className="text-2xl font-display text-[#FFB81C] mb-4">
-              초기화 중...
-            </div>
-            <div className="text-[#9AA6C3]">
-              게임 데이터를 불러오고 있습니다
-            </div>
-          </div>
-        </div>
-      </GameContext.Provider>
-    );
-  }
-
+  // 🔥 항상 children을 렌더링 (Provider 체인 안정화)
   return (
     <GameContext.Provider value={value}>
       {children}

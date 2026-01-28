@@ -88,15 +88,17 @@ export async function getUserCardsDirect(accessToken: string) {
   return allCards;
 }
 
-// 게임 데이터 업데이트
+// 🔥 게임 데이터 업데이트 (팩별 천장 시스템)
 export async function updateGameDataDirect(
   accessToken: string,
   updates: {
     currency?: number;
     shards?: number;
-    s_pity_stack?: number;
-    a_pity_stack?: number;
-    total_pulls?: number;
+    s_pity_stack?: number; // deprecated
+    a_pity_stack?: number; // deprecated
+    total_pulls?: number; // deprecated
+    pity_data?: any; // 🔥 JSONB
+    pack_statistics?: any; // 🔥 JSONB
   }
 ) {
   const supabase = createClient(
@@ -120,7 +122,7 @@ export async function updateGameDataDirect(
   const { data, error } = await supabase
     .from("user_game_data")
     .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("user_id", user.id)  // user_id를 키로 사용
+    .eq("user_id", user.id)
     .select()
     .single();
   

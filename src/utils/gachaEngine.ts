@@ -1,31 +1,8 @@
 // LCK 가챠 엔진: 확률 계산, 천장 시스템, 샤드 지급
 
-import { LCKCard, GachaState, GachaResult, GACHA_CONFIG, Grade, Position, CURRENT_LIVE_SEASON } from "@/types/lck";
+import { LCKCard, GachaResult, GACHA_CONFIG, Grade, Position, CURRENT_LIVE_SEASON, PackPityState, CardPackType } from "@/types/lck";
 import { getCardPool, getCardsByGrade } from "@/data/supabaseCards";
 import { SAMPLE_CARDS } from "@/data/sampleCards";
-
-// 카드팩 타입
-export type CardPackType = 
-  | "standard"
-  | "live_pack"       // 🔥 LIVE 전용 팩 (현재 시즌만)
-  | "year_2013"
-  | "year_2014"
-  | "year_2015"
-  | "year_2016"
-  | "year_2017"
-  | "year_2018"
-  | "year_2019"
-  | "year_2020"
-  | "year_2021"
-  | "year_2022"
-  | "year_2023"
-  | "year_2024"
-  | "year_2025"
-  | "position_TOP"
-  | "position_JGL"
-  | "position_MID"
-  | "position_ADC"
-  | "position_SUP";
 
 // 카드 풀 캐싱
 let cachedCardPool: LCKCard[] | null = null;
@@ -159,9 +136,9 @@ export function calculateSRate(s_pity_stack: number): number {
 }
 
 /**
- * 단일 가챠 뽑기
+ * 단일 가챠 뽑기 (🔥 팩별 천장 시스템)
  */
-export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packType: CardPackType = "standard"): GachaResult {
+export function pullSingle(pityState: PackPityState, ownedCardIds: string[], packType: CardPackType = "standard"): GachaResult {
   // 카드 풀이 초기화되지 않았으면 에러
   if (!cachedCardPool || cachedCardPool.length === 0) {
     throw new Error("카드 풀이 초기화되지 않았습니다. initializeCardPool()을 먼저 호출하세요.");
@@ -171,7 +148,7 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packT
   let isPity = false;
 
   // 하드 천장 체크
-  if (gachaState.s_pity_stack >= GACHA_CONFIG.S_PITY_HARD) {
+  if (pityState.s_pity_stack >= GACHA_CONFIG.S_PITY_HARD) {
     // 무조건 S 등급
     const sCards = getCardsByGradeCached("S", packType);
     if (sCards.length === 0) {
@@ -182,7 +159,7 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packT
       selectedCard = sCards[Math.floor(Math.random() * sCards.length)];
     }
     isPity = true;
-  } else if (gachaState.a_pity_stack >= GACHA_CONFIG.A_PITY_HARD) {
+  } else if (pityState.a_pity_stack >= GACHA_CONFIG.A_PITY_HARD) {
     // A 이상 확정
     const aOrAbove = [...getCardsByGradeCached("S", packType), ...getCardsByGradeCached("A", packType)];
     if (aOrAbove.length === 0) {
@@ -195,7 +172,7 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packT
     isPity = true;
   } else {
     // 일반 확률
-    const sRate = calculateSRate(gachaState.s_pity_stack);
+    const sRate = calculateSRate(pityState.s_pity_stack);
     const rand = Math.random();
     
     let grade: Grade;
@@ -237,11 +214,11 @@ export function pullSingle(gachaState: GachaState, ownedCardIds: string[], packT
 }
 
 /**
- * 10연차
+ * 10연차 (🔥 팩별 천장 시스템)
  */
-export function pullTen(gachaState: GachaState, ownedCardIds: string[], packType: CardPackType = "standard"): GachaResult[] {
+export function pullTen(pityState: PackPityState, ownedCardIds: string[], packType: CardPackType = "standard"): GachaResult[] {
   const results: GachaResult[] = [];
-  let tempState = { ...gachaState };
+  let tempState = { ...pityState };
   let tempOwnedIds = [...ownedCardIds];
   
   for (let i = 0; i < 10; i++) {
@@ -264,7 +241,6 @@ export function pullTen(gachaState: GachaState, ownedCardIds: string[], packType
       tempState.s_pity_stack++;
       tempState.a_pity_stack++;
     }
-    tempState.total_pulls++;
   }
   
   // 10연차 보장: A 이상 최소 1장
@@ -291,12 +267,12 @@ export function pullTen(gachaState: GachaState, ownedCardIds: string[], packType
 }
 
 /**
- * 가챠 상태 업데이트
+ * 가챠 상태 업데이트 (🔥 팩별 천장 시스템)
  */
-export function updateGachaState(
-  currentState: GachaState,
+export function updatePackPityState(
+  currentState: PackPityState,
   results: GachaResult[]
-): GachaState {
+): PackPityState {
   let newState = { ...currentState };
   
   for (const result of results) {
@@ -310,7 +286,6 @@ export function updateGachaState(
       newState.s_pity_stack++;
       newState.a_pity_stack++;
     }
-    newState.total_pulls++;
   }
   
   return newState;
