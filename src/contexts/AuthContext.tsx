@@ -55,41 +55,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInGoogle = async () => {
     console.log("🔵🔵🔵 signInGoogle 함수 호출됨!");
-    console.log("🔵 Supabase Client:", !!supabase);
+    console.log("🔵 Supabase URL:", Deno?.env?.get ? "SERVER" : import.meta.env.VITE_SUPABASE_URL);
     console.log("🔵 현재 URL:", window.location.href);
     
     try {
       console.log("🔵 signInWithOAuth 호출 직전...");
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const result = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://legendsmanager.com/",
-          skipBrowserRedirect: false, // 🔥 자동 리다이렉트 활성화
+          redirectTo: window.location.origin + "/",
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         },
       });
       
-      console.log("🔍 signInWithOAuth 완료!", { 
-        hasData: !!data, 
-        hasUrl: !!data?.url,
-        url: data?.url,
-        hasError: !!error,
-        error: error 
-      });
+      console.log("🔍🔍🔍 FULL RESULT:", JSON.stringify(result, null, 2));
+      console.log("🔍 data:", result.data);
+      console.log("🔍 data.url:", result.data?.url);
+      console.log("🔍 error:", result.error);
       
-      if (error) {
-        console.error("🔴 Google 로그인 에러:", error);
-        throw error;
+      if (result.error) {
+        console.error("🔴🔴🔴 Google 로그인 에러:", result.error);
+        console.error("🔴 에러 메시지:", result.error.message);
+        console.error("🔴 에러 코드:", result.error.status);
+        alert(`Google OAuth 에러: ${result.error.message}`);
+        throw result.error;
       }
       
-      // OAuth의 경우 자동으로 리다이렉트되어야 함
-      console.log("✅ OAuth URL:", data?.url);
-      console.log("⏳ 리다이렉트 대기 중...");
+      if (!result.data?.url) {
+        console.error("❌❌❌ data.url이 없습니다!");
+        alert("Google OAuth URL을 받지 못했습니다. Supabase 설정을 확인하세요.");
+        throw new Error("No OAuth URL returned");
+      }
+      
+      console.log("✅ OAuth URL 받음:", result.data.url);
+      console.log("🚀🚀🚀 리다이렉트 시작...");
+      
+      // 명시적 리다이렉트
+      window.location.href = result.data.url;
       
     } catch (err: any) {
       console.error("💥💥💥 예외 발생:", err);
-      console.error("에러 타입:", typeof err);
-      console.error("에러 내용:", JSON.stringify(err, null, 2));
+      console.error("에러:", err);
       throw err;
     }
   };
