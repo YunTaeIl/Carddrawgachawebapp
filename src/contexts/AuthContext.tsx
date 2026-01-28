@@ -54,32 +54,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInGoogle = async () => {
-    console.log("🔵 Google 로그인 시도 중...");
+    console.log("🔵🔵🔵 signInGoogle 함수 호출됨!");
+    console.log("🔵 Supabase Client:", !!supabase);
+    console.log("🔵 현재 URL:", window.location.href);
     
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "https://legendsmanager.com/", // 🔥 프로덕션 URL
-      },
-    });
-    
-    console.log("🔍 signInWithOAuth 응답:", { data, error });
-    
-    if (error) {
-      console.error("🔴 Google 로그인 에러:", error);
-      console.error("🔴 에러 메시지:", error.message);
-      console.error("🔴 에러 상태:", error.status);
-      throw error;
-    }
-    
-    console.log("✅ Google OAuth 리다이렉트 URL:", data?.url);
-    
-    // 🔥 수동 리다이렉트
-    if (data?.url) {
-      console.log("🚀 리다이렉트 시작:", data.url);
-      window.location.href = data.url;
-    } else {
-      console.error("❌ data.url이 없습니다!");
+    try {
+      console.log("🔵 signInWithOAuth 호출 직전...");
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "https://legendsmanager.com/",
+          skipBrowserRedirect: false, // 🔥 자동 리다이렉트 활성화
+        },
+      });
+      
+      console.log("🔍 signInWithOAuth 완료!", { 
+        hasData: !!data, 
+        hasUrl: !!data?.url,
+        url: data?.url,
+        hasError: !!error,
+        error: error 
+      });
+      
+      if (error) {
+        console.error("🔴 Google 로그인 에러:", error);
+        throw error;
+      }
+      
+      // OAuth의 경우 자동으로 리다이렉트되어야 함
+      console.log("✅ OAuth URL:", data?.url);
+      console.log("⏳ 리다이렉트 대기 중...");
+      
+    } catch (err: any) {
+      console.error("💥💥💥 예외 발생:", err);
+      console.error("에러 타입:", typeof err);
+      console.error("에러 내용:", JSON.stringify(err, null, 2));
+      throw err;
     }
   };
 
@@ -134,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useAuth must be used within AuthProvider");
   }
   return context;

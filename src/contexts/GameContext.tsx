@@ -48,7 +48,9 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, accessToken } = useAuth();
+  const auth = useAuth();
+  const isAuthenticated = auth?.isAuthenticated ?? false;
+  const accessToken = auth?.accessToken ?? null;
   const [userData, setUserData] = useState<UserData>(getDefaultUserData());
   const [isLoading, setIsLoading] = useState(true);
   const [cardPool, setCardPool] = useState<LCKCard[]>([]);

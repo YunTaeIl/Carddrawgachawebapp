@@ -15,12 +15,15 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
+    console.log("🟢🟢🟢 handleGoogleLogin 호출됨!");
     setIsLoading(true);
     try {
+      console.log("🟢 signInGoogle 호출 직전...");
       await signInGoogle();
+      console.log("🟢 signInGoogle 호출 완료 (리다이렉트 대기)");
       // OAuth 리다이렉트 발생
     } catch (error: any) {
-      console.error("❌ Google 로그인 실패:", error);
+      console.error("❌❌❌ Google 로그인 실패:", error);
       console.error("에러 메시지:", error?.message);
       console.error("에러 상세:", JSON.stringify(error, null, 2));
       toast.error(`Google 로그인 실패: ${error?.message || "알 수 없는 오류"}`);
@@ -57,6 +60,7 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
 
       <div className="space-y-3">
         <Button
+          type="button"
           onClick={handleGoogleLogin}
           disabled={isLoading}
           className="w-full bg-white hover:bg-gray-100 text-gray-800 font-bold py-6"
@@ -83,6 +87,7 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
         </Button>
 
         <Button
+          type="button"
           onClick={handleKakaoLogin}
           disabled={isLoading}
           className="w-full bg-[#FEE500] hover:bg-[#FEE500]/80 text-[#000000] font-bold py-6"
