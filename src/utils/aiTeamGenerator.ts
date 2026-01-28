@@ -63,29 +63,213 @@ const AI_TEAM_NAMES = [
   "Team India",
 ];
 
-// 🏆 레전드 리그 전용 역대 명문팀
-const LEGEND_TEAMS = [
-  "2013 SKT T1 K",
-  "2014 삼성화이트",
-  "2015 SKT T1",
-  "2016 SKT T1",
-  "2017 삼성갤럭시",
-  "2020 담원",
-  "2022 DRX",
-  "2023 T1",
-  "2024 T1",
-  "2025 T1",
-  "2019 GEN.G",
-  "2020 GEN.G",
-  "2021 GEN.G",
-  "2025 GEN.G",
-  "2019 그리핀",
-  "2021 담원",
-  "2017 KT",
-  "2023 KT",
-  "2025 KT",
-  "2017 롱주게이밍",
-  "2016 락스타이거즈"
+// 🏆 레전드 리그 전용 역대 명문팀 로스터 (실제 카드 ID 기반)
+interface LegendTeamRoster {
+  displayName: string;
+  playerIds: [string, string, string, string, string]; // [TOP, JGL, MID, ADC, SUP]
+}
+
+const LEGEND_TEAMS_ROSTERS: LegendTeamRoster[] = [
+  {
+    displayName: "2013 SKT T1 K",
+    playerIds: [
+      "2013_SKTelecomT1K_Impact",
+      "2013_SKTelecomT1K_Bengi",
+      "2013_SKTelecomT1K_Faker",
+      "2013_SKTelecomT1K_Piglet",
+      "2013_SKTelecomT1K_PoohManDu"
+    ]
+  },
+  {
+    displayName: "2014 삼성화이트",
+    playerIds: [
+      "2014_SamsungWhite_Looper",
+      "2014_SamsungWhite_DanDy",
+      "2014_SamsungWhite_PawN",
+      "2014_SamsungWhite_imp",
+      "2014_SamsungWhite_Mata"
+    ]
+  },
+  {
+    displayName: "2015 SKT T1",
+    playerIds: [
+      "2015_SKTelecomT1_MaRin",
+      "2015_SKTelecomT1_Bengi",
+      "2015_SKTelecomT1_Faker",
+      "2015_SKTelecomT1_Bang",
+      "2015_SKTelecomT1_Wolf"
+    ]
+  },
+  {
+    displayName: "2016 SKT T1",
+    playerIds: [
+      "2016_SKTelecomT1_Duke",
+      "2016_SKTelecomT1_Bengi",
+      "2016_SKTelecomT1_Faker",
+      "2016_SKTelecomT1_Bang",
+      "2016_SKTelecomT1_Wolf"
+    ]
+  },
+  {
+    displayName: "2017 삼성갤럭시",
+    playerIds: [
+      "2017_SamsungGalaxy_CuVee",
+      "2017_SamsungGalaxy_Ambition",
+      "2017_SamsungGalaxy_Crown",
+      "2017_SamsungGalaxy_Ruler",
+      "2017_SamsungGalaxy_CoreJJ"
+    ]
+  },
+  {
+    displayName: "2020 담원",
+    playerIds: [
+      "2020_DAMWONGaming_Nuguri",
+      "2020_DAMWONGaming_Canyon",
+      "2020_DAMWONGaming_ShowMaker",
+      "2020_DAMWONGaming_Ghost",
+      "2020_DAMWONGaming_BeryL"
+    ]
+  },
+  {
+    displayName: "2022 DRX",
+    playerIds: [
+      "2022_DRX_Kingen",
+      "2022_DRX_Pyosik",
+      "2022_DRX_Zeka",
+      "2022_DRX_Deft",
+      "2022_DRX_BeryL"
+    ]
+  },
+  {
+    displayName: "2023 T1",
+    playerIds: [
+      "2023_T1_Zeus",
+      "2023_T1_Oner",
+      "2023_T1_Faker",
+      "2023_T1_Gumayusi",
+      "2023_T1_Keria"
+    ]
+  },
+  {
+    displayName: "2024 T1",
+    playerIds: [
+      "2024_T1_Zeus",
+      "2024_T1_Oner",
+      "2024_T1_Faker",
+      "2024_T1_Gumayusi",
+      "2024_T1_Keria"
+    ]
+  },
+  {
+    displayName: "2025 T1",
+    playerIds: [
+      "2025_T1_Doran",
+      "2025_T1_Oner",
+      "2025_T1_Faker",
+      "2025_T1_Gumayusi",
+      "2025_T1_Keria"
+    ]
+  },
+  {
+    displayName: "2020 GEN.G",
+    playerIds: [
+      "2020_GenG_Rascal",
+      "2020_GenG_Clid",
+      "2020_GenG_Bdd",
+      "2020_GenG_Ruler",
+      "2020_GenG_Life"
+    ]
+  },
+  {
+    displayName: "2021 GEN.G",
+    playerIds: [
+      "2021_GenG_Rascal",
+      "2021_GenG_Clid",
+      "2021_GenG_Bdd",
+      "2021_GenG_Ruler",
+      "2021_GenG_Life"
+    ]
+  },
+  {
+    displayName: "2025 GEN.G",
+    playerIds: [
+      "2025_GenG_Kiin",
+      "2025_GenG_Canyon",
+      "2025_GenG_Chovy",
+      "2025_GenG_Ruler",
+      "2025_GenG_Duro"
+    ]
+  },
+  {
+    displayName: "2019 그리핀",
+    playerIds: [
+      "2019_Griffin_Doran",
+      "2019_Griffin_Tarzan",
+      "2019_Griffin_Chovy",
+      "2019_Griffin_Viper",
+      "2019_Griffin_Lehends"
+    ]
+  },
+  {
+    displayName: "2021 담원",
+    playerIds: [
+      "2021_DWGKIA_Khan",
+      "2021_DWGKIA_Canyon",
+      "2021_DWGKIA_ShowMaker",
+      "2021_DWGKIA_Ghost",
+      "2021_DWGKIA_BeryL"
+    ]
+  },
+  {
+    displayName: "2017 KT",
+    playerIds: [
+      "2017_KTRolster_Smeb",
+      "2017_KTRolster_Score",
+      "2017_KTRolster_PawN",
+      "2017_KTRolster_Deft",
+      "2017_KTRolster_Mata"
+    ]
+  },
+  {
+    displayName: "2023 KT",
+    playerIds: [
+      "2023_KTRolster_Kiin",
+      "2023_KTRolster_Cuzz",
+      "2023_KTRolster_Bdd",
+      "2023_KTRolster_Aiming",
+      "2023_KTRolster_Lehends"
+    ]
+  },
+  {
+    displayName: "2025 KT",
+    playerIds: [
+      "2025_KTRolster_PerfecT",
+      "2025_KTRolster_Cuzz",
+      "2025_KTRolster_Bdd",
+      "2025_KTRolster_deokdam",
+      "2025_KTRolster_Peter"
+    ]
+  },
+  {
+    displayName: "2017 롱주게이밍",
+    playerIds: [
+      "2017_LongzhuGaming_Khan",
+      "2017_LongzhuGaming_Cuzz",
+      "2017_LongzhuGaming_Bdd",
+      "2017_LongzhuGaming_PraY",
+      "2017_LongzhuGaming_GorillA"
+    ]
+  },
+  {
+    displayName: "2016 락스타이거즈",
+    playerIds: [
+      "2016_ROXTigers_Smeb",
+      "2016_ROXTigers_Peanut",
+      "2016_ROXTigers_Kuro",
+      "2016_ROXTigers_PraY",
+      "2016_ROXTigers_GorillA"
+    ]
+  }
 ];
 
 // ============================================================
@@ -499,85 +683,72 @@ export function createPlayerTeam(squad: Team["squad"]): Team {
 
 /**
  * 🏆 레전드 리그: 역대 명문팀 중 랜덤 9팀 선택
- * - 21개 명문팀 중 9개를 랜덤으로 선택
- * - 각 팀은 해당 연도의 실제 선수들로 구성 (S/A급 위주)
+ * - 20개 명문팀 중 9개를 랜덤으로 선택
+ * - 각 팀은 실제 카드 ID로 정확한 로스터 구성
  */
 function generateLegendTeams(allCards: LCKCard[]): Team[] {
-  // 1) 21개 팀 중 랜덤 9개 선택
-  const shuffled = [...LEGEND_TEAMS].sort(() => Math.random() - 0.5);
+  console.log("🏆 레전드 팀 생성 시작...");
+  console.log("전체 카드 수:", allCards.length);
+  
+  // 카드 ID → 카드 객체 맵 생성 (빠른 조회)
+  const cardMap = new Map<string, LCKCard>();
+  for (const card of allCards) {
+    cardMap.set(card.id, card);
+  }
+  
+  // 1) 20개 팀 중 랜덤 9개 선택
+  const shuffled = [...LEGEND_TEAMS_ROSTERS].sort(() => Math.random() - 0.5);
   const selectedTeams = shuffled.slice(0, 9);
   
   // 2) 각 팀별 로스터 생성
   const aiTeams: Team[] = [];
-  const usedPlayerNames = new Set<string>();
   
   for (let i = 0; i < selectedTeams.length; i++) {
-    const teamName = selectedTeams[i];
+    const teamData = selectedTeams[i];
     const teamId = `legend_team_${i}`;
     
-    // 팀명에서 연도와 팀명 추출
-    const match = teamName.match(/^(\d{4})\s+(.+)$/);
-    if (!match) continue;
+    console.log(`\n🔍 팀 ${i + 1}: ${teamData.displayName}`);
     
-    const year = match[1];
-    const originalTeam = match[2];
+    // 포지션별 카드 ID로 직접 조회
+    const [topId, jglId, midId, adcId, supId] = teamData.playerIds;
     
-    // 해당 연도 + 팀명으로 카드 필터링 (S/A급 우선)
-    const teamCards = allCards.filter(card => 
-      card.year.toString() === year && 
-      card.team === originalTeam &&
-      !isLiveCard(card) &&
-      (card.grade === "S" || card.grade === "A" || card.grade === "B")
-    );
-    
-    // 포지션별 최고 카드 선택
     const squad: Team["squad"] = {
-      TOP: null,
-      JGL: null,
-      MID: null,
-      ADC: null,
-      SUP: null
+      TOP: cardMap.get(topId) || null,
+      JGL: cardMap.get(jglId) || null,
+      MID: cardMap.get(midId) || null,
+      ADC: cardMap.get(adcId) || null,
+      SUP: cardMap.get(supId) || null
     };
     
-    for (const position of ["TOP", "JGL", "MID", "ADC", "SUP"] as Position[]) {
-      const positionCards = teamCards
-        .filter(c => c.position === position && !usedPlayerNames.has(c.name))
-        .sort((a, b) => b.stats.ovr - a.stats.ovr);
+    // 각 포지션 로그
+    const positions: (keyof Team["squad"])[] = ["TOP", "JGL", "MID", "ADC", "SUP"];
+    const ids = [topId, jglId, midId, adcId, supId];
+    
+    for (let j = 0; j < positions.length; j++) {
+      const position = positions[j];
+      const cardId = ids[j];
+      const card = squad[position];
       
-      if (positionCards.length > 0) {
-        const selected = positionCards[0];
-        squad[position] = selected;
-        usedPlayerNames.add(selected.name);
+      if (card) {
+        console.log(`  ✅ ${position}: ${card.name} (${card.grade}급, OVR ${card.stats.ovr})`);
       } else {
-        // 해당 포지션에 카드가 없으면 다른 연도에서 같은 팀 카드 찾기
-        const fallbackCards = allCards
-          .filter(c => 
-            c.position === position && 
-            c.team === originalTeam && 
-            !usedPlayerNames.has(c.name) &&
-            !isLiveCard(c) &&
-            (c.grade === "S" || c.grade === "A" || c.grade === "B")
-          )
-          .sort((a, b) => b.stats.ovr - a.stats.ovr);
-        
-        if (fallbackCards.length > 0) {
-          const selected = fallbackCards[0];
-          squad[position] = selected;
-          usedPlayerNames.add(selected.name);
-        }
+        console.error(`  ❌ ${position}: 카드 ID "${cardId}" 찾을 수 없음!`);
       }
     }
     
+    // 팀 전력 계산
     const stats = calculateTeamStats(squad);
     
     aiTeams.push({
       id: teamId,
-      name: teamName,
+      name: teamData.displayName,
       isPlayer: false,
       squad,
       stats
     });
   }
+  
+  console.log("\n✅ 레전드 팀 생성 완료:", aiTeams.length, "팀");
   
   return aiTeams;
 }
