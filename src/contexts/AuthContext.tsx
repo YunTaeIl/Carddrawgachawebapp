@@ -54,53 +54,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInGoogle = async () => {
-    const log = (msg: string, data?: any) => {
-      console.log(msg, data);
-      const logs = JSON.parse(localStorage.getItem("auth_debug_logs") || "[]");
-      logs.push({ time: new Date().toISOString(), msg, data });
-      localStorage.setItem("auth_debug_logs", JSON.stringify(logs));
-    };
+    console.log("🔵 Google 로그인 시도 중...");
+    console.log("🔵 현재 URL:", window.location.origin);
     
-    log("🔵 Google 로그인 시도 중...");
-    log("🔵 현재 URL:", window.location.origin);
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}`,
+      },
+    });
     
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}`,
-        },
-      });
-      
-      log("🔍 signInWithOAuth 응답:", { 
-        hasData: !!data, 
-        hasUrl: !!data?.url, 
-        url: data?.url,
-        hasError: !!error,
-        errorMsg: error?.message 
-      });
-      
-      if (error) {
-        log("🔴 Google 로그인 에러:", {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
-        throw error;
-      }
-      
-      if (data?.url) {
-        log("🚀 리다이렉트 시작:", data.url);
-        window.location.href = data.url;
-      } else {
-        log("❌ data.url이 없습니다!");
-      }
-    } catch (err: any) {
-      log("💥 예외 발생:", {
-        message: err?.message,
-        stack: err?.stack
-      });
-      throw err;
+    console.log("🔍 signInWithOAuth 응답:", { data, error });
+    
+    if (error) {
+      console.error("🔴 Google 로그인 에러:", error);
+      console.error("🔴 에러 메시지:", error.message);
+      console.error("🔴 에러 상태:", error.status);
+      throw error;
+    }
+    
+    console.log("✅ Google OAuth 리다이렉트 URL:", data?.url);
+    console.log("✅ 리다이렉트 실행 전...");
+    
+    // 🔥 수동 리다이렉트 (자동 리다이렉트가 안 될 경우 대비)
+    if (data?.url) {
+      console.log("🚀 리다이렉트 시작:", data.url);
+      window.location.href = data.url;
+    } else {
+      console.error("❌ data.url이 없습니다!");
     }
   };
 

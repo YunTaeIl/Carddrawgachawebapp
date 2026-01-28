@@ -156,32 +156,8 @@ function AppContent() {
     }
   };
 
-  // 🔍 디버그 로그 확인
-  React.useEffect(() => {
-    const logs = localStorage.getItem("auth_debug_logs");
-    if (logs) {
-      console.log("🔍 저장된 인증 로그:", JSON.parse(logs));
-    }
-  }, []);
-
   return (
     <>
-      {/* 🔍 디버그 버튼 */}
-      <button
-        onClick={() => {
-          const logs = localStorage.getItem("auth_debug_logs");
-          if (logs) {
-            alert(JSON.stringify(JSON.parse(logs), null, 2));
-            localStorage.removeItem("auth_debug_logs");
-          } else {
-            alert("로그 없음");
-          }
-        }}
-        className="fixed bottom-4 right-4 z-50 bg-purple-600 text-white px-4 py-2 rounded shadow-lg text-xs"
-      >
-        🔍 인증 로그 보기
-      </button>
-      
       {/* shared-squad 페이지가 아닐 때만 사이드바 표시 */}
       {currentPage !== "shared-squad" && (
         <Sidebar
