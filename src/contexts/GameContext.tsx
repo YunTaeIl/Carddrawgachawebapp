@@ -48,17 +48,7 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  // 🔥 useAuth가 AuthProvider 내부에서만 작동하도록 에러 처리
-  let isAuthenticated = false;
-  let accessToken: string | null = null;
-  
-  try {
-    const auth = useAuth();
-    isAuthenticated = auth.isAuthenticated;
-    accessToken = auth.accessToken;
-  } catch (error) {
-    console.warn("⚠️ AuthProvider가 아직 마운트되지 않았습니다. 게스트 모드로 실행합니다.");
-  }
+  const { isAuthenticated, accessToken } = useAuth();
   const [userData, setUserData] = useState<UserData>(getDefaultUserData());
   const [isLoading, setIsLoading] = useState(true);
   const [cardPool, setCardPool] = useState<LCKCard[]>([]);
