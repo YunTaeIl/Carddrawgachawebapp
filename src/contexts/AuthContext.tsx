@@ -27,12 +27,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // 🔐 user_profiles에서 is_admin 확인
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('is_admin')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error("Admin status check error:", error);
+        setIsAdmin(false);
+        return;
+      }
+      
+      setIsAdmin(data?.is_admin ?? false);
+    } catch (error) {
+      console.error("Admin check failed:", error);
+      setIsAdmin(false);
+    }
+  };
 
   useEffect(() => {
     // 초기 세션 확인
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAccessToken(session?.access_token ?? null);
+      
+      // 유저가 있으면 admin 상태 체크
+      if (session?.user?.id) {
+        checkAdminStatus(session.user.id);
+      }
+      
       setIsLoading(false);
     }).catch((error) => {
       console.error("Session error:", error);
@@ -41,16 +70,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 인증 상태 변경 리스너
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
+      const newUser = session?.user ?? null;
+      setUser(newUser);
       setAccessToken(session?.access_token ?? null);
       
+      // 유저가 있으면 admin 상태 체크
+      if (session?.user?.id) {
+        checkAdminStatus(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
+      
       // 로그아웃 이벤트 또는 세션 만료 시 localStorage 클리어
-      if (event === 'SIGNED_OUT' || (!session && user)) {
+      if (event === 'SIGNED_OUT' || !session) {
         localStorage.clear();
       }
     });
 
     return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const signInGoogle = async () => {
@@ -141,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accessToken,
         isLoading,
         isAuthenticated: !!user,
-        isAdmin: user?.email === "taeil710@naver.com",
+        isAdmin,
         signInGoogle,
         signInKakao,
         signOut,

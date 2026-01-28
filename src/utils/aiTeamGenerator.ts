@@ -63,6 +63,31 @@ const AI_TEAM_NAMES = [
   "Team India",
 ];
 
+// 🏆 레전드 리그 전용 역대 명문팀
+const LEGEND_TEAMS = [
+  "2013 SKT T1 K",
+  "2014 삼성화이트",
+  "2015 SKT T1",
+  "2016 SKT T1",
+  "2017 삼성갤럭시",
+  "2020 담원",
+  "2022 DRX",
+  "2023 T1",
+  "2024 T1",
+  "2025 T1",
+  "2019 GEN.G",
+  "2020 GEN.G",
+  "2021 GEN.G",
+  "2025 GEN.G",
+  "2019 그리핀",
+  "2021 담원",
+  "2017 KT",
+  "2023 KT",
+  "2025 KT",
+  "2017 롱주게이밍",
+  "2016 락스타이거즈"
+];
+
 // ============================================================
 // 3. 핵심 함수: AI 로스터 생성
 // ============================================================
@@ -79,6 +104,11 @@ export function generateAITeams(
   leagueType: LeagueType,
   playerSquad: Team["squad"]
 ): Team[] {
+  // 🏆 레전드 리그는 역대 명문팀 중 랜덤 9팀 선택
+  if (leagueType === "legend") {
+    return generateLegendTeams(allCards);
+  }
+  
   // 1) 리그별 후보 풀 구축함
   const candidatePool = buildCandidatePool(leagueType, allCards);
   
@@ -461,4 +491,93 @@ export function createPlayerTeam(squad: Team["squad"]): Team {
     squad,
     stats
   };
+}
+
+// ============================================================
+// 10. 레전드 리그 전용 팀 생성
+// ============================================================
+
+/**
+ * 🏆 레전드 리그: 역대 명문팀 중 랜덤 9팀 선택
+ * - 21개 명문팀 중 9개를 랜덤으로 선택
+ * - 각 팀은 해당 연도의 실제 선수들로 구성 (S/A급 위주)
+ */
+function generateLegendTeams(allCards: LCKCard[]): Team[] {
+  // 1) 21개 팀 중 랜덤 9개 선택
+  const shuffled = [...LEGEND_TEAMS].sort(() => Math.random() - 0.5);
+  const selectedTeams = shuffled.slice(0, 9);
+  
+  // 2) 각 팀별 로스터 생성
+  const aiTeams: Team[] = [];
+  const usedPlayerNames = new Set<string>();
+  
+  for (let i = 0; i < selectedTeams.length; i++) {
+    const teamName = selectedTeams[i];
+    const teamId = `legend_team_${i}`;
+    
+    // 팀명에서 연도와 팀명 추출
+    const match = teamName.match(/^(\d{4})\s+(.+)$/);
+    if (!match) continue;
+    
+    const year = match[1];
+    const originalTeam = match[2];
+    
+    // 해당 연도 + 팀명으로 카드 필터링 (S/A급 우선)
+    const teamCards = allCards.filter(card => 
+      card.year.toString() === year && 
+      card.team === originalTeam &&
+      !isLiveCard(card) &&
+      (card.grade === "S" || card.grade === "A" || card.grade === "B")
+    );
+    
+    // 포지션별 최고 카드 선택
+    const squad: Team["squad"] = {
+      TOP: null,
+      JGL: null,
+      MID: null,
+      ADC: null,
+      SUP: null
+    };
+    
+    for (const position of ["TOP", "JGL", "MID", "ADC", "SUP"] as Position[]) {
+      const positionCards = teamCards
+        .filter(c => c.position === position && !usedPlayerNames.has(c.name))
+        .sort((a, b) => b.stats.ovr - a.stats.ovr);
+      
+      if (positionCards.length > 0) {
+        const selected = positionCards[0];
+        squad[position] = selected;
+        usedPlayerNames.add(selected.name);
+      } else {
+        // 해당 포지션에 카드가 없으면 다른 연도에서 같은 팀 카드 찾기
+        const fallbackCards = allCards
+          .filter(c => 
+            c.position === position && 
+            c.team === originalTeam && 
+            !usedPlayerNames.has(c.name) &&
+            !isLiveCard(c) &&
+            (c.grade === "S" || c.grade === "A" || c.grade === "B")
+          )
+          .sort((a, b) => b.stats.ovr - a.stats.ovr);
+        
+        if (fallbackCards.length > 0) {
+          const selected = fallbackCards[0];
+          squad[position] = selected;
+          usedPlayerNames.add(selected.name);
+        }
+      }
+    }
+    
+    const stats = calculateTeamStats(squad);
+    
+    aiTeams.push({
+      id: teamId,
+      name: teamName,
+      isPlayer: false,
+      squad,
+      stats
+    });
+  }
+  
+  return aiTeams;
 }
