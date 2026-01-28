@@ -116,6 +116,11 @@ export function MatchSimulationPage({
   
   const winner = simulation.winnerId === homeTeam.id ? homeTeam : awayTeam;
   const isPlayerWin = simulation.winnerId === currentLeague?.playerTeamId;
+  
+  // 대역전승 판정: 골드가 뒤졌는데 승리한 경우
+  const goldLead = simulation.state.goldLead;
+  const isHomeWin = simulation.winnerId === homeTeam.id;
+  const isComebackVictory = (isHomeWin && goldLead < -3) || (!isHomeWin && goldLead > 3);
 
   // 팀 로고 fallback
   const getTeamLogo = (teamName: string) => {
@@ -544,6 +549,13 @@ export function MatchSimulationPage({
               {isPlayerWin ? 'VICTORY' : 'DEFEAT'}
             </h2>
             
+            {/* 대역전승 메시지 */}
+            {isComebackVictory && isPlayerWin && (
+              <div className="mb-4 bg-gradient-to-r from-purple-500/30 to-pink-500/30 border-2 border-purple-400 rounded-xl px-6 py-3 animate-pulse">
+                <p className="text-2xl font-bold text-purple-300">⚡ 대역전승! ⚡</p>
+              </div>
+            )}
+            
             <p className="text-2xl text-white font-bold mb-2">{getKoreanTeamName(winner.name)} 승리</p>
             <p className="text-base text-slate-300 mb-8">
               게임 시간: {formatGameTime(gameTime)}
@@ -572,6 +584,12 @@ export function MatchSimulationPage({
                     <span className="text-xs text-slate-500">바론</span>
                     <span className="text-lg font-bold text-blue-400">{simulation.state.barons.home}</span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">골드</span>
+                    <span className="text-lg font-bold text-amber-400">
+                      {goldLead > 0 ? `+${goldLead.toFixed(1)}k` : goldLead < 0 ? `${goldLead.toFixed(1)}k` : '0.0k'}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="text-center">
@@ -594,6 +612,12 @@ export function MatchSimulationPage({
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-slate-500">바론</span>
                     <span className="text-lg font-bold text-red-400">{simulation.state.barons.away}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500">골드</span>
+                    <span className="text-lg font-bold text-amber-400">
+                      {goldLead < 0 ? `+${Math.abs(goldLead).toFixed(1)}k` : goldLead > 0 ? `-${goldLead.toFixed(1)}k` : '0.0k'}
+                    </span>
                   </div>
                 </div>
               </div>
