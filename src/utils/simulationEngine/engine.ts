@@ -59,35 +59,7 @@ function applyTeamSynergies(team: Team): Team {
     const synergies = calculateSynergies(team.squad);
     const cardBonuses = calculateCardSynergyBonuses(team.squad, synergies);
     
-    // 🔥 [1] 시너지 보너스 키 매칭 검증 로그
     const deployedCards = Object.values(team.squad).filter(c => c !== null);
-    console.log(`[SYNERGY] 팀: ${team.name}`);
-    console.log("[SYNERGY] SQUAD IDS:", deployedCards.map(c => c!.id));
-    console.log("[SYNERGY] BONUS KEYS:", Object.keys(cardBonuses));
-    
-    // 시너지로 인한 스탯 보너스 계산
-    let synergyOVRBonus = 0;
-    let synergyMechanicsBonus = 0;
-    let synergyLaningBonus = 0;
-    let synergyTeamfightBonus = 0;
-    let synergyMacroBonus = 0;
-    let synergyClutchBonus = 0;
-    
-    deployedCards.forEach(card => {
-      if (!card) return;
-      const bonus = cardBonuses[card.id];
-      console.log(`[SYNERGY] MATCH? ${card.id} =>`, bonus ? `✅ OVR+${bonus.ovr}` : "❌ undefined");
-      if (bonus) {
-        synergyOVRBonus += bonus.ovr || 0;
-        synergyMechanicsBonus += bonus.mechanics || 0;
-        synergyLaningBonus += bonus.laning || 0;
-        synergyTeamfightBonus += bonus.teamfight || 0;
-        synergyMacroBonus += bonus.macro || 0;
-        synergyClutchBonus += bonus.clutch || 0;
-      }
-    });
-    
-    console.log(`[SYNERGY] 총 시너지 보너스 OVR: ${synergyOVRBonus}`);
     
     // 각 카드에 시너지 적용
     const updatedSquad = { ...team.squad };
@@ -136,23 +108,8 @@ function applyTeamSynergies(team: Team): Team {
       }
     });
     
-    // 🔥 NaN/undefined 검증 로그
-    console.log(`[SYNERGY] 재계산된 팀 스탯:`, {
-      totalOVR,
-      mechanics: totalMechanics,
-      laning: totalLaning,
-      teamfight: totalTeamfight,
-      macro: totalMacro,
-      clutch: totalClutch
-    });
-    
-    if (!Number.isFinite(totalOVR)) {
-      console.error(`[SYNERGY] ⚠️ NaN 발견! totalOVR=${totalOVR}, 원본=${team.stats.totalOVR}`);
-      totalOVR = (team.stats.totalOVR || 0) + synergyOVRBonus;
-    }
-    
     // 시너지가 적용된 팀 스탯 + 개별 카드 스탯 반환
-    const result = {
+    return {
       ...team,
       squad: updatedSquad,
       stats: {
@@ -164,17 +121,6 @@ function applyTeamSynergies(team: Team): Team {
         clutch: totalClutch
       }
     };
-    
-    console.log(`[SYNERGY] ✅ ${team.name} 최종 스탯 (시너지 적용 완료):`, {
-      totalOVR,
-      mechanics: totalMechanics,
-      laning: totalLaning,
-      teamfight: totalTeamfight,
-      macro: totalMacro,
-      clutch: totalClutch
-    });
-    
-    return result;
   } catch (error) {
     console.error("팀 시너지 적용 오류:", error);
     return team; // 오류 시 원본 팀 반환
@@ -192,17 +138,8 @@ export function initializeGame(
   awayPlan: CoachPlan
 ): GameSimulation {
   // 시너지 적용된 팀 스탯 계산
-  console.log(`\n========== 세트 ${setNumber} 시뮬레이션 시작 ==========`);
-  console.log(`홈: ${homeTeam.name} (기본 OVR: ${homeTeam.stats.totalOVR})`);
-  console.log(`원정: ${awayTeam.name} (기본 OVR: ${awayTeam.stats.totalOVR})`);
-  
   const homeTeamWithSynergy = applyTeamSynergies(homeTeam);
   const awayTeamWithSynergy = applyTeamSynergies(awayTeam);
-  
-  console.log(`\n✅ 시너지 적용 완료:`);
-  console.log(`홈: ${homeTeamWithSynergy.name} - 최종 OVR: ${homeTeamWithSynergy.stats.totalOVR} (${homeTeamWithSynergy.stats.totalOVR > homeTeam.stats.totalOVR ? '+' : ''}${homeTeamWithSynergy.stats.totalOVR - homeTeam.stats.totalOVR})`);
-  console.log(`원정: ${awayTeamWithSynergy.name} - 최종 OVR: ${awayTeamWithSynergy.stats.totalOVR} (${awayTeamWithSynergy.stats.totalOVR > awayTeam.stats.totalOVR ? '+' : ''}${awayTeamWithSynergy.stats.totalOVR - awayTeam.stats.totalOVR})`);
-  console.log(`OVR 차이: ${Math.abs(homeTeamWithSynergy.stats.totalOVR - awayTeamWithSynergy.stats.totalOVR)} (${homeTeamWithSynergy.stats.totalOVR > awayTeamWithSynergy.stats.totalOVR ? '홈 우세' : '원정 우세'})\n`);
   
   return {
     setNumber,
@@ -561,9 +498,6 @@ function weightedRandom<T>(items: T[], weights: number[]): T | null {
 function executeEvent(game: GameSimulation, eventType: GameEventType, time: number): GameEvent {
   const config = EVENT_CONFIGS[eventType];
   
-  console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  console.log(`⏱️  시간: ${Math.floor(time / 60)}분 ${time % 60}초`);
-  
   // 승패 결정
   const winSide = decideEventWinner(game, eventType);
   const success = true; // 일단 모두 성공으로 (실패 로직은 확장 가능)
@@ -589,11 +523,6 @@ function executeEvent(game: GameSimulation, eventType: GameEventType, time: numb
   if (goldSwing > 1000) impactTags.push("major");
   if (killCount && killCount >= 3) impactTags.push("multi_kill");
   
-  console.log(`💰 골드 스윙: ${goldSwing.toFixed(0)}G`);
-  console.log(`💀 킬 수: ${killCount}`);
-  console.log(`📢 ${text}`);
-  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
-  
   return {
     time,
     type: eventType,
@@ -608,15 +537,9 @@ function executeEvent(game: GameSimulation, eventType: GameEventType, time: numb
 function decideEventWinner(game: GameSimulation, eventType: GameEventType): "home" | "away" {
   const config = EVENT_CONFIGS[eventType];
   
-  console.log(`\n🎲 [EVENT] ${eventType} 승자 결정 중...`);
-  console.log(`⚔️ ${game.homeTeam.name} (OVR: ${game.homeTeam.stats.totalOVR}) vs ${game.awayTeam.name} (OVR: ${game.awayTeam.stats.totalOVR})`);
-  
   // 확률 계산
   const factors = calculateProbabilityFactors(game, eventType);
   const totalScore = Object.values(factors).reduce((sum, val) => sum + val, 0);
-  
-  console.log(`📊 확률 요소:`, factors);
-  console.log(`📈 Total Score: ${totalScore.toFixed(2)}`);
   
   // 🔥 스탯 차이를 승률로 변환 (스케일링)
   // 스탯 차이 50 → 승률 약 75% (25% 차이)
@@ -627,17 +550,8 @@ function decideEventWinner(game: GameSimulation, eventType: GameEventType): "hom
   // 🔥 NaN 방어
   const safeProb = Number.isFinite(homeWinProb) ? homeWinProb : 0.5;
   
-  if (!Number.isFinite(homeWinProb)) {
-    console.warn(`[PROB] ⚠️ NaN 발견! totalScore=${totalScore}, factors=`, factors);
-  }
-  
-  console.log(`🎯 홈 승률: ${(safeProb * 100).toFixed(1)}%`);
-  
   const roll = Math.random();
   const winner = roll < safeProb ? "home" : "away";
-  
-  console.log(`🎲 주사위: ${(roll * 100).toFixed(1)}% → ${winner === "home" ? "✅ 홈 승리!" : "✅ 원정 승리!"}`);
-  console.log(`🏆 승자: ${winner === "home" ? game.homeTeam.name : game.awayTeam.name}\n`);
   
   return winner;
 }
@@ -648,8 +562,6 @@ function calculateProbabilityFactors(
 ): ProbabilityFactors {
   const config = EVENT_CONFIGS[eventType];
   const weights = config.statWeights;
-  
-  console.log(`\n🧮 확률 계산 시작 (${eventType})`);
   
   // 기본 스탯 차이
   const statDiff = calculateWeightedStatDiff(game.homeTeam, game.awayTeam, weights);
@@ -679,23 +591,6 @@ function calculateProbabilityFactors(
   // 랜덤 노이즈
   const noise = (Math.random() - 0.5) * 20;
   
-  console.log(`🎮 [STATE] 게임 상태:`, {
-    goldDiff: goldDiff.toFixed(0),
-    momentum: momentum.toFixed(0),
-    laneControl: laneControl.toFixed(1),
-    visionControl: visionControl.toFixed(1),
-    mental: mental.toFixed(1)
-  });
-  
-  console.log(`🔥 [BONUS] 추가 보너스:`, {
-    form: formBonus.toFixed(1),
-    fatigue: fatiguePenalty.toFixed(1),
-    tendency: tendencyBonus.toFixed(1),
-    coachPlan: coachPlanBonus.toFixed(1),
-    activeCall: activeCallBonus.toFixed(1),
-    noise: noise.toFixed(1)
-  });
-  
   return {
     statDiff,
     goldDiff: goldDiff * 0.01,
@@ -720,31 +615,6 @@ function calculateWeightedStatDiff(
   const statsA = teamA.stats;
   const statsB = teamB.stats;
   
-  console.log(`💪 [STAT] ${teamA.name} 스탯 (확률 계산용):`, {
-    ovr: statsA.totalOVR,
-    mec: statsA.mechanics,
-    lan: statsA.laning,
-    tf: statsA.teamfight,
-    mac: statsA.macro,
-    clu: statsA.clutch
-  });
-  console.log(`💪 [STAT] ${teamB.name} 스탯 (확률 계산용):`, {
-    ovr: statsB.totalOVR,
-    mec: statsB.mechanics,
-    lan: statsB.laning,
-    tf: statsB.teamfight,
-    mac: statsB.macro,
-    clu: statsB.clutch
-  });
-  
-  // 🔥 디버그: 혹시 원본 팀 스탯과 다른지 확인
-  if (statsA.mechanics !== teamA.stats.mechanics) {
-    console.error(`❌ [BUG] ${teamA.name} 스탯 불일치 감지!`);
-    console.error(`teamA.stats.mechanics: ${teamA.stats.mechanics}`);
-    console.error(`statsA.mechanics: ${statsA.mechanics}`);
-  }
-  console.log(`⚖️ [WEIGHT] 이벤트 가중치:`, weights);
-  
   const mecDiff = ((statsA.mechanics || 0) - (statsB.mechanics || 0)) * (weights.mechanics ?? 0);
   const lanDiff = ((statsA.laning || 0) - (statsB.laning || 0)) * (weights.laning ?? 0);
   const tfDiff = ((statsA.teamfight || 0) - (statsB.teamfight || 0)) * (weights.teamfight ?? 0);
@@ -753,16 +623,6 @@ function calculateWeightedStatDiff(
   
   const total = mecDiff + lanDiff + tfDiff + macDiff + cluDiff;
   
-  console.log(`📐 [CALC] 스탯 차이 계산:`, {
-    mechanics: `${mecDiff.toFixed(1)}`,
-    laning: `${lanDiff.toFixed(1)}`,
-    teamfight: `${tfDiff.toFixed(1)}`,
-    macro: `${macDiff.toFixed(1)}`,
-    clutch: `${cluDiff.toFixed(1)}`,
-    total: `${total.toFixed(1)}`
-  });
-  
-  // 🔥 안전 처리: 모든 스탯과 가중치에 기본값
   return total;
 }
 
@@ -1031,8 +891,6 @@ export function useCoachCall(
   } else {
     game.activeCalls.away = [...game.activeCalls.away, newCall];
   }
-  
-  console.log(`[COACH CALL] ${side} used ${callConfig.name}`);
   
   return game;
 }
