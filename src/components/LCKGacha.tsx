@@ -395,6 +395,13 @@ export function LCKGacha({ onBack }: LCKGachaProps) {
             </p>
           </div>
 
+          {/* 🚨 긴급 공지 */}
+          <div className="mb-6 bg-red-500/10 border border-red-500/50 rounded-lg p-4">
+            <p className="text-sm text-red-400 leading-relaxed">
+              * 일반 카드팩(LCK 2013-2025)에서 LIVE 등급 카드가 뽑히는 버그가 발견되어 회수 예정입니다. 해당 카드를 뽑으신 분들께는 보상이 지급될 예정입니다.
+            </p>
+          </div>
+
           {/* 카드팩 미리보기 */}
           <div className="mb-8 flex justify-center">
             <div className={`relative w-64 h-96 rounded-2xl bg-gradient-to-br ${currentPackStyle.bg} ${currentPackStyle.border} border-4 ${currentPackStyle.glow} transform hover:scale-105 transition-transform duration-300`}>
