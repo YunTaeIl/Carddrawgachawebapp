@@ -115,17 +115,53 @@ function applyTeamSynergies(team: Team): Team {
       }
     });
     
+    // 🔥 updatedSquad 기준으로 team.stats 재계산
+    let totalOVR = 0;
+    let totalMechanics = 0;
+    let totalLaning = 0;
+    let totalTeamfight = 0;
+    let totalMacro = 0;
+    let totalClutch = 0;
+    const positions = ["TOP", "JGL", "MID", "ADC", "SUP"] as const;
+    
+    positions.forEach(pos => {
+      const card = updatedSquad[pos];
+      if (card?.stats) {
+        totalOVR += card.stats.ovr || 0;
+        totalMechanics += card.stats.mechanics || 0;
+        totalLaning += card.stats.laning || 0;
+        totalTeamfight += card.stats.teamfight || 0;
+        totalMacro += card.stats.macro || 0;
+        totalClutch += card.stats.clutch || 0;
+      }
+    });
+    
+    // 🔥 NaN/undefined 검증 로그
+    console.log(`[SYNERGY] 재계산된 팀 스탯:`, {
+      totalOVR,
+      mechanics: totalMechanics,
+      laning: totalLaning,
+      teamfight: totalTeamfight,
+      macro: totalMacro,
+      clutch: totalClutch
+    });
+    
+    if (!Number.isFinite(totalOVR)) {
+      console.error(`[SYNERGY] ⚠️ NaN 발견! totalOVR=${totalOVR}, 원본=${team.stats.totalOVR}`);
+      totalOVR = (team.stats.totalOVR || 0) + synergyOVRBonus;
+    }
+    
     // 시너지가 적용된 팀 스탯 + 개별 카드 스탯 반환
     return {
       ...team,
       squad: updatedSquad,
       stats: {
-        totalOVR: team.stats.totalOVR + synergyOVRBonus,
-        mechanics: team.stats.mechanics + synergyMechanicsBonus,
-        laning: team.stats.laning + synergyLaningBonus,
-        teamfight: team.stats.teamfight + synergyTeamfightBonus,
-        macro: team.stats.macro + synergyMacroBonus,
-        clutch: team.stats.clutch + synergyClutchBonus
+        totalOVR: totalOVR,
+        mechanics: totalMechanics,
+        laning: totalLaning,
+        teamfight: totalTeamfight,
+        macro: totalMacro,
+        clutch: totalClutch
       }
     };
   } catch (error) {
@@ -152,10 +188,10 @@ export function initializeGame(
   const homeTeamWithSynergy = applyTeamSynergies(homeTeam);
   const awayTeamWithSynergy = applyTeamSynergies(awayTeam);
   
-  console.log(`\n시너지 적용 후:`);
-  console.log(`홈: ${homeTeamWithSynergy.name} (최종 OVR: ${homeTeamWithSynergy.stats.totalOVR})`);
-  console.log(`원정: ${awayTeamWithSynergy.name} (최종 OVR: ${awayTeamWithSynergy.stats.totalOVR})`);
-  console.log(`OVR 차이: ${homeTeamWithSynergy.stats.totalOVR - awayTeamWithSynergy.stats.totalOVR}\n`);
+  console.log(`\n✅ 시너지 적용 완료:`);
+  console.log(`홈: ${homeTeamWithSynergy.name} - 최종 OVR: ${homeTeamWithSynergy.stats.totalOVR} (${homeTeamWithSynergy.stats.totalOVR > homeTeam.stats.totalOVR ? '+' : ''}${homeTeamWithSynergy.stats.totalOVR - homeTeam.stats.totalOVR})`);
+  console.log(`원정: ${awayTeamWithSynergy.name} - 최종 OVR: ${awayTeamWithSynergy.stats.totalOVR} (${awayTeamWithSynergy.stats.totalOVR > awayTeam.stats.totalOVR ? '+' : ''}${awayTeamWithSynergy.stats.totalOVR - awayTeam.stats.totalOVR})`);
+  console.log(`OVR 차이: ${Math.abs(homeTeamWithSynergy.stats.totalOVR - awayTeamWithSynergy.stats.totalOVR)} (${homeTeamWithSynergy.stats.totalOVR > awayTeamWithSynergy.stats.totalOVR ? '홈 우세' : '원정 우세'})\n`);
   
   return {
     setNumber,
@@ -560,7 +596,14 @@ function decideEventWinner(game: GameSimulation, eventType: GameEventType): "hom
   // sigmoid 변환
   const homeWinProb = 1 / (1 + Math.exp(-totalScore / 50));
   
-  return Math.random() < homeWinProb ? "home" : "away";
+  // 🔥 NaN 방어
+  const safeProb = Number.isFinite(homeWinProb) ? homeWinProb : 0.5;
+  
+  if (!Number.isFinite(homeWinProb)) {
+    console.warn(`[PROB] ⚠️ NaN 발견! totalScore=${totalScore}, factors=`, factors);
+  }
+  
+  return Math.random() < safeProb ? "home" : "away";
 }
 
 function calculateProbabilityFactors(
@@ -622,12 +665,13 @@ function calculateWeightedStatDiff(
   const statsA = teamA.stats;
   const statsB = teamB.stats;
   
+  // 🔥 안전 처리: 모든 스탯과 가중치에 기본값
   return (
-    (statsA.mechanics - statsB.mechanics) * weights.mechanics +
-    (statsA.laning - statsB.laning) * weights.laning +
-    (statsA.teamfight - statsB.teamfight) * weights.teamfight +
-    (statsA.macro - statsB.macro) * weights.macro +
-    (statsA.clutch - statsB.clutch) * weights.clutch
+    ((statsA.mechanics || 0) - (statsB.mechanics || 0)) * (weights.mechanics ?? 0) +
+    ((statsA.laning || 0) - (statsB.laning || 0)) * (weights.laning ?? 0) +
+    ((statsA.teamfight || 0) - (statsB.teamfight || 0)) * (weights.teamfight ?? 0) +
+    ((statsA.macro || 0) - (statsB.macro || 0)) * (weights.macro ?? 0) +
+    ((statsA.clutch || 0) - (statsB.clutch || 0)) * (weights.clutch ?? 0)
   );
 }
 
@@ -835,29 +879,28 @@ function checkGameEnd(game: GameSimulation, time: number): void {
     
     if (Math.random() < endChance) {
       // 게임 종료 (🔥 [5] winProbHome 기준으로 승자 결정)
-      const winner = state.winProbHome >= 50 ? "home" : "away";
-      const winnerId = winner === "home" ? game.homeTeam.id : game.awayTeam.id;
+      const winner = state.winProbHome > 50 ? "home" : "away";
       
-      const winnerTeamName = getKoreanTeamName(winner === "home" ? game.homeTeam.name : game.awayTeam.name);
+      game.isFinished = true;
+      game.winnerId = winner === "home" ? game.homeTeam.id : game.awayTeam.id;
       
-      const endEvent: GameEvent = {
+      // NEXUS_DESTROYED 이벤트 생성
+      const nexusEvent: GameEvent = {
         time,
         type: "NEXUS_DESTROYED",
         side: winner,
         success: true,
         goldSwing: 0,
-        text: `${winnerTeamName}이 넥서스를 파괴했습니다! 승리!`,
+        text: `${winner === "home" ? getKoreanTeamName(game.homeTeam.name) : getKoreanTeamName(game.awayTeam.name)}가 승리했습니다!`,
         impactTags: ["game_end"]
       };
       
-      game.events.push(endEvent);
-      game.isFinished = true;
-      game.winnerId = winnerId;
+      game.events = [...game.events, nexusEvent];
     }
   }
 }
 
-// ========== 감독 콜 사용 ==========
+// ========== 감독 개입 ==========
 
 /**
  * 감독 콜 사용
@@ -865,87 +908,55 @@ function checkGameEnd(game: GameSimulation, time: number): void {
 export function useCoachCall(
   game: GameSimulation,
   side: "home" | "away",
-  callType: CoachCallType
-): { success: boolean; message: string } {
-  const config = COACH_CALL_CONFIGS[callType];
-  const cp = side === "home" ? game.commandPoints.home : game.commandPoints.away;
-  
-  // CP 부족 체크
-  if (cp.current < config.cpCost) {
-    return {
-      success: false,
-      message: `CP가 부족합니다 (필요: ${config.cpCost}, 현재: ${Math.floor(cp.current)})`
-    };
+  callType: string
+): GameSimulation {
+  const callConfig = COACH_CALL_CONFIGS[callType];
+  if (!callConfig) {
+    console.error(`Unknown coach call: ${callType}`);
+    return game;
   }
   
-  // 같은 콜이 이미 활성화되어 있는지 체크
-  const activeCalls = side === "home" ? game.activeCalls.home : game.activeCalls.away;
-  const alreadyActive = activeCalls.some(call => call.type === callType);
+  const cp = side === "home" ? game.commandPoints.home : game.commandPoints.away;
   
-  if (alreadyActive) {
-    return {
-      success: false,
-      message: "이미 활성화된 콜입니다"
-    };
+  if (cp.current < callConfig.cpCost) {
+    console.warn(`Not enough CP for ${callType}`);
+    return game;
   }
   
   // CP 소모
-  cp.current -= config.cpCost;
+  cp.current -= callConfig.cpCost;
   
   // 콜 활성화
   const newCall: CoachCall = {
-    id: `${callType}-${Date.now()}`,
     type: callType,
-    cpCost: config.cpCost,
-    startedAtGameTime: game.currentTime,
-    durationMinutes: config.duration,
-    modifiers: config.modifiers
+    name: callConfig.name,
+    activatedAt: game.currentTime,
+    duration: callConfig.duration,
+    modifiers: callConfig.modifiers
   };
   
-  activeCalls.push(newCall);
+  if (side === "home") {
+    game.activeCalls.home = [...game.activeCalls.home, newCall];
+  } else {
+    game.activeCalls.away = [...game.activeCalls.away, newCall];
+  }
   
-  return {
-    success: true,
-    message: `${getCallDisplayName(callType)} 사용!`
-  };
+  console.log(`[COACH CALL] ${side} used ${callConfig.name}`);
+  
+  return game;
 }
 
 /**
- * 만료된 콜 제거
+ * 만료된 콜 정리
  */
 export function cleanupExpiredCalls(game: GameSimulation): void {
-  const cleanupSide = (side: "home" | "away") => {
-    const activeCalls = side === "home" ? game.activeCalls.home : game.activeCalls.away;
-    const currentTime = game.currentTime;
-    
-    // 만료된 콜 필터링
-    const validCalls = activeCalls.filter(call => {
-      const elapsed = currentTime - call.startedAtGameTime;
-      const duration = call.durationMinutes * 60; // 분 -> 초
-      return elapsed < duration;
-    });
-    
-    if (side === "home") {
-      game.activeCalls.home = validCalls;
-    } else {
-      game.activeCalls.away = validCalls;
-    }
-  };
+  const currentTime = game.currentTime;
   
-  cleanupSide("home");
-  cleanupSide("away");
-}
-
-function getCallDisplayName(callType: CoachCallType): string {
-  const names: Record<CoachCallType, string> = {
-    SAFE_PLAY: "안전 운영",
-    DIVE_CALL: "타워다이브",
-    INVADE_CALL: "적 정글 침투",
-    VISION_CONTROL: "시야 장악",
-    FORCE_OBJECTIVE: "오브젝트 강제",
-    AVOID_FIGHT: "교전 회피",
-    START_BARON: "바론 시작",
-    BARON_FAKE: "바론 페이크"
-  };
-  return names[callType];
+  game.activeCalls.home = game.activeCalls.home.filter(
+    call => (currentTime - call.activatedAt) < call.duration
+  );
+  
+  game.activeCalls.away = game.activeCalls.away.filter(
+    call => (currentTime - call.activatedAt) < call.duration
+  );
 }
