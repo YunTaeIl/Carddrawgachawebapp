@@ -6,6 +6,7 @@ import { useLeague } from "@/contexts/LeagueContext";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Series } from "@/types/league";
 import { getKoreanTeamName } from "@/utils/teamNames";
+import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 interface PlayoffsPageProps {
   onBack: () => void;
@@ -50,6 +51,17 @@ export function PlayoffsPage({ onBack, onSeriesStart, onAllComplete }: PlayoffsP
     const isPlayerInSeries = team1?.isPlayer || team2?.isPlayer;
     const canStart = team1 && team2 && !series.isCompleted;
 
+    // 🔥 시너지 적용된 OVR 계산
+    const getTeamOVRWithSynergy = (team: any) => {
+      const synergies = calculateSynergies(team.squad);
+      const cardBonuses = calculateCardSynergyBonuses(team.squad, synergies);
+      const synergyBonus = Object.values(cardBonuses).reduce((sum: number, bonus: any) => sum + (bonus?.ovr || 0), 0);
+      return team.stats.totalOVR + synergyBonus;
+    };
+
+    const team1OVR = team1 ? getTeamOVRWithSynergy(team1) : 0;
+    const team2OVR = team2 ? getTeamOVRWithSynergy(team2) : 0;
+
     return (
       <div className={`rounded-2xl p-6 border min-w-[320px] ${
         isPlayerInSeries 
@@ -72,7 +84,7 @@ export function PlayoffsPage({ onBack, onSeriesStart, onAllComplete }: PlayoffsP
                       <span className="text-emerald-400 text-sm flex-shrink-0">👑</span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-500 whitespace-nowrap">OVR {team1.stats.totalOVR}</div>
+                  <div className="text-xs text-slate-500 whitespace-nowrap">OVR {team1OVR}</div>
                 </div>
                 <div className="text-xl font-bold text-slate-600 flex-shrink-0">VS</div>
                 <div className="flex-1 text-right min-w-0">
@@ -82,7 +94,7 @@ export function PlayoffsPage({ onBack, onSeriesStart, onAllComplete }: PlayoffsP
                     )}
                     <span className="truncate">{getKoreanTeamName(team2.name)}</span>
                   </div>
-                  <div className="text-xs text-slate-500 whitespace-nowrap">OVR {team2.stats.totalOVR}</div>
+                  <div className="text-xs text-slate-500 whitespace-nowrap">OVR {team2OVR}</div>
                 </div>
               </div>
 
