@@ -68,6 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     console.log("✅ Google OAuth 리다이렉트 URL:", data?.url);
+    
+    // 🔥 수동 리다이렉트 (자동 리다이렉트가 안 될 경우 대비)
+    if (data?.url) {
+      window.location.href = data.url;
+    }
   };
 
   const signInKakao = async () => {
@@ -85,6 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     console.log("✅ Kakao OAuth 리다이렉트 URL:", data?.url);
+    
+    // 🔥 수동 리다이렉트 (자동 리다이렉트가 안 될 경우 대비)
+    if (data?.url) {
+      window.location.href = data.url;
+    }
   };
 
   const signOut = async () => {
