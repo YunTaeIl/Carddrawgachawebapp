@@ -31,6 +31,26 @@ import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergy
 // ========== 초기화 ==========
 
 /**
+ * 카드 스탯 구조 정규화 (stats가 없으면 생성)
+ */
+function normalizeCardStats(card: LCKCard): LCKCard {
+  if (!card.stats) {
+    return {
+      ...card,
+      stats: {
+        ovr: (card as any).ovr ?? 0,
+        mechanics: (card as any).mechanics ?? 0,
+        laning: (card as any).laning ?? 0,
+        teamfight: (card as any).teamfight ?? 0,
+        macro: (card as any).macro ?? 0,
+        clutch: (card as any).clutch ?? 0,
+      }
+    };
+  }
+  return card;
+}
+
+/**
  * 팀에 시너지 적용
  */
 function applyTeamSynergies(team: Team): Team {
@@ -39,8 +59,11 @@ function applyTeamSynergies(team: Team): Team {
     const synergies = calculateSynergies(team.squad);
     const cardBonuses = calculateCardSynergyBonuses(team.squad, synergies);
     
-    // 각 카드의 시너지 보너스 합산
+    // 🔥 [1] 시너지 보너스 키 매칭 검증 로그
     const deployedCards = Object.values(team.squad).filter(c => c !== null);
+    console.log(`[SYNERGY] 팀: ${team.name}`);
+    console.log("[SYNERGY] SQUAD IDS:", deployedCards.map(c => c!.id));
+    console.log("[SYNERGY] BONUS KEYS:", Object.keys(cardBonuses));
     
     // 시너지로 인한 스탯 보너스 계산
     let synergyOVRBonus = 0;
@@ -53,6 +76,7 @@ function applyTeamSynergies(team: Team): Team {
     deployedCards.forEach(card => {
       if (!card) return;
       const bonus = cardBonuses[card.id];
+      console.log(`[SYNERGY] MATCH? ${card.id} =>`, bonus ? `✅ OVR+${bonus.ovr}` : "❌ undefined");
       if (bonus) {
         synergyOVRBonus += bonus.ovr || 0;
         synergyMechanicsBonus += bonus.mechanics || 0;
@@ -63,25 +87,30 @@ function applyTeamSynergies(team: Team): Team {
       }
     });
     
+    console.log(`[SYNERGY] 총 시너지 보너스 OVR: ${synergyOVRBonus}`);
+    
     // 각 카드에 시너지 적용
     const updatedSquad = { ...team.squad };
     (["TOP", "JGL", "MID", "ADC", "SUP"] as const).forEach(pos => {
       const card = updatedSquad[pos];
       if (card) {
+        const normalizedCard = normalizeCardStats(card);
         const bonus = cardBonuses[card.id];
         if (bonus) {
           updatedSquad[pos] = {
-            ...card,
+            ...normalizedCard,
             stats: {
-              ...card.stats,
-              ovr: (card.stats.ovr || 0) + (bonus.ovr || 0),
-              mechanics: (card.stats.mechanics || 0) + (bonus.mechanics || 0),
-              laning: (card.stats.laning || 0) + (bonus.laning || 0),
-              teamfight: (card.stats.teamfight || 0) + (bonus.teamfight || 0),
-              macro: (card.stats.macro || 0) + (bonus.macro || 0),
-              clutch: (card.stats.clutch || 0) + (bonus.clutch || 0)
+              ...normalizedCard.stats,
+              ovr: (normalizedCard.stats.ovr || 0) + (bonus.ovr || 0),
+              mechanics: (normalizedCard.stats.mechanics || 0) + (bonus.mechanics || 0),
+              laning: (normalizedCard.stats.laning || 0) + (bonus.laning || 0),
+              teamfight: (normalizedCard.stats.teamfight || 0) + (bonus.teamfight || 0),
+              macro: (normalizedCard.stats.macro || 0) + (bonus.macro || 0),
+              clutch: (normalizedCard.stats.clutch || 0) + (bonus.clutch || 0)
             }
           };
+        } else {
+          updatedSquad[pos] = normalizedCard;
         }
       }
     });
@@ -116,8 +145,17 @@ export function initializeGame(
   awayPlan: CoachPlan
 ): GameSimulation {
   // 시너지 적용된 팀 스탯 계산
+  console.log(`\n========== 세트 ${setNumber} 시뮬레이션 시작 ==========`);
+  console.log(`홈: ${homeTeam.name} (기본 OVR: ${homeTeam.stats.totalOVR})`);
+  console.log(`원정: ${awayTeam.name} (기본 OVR: ${awayTeam.stats.totalOVR})`);
+  
   const homeTeamWithSynergy = applyTeamSynergies(homeTeam);
   const awayTeamWithSynergy = applyTeamSynergies(awayTeam);
+  
+  console.log(`\n시너지 적용 후:`);
+  console.log(`홈: ${homeTeamWithSynergy.name} (최종 OVR: ${homeTeamWithSynergy.stats.totalOVR})`);
+  console.log(`원정: ${awayTeamWithSynergy.name} (최종 OVR: ${awayTeamWithSynergy.stats.totalOVR})`);
+  console.log(`OVR 차이: ${homeTeamWithSynergy.stats.totalOVR - awayTeamWithSynergy.stats.totalOVR}\n`);
   
   return {
     setNumber,
@@ -485,14 +523,8 @@ function executeEvent(game: GameSimulation, eventType: GameEventType, time: numb
   const goldSwing = minGold + Math.random() * (maxGold - minGold);
   
   // 🔥 킬 수 증가
-  const killCount = EVENT_KILL_COUNTS[eventType];
-  if (killCount) {
-    if (winSide === "home") {
-      game.gameState.kills.home += killCount;
-    } else {
-      game.gameState.kills.away += killCount;
-    }
-  }
+  // 🔥 [4] executeEvent는 상태 변경하지 않음 - 킬 카운트는 applyEventEffects에서 처리
+  const killCount = EVENT_KILL_COUNTS[eventType] || 0;
   
   // 메시지
   const teamName = winSide === "home" 
@@ -802,8 +834,8 @@ function checkGameEnd(game: GameSimulation, time: number): void {
     if (time >= game.targetDuration) endChance += 0.5;
     
     if (Math.random() < endChance) {
-      // 게임 종료
-      const winner = state.goldDiff > 0 ? "home" : "away";
+      // 게임 종료 (🔥 [5] winProbHome 기준으로 승자 결정)
+      const winner = state.winProbHome >= 50 ? "home" : "away";
       const winnerId = winner === "home" ? game.homeTeam.id : game.awayTeam.id;
       
       const winnerTeamName = getKoreanTeamName(winner === "home" ? game.homeTeam.name : game.awayTeam.name);
