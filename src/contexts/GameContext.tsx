@@ -75,14 +75,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
           currency: data.currency,
           shards: data.shards,
           pity_data: data.pityData, // 🔥 JSONB
-          pack_statistics: data.packStatistics, // 🔥 JSONB
-          // deprecated (하위 호환)
-          s_pity_stack: data.gachaState.s_pity_stack,
-          a_pity_stack: data.gachaState.a_pity_stack,
-          total_pulls: data.gachaState.total_pulls
+          pack_statistics: data.packStatistics // 🔥 JSONB
         });
       } catch (error: any) {
-        // 에러 무시
+        console.error("DB 저장 실패:", error);
       }
     }, 1000);
   };

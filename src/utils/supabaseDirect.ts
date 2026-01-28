@@ -94,9 +94,6 @@ export async function updateGameDataDirect(
   updates: {
     currency?: number;
     shards?: number;
-    s_pity_stack?: number; // deprecated
-    a_pity_stack?: number; // deprecated
-    total_pulls?: number; // deprecated
     pity_data?: any; // 🔥 JSONB
     pack_statistics?: any; // 🔥 JSONB
   }
