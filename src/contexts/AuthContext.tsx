@@ -55,12 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInGoogle = async () => {
     console.log("🔵 Google 로그인 시도 중...");
-    console.log("🔵 현재 전체 URL:", window.location.href);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.href, // 🔥 전체 URL 사용
+        redirectTo: "https://legendsmanager.com/", // 🔥 프로덕션 URL
       },
     });
     
@@ -74,9 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     console.log("✅ Google OAuth 리다이렉트 URL:", data?.url);
-    console.log("✅ 리다이렉트 실행 전...");
     
-    // 🔥 수동 리다이렉트 (자동 리다이렉트가 안 될 경우 대비)
+    // 🔥 수동 리다이렉트
     if (data?.url) {
       console.log("🚀 리다이렉트 시작:", data.url);
       window.location.href = data.url;
@@ -90,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
       options: {
-        redirectTo: window.location.href, // 🔥 전체 URL 사용
+        redirectTo: "https://legendsmanager.com/", // 🔥 프로덕션 URL
       },
     });
     
