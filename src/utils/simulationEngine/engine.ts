@@ -102,11 +102,11 @@ function applyTeamSynergies(team: Team): Team {
             stats: {
               ...normalizedCard.stats,
               ovr: (normalizedCard.stats.ovr || 0) + (bonus.ovr || 0),
-              mechanics: (normalizedCard.stats.mechanics || 0) + (bonus.mechanics || 0),
-              laning: (normalizedCard.stats.laning || 0) + (bonus.laning || 0),
-              teamfight: (normalizedCard.stats.teamfight || 0) + (bonus.teamfight || 0),
-              macro: (normalizedCard.stats.macro || 0) + (bonus.macro || 0),
-              clutch: (normalizedCard.stats.clutch || 0) + (bonus.clutch || 0)
+              mechanics: (normalizedCard.stats.mechanics || 0) + (bonus.mec || 0),
+              laning: (normalizedCard.stats.laning || 0) + (bonus.lan || 0),
+              teamfight: (normalizedCard.stats.teamfight || 0) + (bonus.tf || 0),
+              macro: (normalizedCard.stats.macro || 0) + (bonus.mac || 0),
+              clutch: (normalizedCard.stats.clutch || 0) + (bonus.clu || 0)
             }
           };
         } else {
