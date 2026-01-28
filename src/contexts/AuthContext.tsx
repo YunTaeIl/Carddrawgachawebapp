@@ -55,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInGoogle = async () => {
     console.log("🔵🔵🔵 signInGoogle 함수 호출됨!");
-    console.log("🔵 Supabase URL:", Deno?.env?.get ? "SERVER" : import.meta.env.VITE_SUPABASE_URL);
     console.log("🔵 현재 URL:", window.location.href);
     
     try {
