@@ -152,7 +152,7 @@ function applyTeamSynergies(team: Team): Team {
     }
     
     // 시너지가 적용된 팀 스탯 + 개별 카드 스탯 반환
-    return {
+    const result = {
       ...team,
       squad: updatedSquad,
       stats: {
@@ -164,6 +164,17 @@ function applyTeamSynergies(team: Team): Team {
         clutch: totalClutch
       }
     };
+    
+    console.log(`[SYNERGY] ✅ ${team.name} 최종 스탯 (시너지 적용 완료):`, {
+      totalOVR,
+      mechanics: totalMechanics,
+      laning: totalLaning,
+      teamfight: totalTeamfight,
+      macro: totalMacro,
+      clutch: totalClutch
+    });
+    
+    return result;
   } catch (error) {
     console.error("팀 시너지 적용 오류:", error);
     return team; // 오류 시 원본 팀 반환
@@ -706,20 +717,29 @@ function calculateWeightedStatDiff(
   const statsA = teamA.stats;
   const statsB = teamB.stats;
   
-  console.log(`💪 [STAT] ${teamA.name} 스탯:`, {
+  console.log(`💪 [STAT] ${teamA.name} 스탯 (확률 계산용):`, {
+    ovr: statsA.totalOVR,
     mec: statsA.mechanics,
     lan: statsA.laning,
     tf: statsA.teamfight,
     mac: statsA.macro,
     clu: statsA.clutch
   });
-  console.log(`💪 [STAT] ${teamB.name} 스탯:`, {
+  console.log(`💪 [STAT] ${teamB.name} 스탯 (확률 계산용):`, {
+    ovr: statsB.totalOVR,
     mec: statsB.mechanics,
     lan: statsB.laning,
     tf: statsB.teamfight,
     mac: statsB.macro,
     clu: statsB.clutch
   });
+  
+  // 🔥 디버그: 혹시 원본 팀 스탯과 다른지 확인
+  if (statsA.mechanics !== teamA.stats.mechanics) {
+    console.error(`❌ [BUG] ${teamA.name} 스탯 불일치 감지!`);
+    console.error(`teamA.stats.mechanics: ${teamA.stats.mechanics}`);
+    console.error(`statsA.mechanics: ${statsA.mechanics}`);
+  }
   console.log(`⚖️ [WEIGHT] 이벤트 가중치:`, weights);
   
   const mecDiff = ((statsA.mechanics || 0) - (statsB.mechanics || 0)) * (weights.mechanics ?? 0);
