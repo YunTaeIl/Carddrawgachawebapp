@@ -54,7 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    console.log("🔵 Google 로그인 시도 중...");
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}`,
@@ -62,12 +63,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (error) {
+      console.error("🔴 Google 로그인 에러:", error);
       throw error;
     }
+    
+    console.log("✅ Google OAuth 리다이렉트 URL:", data?.url);
   };
 
   const signInKakao = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    console.log("🔵 Kakao 로그인 시도 중...");
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
       options: {
         redirectTo: `${window.location.origin}`,
@@ -75,8 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (error) {
+      console.error("🔴 Kakao 로그인 에러:", error);
       throw error;
     }
+    
+    console.log("✅ Kakao OAuth 리다이렉트 URL:", data?.url);
   };
 
   const signOut = async () => {

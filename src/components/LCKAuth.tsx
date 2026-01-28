@@ -19,9 +19,11 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
     try {
       await signInGoogle();
       // OAuth 리다이렉트 발생
-    } catch (error) {
-      console.error("Google 로그인 실패:", error);
-      toast.error("Google 로그인에 실패했습니다");
+    } catch (error: any) {
+      console.error("❌ Google 로그인 실패:", error);
+      console.error("에러 메시지:", error?.message);
+      console.error("에러 상세:", JSON.stringify(error, null, 2));
+      toast.error(`Google 로그인 실패: ${error?.message || "알 수 없는 오류"}`);
       setIsLoading(false);
     }
   };
@@ -31,9 +33,11 @@ export function LCKAuth({ onSuccess }: LCKAuthProps) {
     try {
       await signInKakao();
       // OAuth 리다이렉트 발생
-    } catch (error) {
-      console.error("Kakao 로그인 실패:", error);
-      toast.error("카카오 로그인에 실패했습니다");
+    } catch (error: any) {
+      console.error("❌ Kakao 로그인 실패:", error);
+      console.error("에러 메시지:", error?.message);
+      console.error("에러 상세:", JSON.stringify(error, null, 2));
+      toast.error(`카카오 로그인 실패: ${error?.message || "알 수 없는 오류"}`);
       setIsLoading(false);
     }
   };

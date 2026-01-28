@@ -132,9 +132,19 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     const team2 = getTeamById(series.team2Id);
     if (!team1 || !team2) return;
     
-    // 팀 OVR 기반 승률 계산
-    const team1OVR = team1.stats.totalOVR;
-    const team2OVR = team2.stats.totalOVR;
+    // 🔥 시너지 적용된 팀 OVR 기반 승률 계산
+    const { calculateSynergies, calculateCardSynergyBonuses } = require("@/utils/synergyEngine");
+    
+    const team1Synergies = calculateSynergies(team1.squad);
+    const team1CardBonuses = calculateCardSynergyBonuses(team1.squad, team1Synergies);
+    const team1SynergyBonus = Object.values(team1CardBonuses).reduce((sum, bonus: any) => sum + (bonus?.ovr || 0), 0);
+    const team1OVR = team1.stats.totalOVR + team1SynergyBonus;
+    
+    const team2Synergies = calculateSynergies(team2.squad);
+    const team2CardBonuses = calculateCardSynergyBonuses(team2.squad, team2Synergies);
+    const team2SynergyBonus = Object.values(team2CardBonuses).reduce((sum, bonus: any) => sum + (bonus?.ovr || 0), 0);
+    const team2OVR = team2.stats.totalOVR + team2SynergyBonus;
+    
     const totalOVR = team1OVR + team2OVR;
     const team1WinProb = team1OVR / totalOVR;
     
