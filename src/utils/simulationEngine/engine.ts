@@ -550,6 +550,9 @@ function weightedRandom<T>(items: T[], weights: number[]): T | null {
 function executeEvent(game: GameSimulation, eventType: GameEventType, time: number): GameEvent {
   const config = EVENT_CONFIGS[eventType];
   
+  console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.log(`⏱️  시간: ${Math.floor(time / 60)}분 ${time % 60}초`);
+  
   // 승패 결정
   const winSide = decideEventWinner(game, eventType);
   const success = true; // 일단 모두 성공으로 (실패 로직은 확장 가능)
@@ -575,6 +578,11 @@ function executeEvent(game: GameSimulation, eventType: GameEventType, time: numb
   if (goldSwing > 1000) impactTags.push("major");
   if (killCount && killCount >= 3) impactTags.push("multi_kill");
   
+  console.log(`💰 골드 스윙: ${goldSwing.toFixed(0)}G`);
+  console.log(`💀 킬 수: ${killCount}`);
+  console.log(`📢 ${text}`);
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+  
   return {
     time,
     type: eventType,
@@ -589,9 +597,15 @@ function executeEvent(game: GameSimulation, eventType: GameEventType, time: numb
 function decideEventWinner(game: GameSimulation, eventType: GameEventType): "home" | "away" {
   const config = EVENT_CONFIGS[eventType];
   
+  console.log(`\n🎲 [EVENT] ${eventType} 승자 결정 중...`);
+  console.log(`⚔️ ${game.homeTeam.name} (OVR: ${game.homeTeam.stats.totalOVR}) vs ${game.awayTeam.name} (OVR: ${game.awayTeam.stats.totalOVR})`);
+  
   // 확률 계산
   const factors = calculateProbabilityFactors(game, eventType);
   const totalScore = Object.values(factors).reduce((sum, val) => sum + val, 0);
+  
+  console.log(`📊 확률 요소:`, factors);
+  console.log(`📈 Total Score: ${totalScore.toFixed(2)}`);
   
   // sigmoid 변환
   const homeWinProb = 1 / (1 + Math.exp(-totalScore / 50));
@@ -603,7 +617,15 @@ function decideEventWinner(game: GameSimulation, eventType: GameEventType): "hom
     console.warn(`[PROB] ⚠️ NaN 발견! totalScore=${totalScore}, factors=`, factors);
   }
   
-  return Math.random() < safeProb ? "home" : "away";
+  console.log(`🎯 홈 승률: ${(safeProb * 100).toFixed(1)}%`);
+  
+  const roll = Math.random();
+  const winner = roll < safeProb ? "home" : "away";
+  
+  console.log(`🎲 주사위: ${(roll * 100).toFixed(1)}% → ${winner === "home" ? "✅ 홈 승리!" : "✅ 원정 승리!"}`);
+  console.log(`🏆 승자: ${winner === "home" ? game.homeTeam.name : game.awayTeam.name}\n`);
+  
+  return winner;
 }
 
 function calculateProbabilityFactors(
@@ -612,6 +634,8 @@ function calculateProbabilityFactors(
 ): ProbabilityFactors {
   const config = EVENT_CONFIGS[eventType];
   const weights = config.statWeights;
+  
+  console.log(`\n🧮 확률 계산 시작 (${eventType})`);
   
   // 기본 스탯 차이
   const statDiff = calculateWeightedStatDiff(game.homeTeam, game.awayTeam, weights);
@@ -641,6 +665,23 @@ function calculateProbabilityFactors(
   // 랜덤 노이즈
   const noise = (Math.random() - 0.5) * 20;
   
+  console.log(`🎮 [STATE] 게임 상태:`, {
+    goldDiff: goldDiff.toFixed(0),
+    momentum: momentum.toFixed(0),
+    laneControl: laneControl.toFixed(1),
+    visionControl: visionControl.toFixed(1),
+    mental: mental.toFixed(1)
+  });
+  
+  console.log(`🔥 [BONUS] 추가 보너스:`, {
+    form: formBonus.toFixed(1),
+    fatigue: fatiguePenalty.toFixed(1),
+    tendency: tendencyBonus.toFixed(1),
+    coachPlan: coachPlanBonus.toFixed(1),
+    activeCall: activeCallBonus.toFixed(1),
+    noise: noise.toFixed(1)
+  });
+  
   return {
     statDiff,
     goldDiff: goldDiff * 0.01,
@@ -665,14 +706,41 @@ function calculateWeightedStatDiff(
   const statsA = teamA.stats;
   const statsB = teamB.stats;
   
+  console.log(`💪 [STAT] ${teamA.name} 스탯:`, {
+    mec: statsA.mechanics,
+    lan: statsA.laning,
+    tf: statsA.teamfight,
+    mac: statsA.macro,
+    clu: statsA.clutch
+  });
+  console.log(`💪 [STAT] ${teamB.name} 스탯:`, {
+    mec: statsB.mechanics,
+    lan: statsB.laning,
+    tf: statsB.teamfight,
+    mac: statsB.macro,
+    clu: statsB.clutch
+  });
+  console.log(`⚖️ [WEIGHT] 이벤트 가중치:`, weights);
+  
+  const mecDiff = ((statsA.mechanics || 0) - (statsB.mechanics || 0)) * (weights.mechanics ?? 0);
+  const lanDiff = ((statsA.laning || 0) - (statsB.laning || 0)) * (weights.laning ?? 0);
+  const tfDiff = ((statsA.teamfight || 0) - (statsB.teamfight || 0)) * (weights.teamfight ?? 0);
+  const macDiff = ((statsA.macro || 0) - (statsB.macro || 0)) * (weights.macro ?? 0);
+  const cluDiff = ((statsA.clutch || 0) - (statsB.clutch || 0)) * (weights.clutch ?? 0);
+  
+  const total = mecDiff + lanDiff + tfDiff + macDiff + cluDiff;
+  
+  console.log(`📐 [CALC] 스탯 차이 계산:`, {
+    mechanics: `${mecDiff.toFixed(1)}`,
+    laning: `${lanDiff.toFixed(1)}`,
+    teamfight: `${tfDiff.toFixed(1)}`,
+    macro: `${macDiff.toFixed(1)}`,
+    clutch: `${cluDiff.toFixed(1)}`,
+    total: `${total.toFixed(1)}`
+  });
+  
   // 🔥 안전 처리: 모든 스탯과 가중치에 기본값
-  return (
-    ((statsA.mechanics || 0) - (statsB.mechanics || 0)) * (weights.mechanics ?? 0) +
-    ((statsA.laning || 0) - (statsB.laning || 0)) * (weights.laning ?? 0) +
-    ((statsA.teamfight || 0) - (statsB.teamfight || 0)) * (weights.teamfight ?? 0) +
-    ((statsA.macro || 0) - (statsB.macro || 0)) * (weights.macro ?? 0) +
-    ((statsA.clutch || 0) - (statsB.clutch || 0)) * (weights.clutch ?? 0)
-  );
+  return total;
 }
 
 function calculateFormBonus(game: GameSimulation, side: "home" | "away"): number {
