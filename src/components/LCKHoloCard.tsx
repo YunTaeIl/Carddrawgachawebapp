@@ -291,32 +291,62 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
           {/* ⬆️ 강화 오라 효과 */}
           {upgradeAura && (
             <>
-              {/* 펄싱 오라 링 */}
+              {/* 펄싱 오라 링 1 (가장 안쪽) */}
               <div 
-                className="absolute -inset-1 rounded-2xl -z-10 animate-pulse"
+                className="absolute -inset-1 rounded-2xl -z-10"
                 style={{
                   boxShadow: upgradeAura.glow,
-                  opacity: 0.8
+                  opacity: 0.9,
+                  animation: "upgradePulse1 2s ease-in-out infinite"
                 }}
               />
               
-              {/* 회전하는 오라 */}
+              {/* 펄싱 오라 링 2 (중간) */}
               <div 
-                className="absolute -inset-2 rounded-2xl -z-10"
+                className="absolute -inset-3 rounded-2xl -z-10"
                 style={{
-                  background: `conic-gradient(
-                    from 0deg,
-                    ${upgradeAura.color}00,
-                    ${upgradeAura.color}88,
-                    ${upgradeAura.pulseColor}88,
-                    ${upgradeAura.color}88,
-                    ${upgradeAura.color}00
-                  )`,
-                  animation: "spin 3s linear infinite",
-                  filter: "blur(8px)",
-                  opacity: 0.6
+                  boxShadow: `0 0 40px ${upgradeAura.color}88, 0 0 80px ${upgradeAura.pulseColor}66`,
+                  opacity: 0.7,
+                  animation: "upgradePulse2 2s ease-in-out infinite 0.5s"
                 }}
               />
+              
+              {/* 펄싱 오라 링 3 (바깥) */}
+              <div 
+                className="absolute -inset-5 rounded-2xl -z-10"
+                style={{
+                  boxShadow: `0 0 60px ${upgradeAura.pulseColor}66, 0 0 120px ${upgradeAura.color}44`,
+                  opacity: 0.5,
+                  animation: "upgradePulse3 2s ease-in-out infinite 1s"
+                }}
+              />
+              
+              {/* 빛나는 파티클들 */}
+              <div className="absolute -inset-4 -z-10 pointer-events-none">
+                {[...Array(12)].map((_, i) => {
+                  const angle = (i * 30);
+                  const radius = 105;
+                  const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
+                  const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
+                  
+                  return (
+                    <div
+                      key={i}
+                      className="absolute rounded-full"
+                      style={{
+                        left: `${x}%`,
+                        top: `${y}%`,
+                        width: "8px",
+                        height: "8px",
+                        background: `radial-gradient(circle, ${upgradeAura.pulseColor}, ${upgradeAura.color})`,
+                        boxShadow: `0 0 12px ${upgradeAura.color}, 0 0 24px ${upgradeAura.pulseColor}`,
+                        animation: `upgradeParticle 2s ease-in-out infinite ${i * 0.15}s`,
+                        transform: "translate(-50%, -50%)"
+                      }}
+                    />
+                  );
+                })}
+              </div>
             </>
           )}
 
@@ -746,21 +776,6 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                 </div>
               )}
               
-              {/* ⬆️ 강화 레벨 표시 (우측 상단) */}
-              {upgradeLevel > 0 && upgradeAura && (
-                <div 
-                  className="absolute -top-1 -right-1 z-20 px-2.5 py-1 rounded-full font-bold text-sm animate-pulse"
-                  style={{
-                    background: `linear-gradient(135deg, ${upgradeAura.color}, ${upgradeAura.pulseColor})`,
-                    boxShadow: `${upgradeAura.glow}, 0 4px 12px rgba(0,0,0,0.8)`,
-                    color: "white",
-                    textShadow: "0 2px 4px rgba(0,0,0,0.8)"
-                  }}
-                >
-                  +{upgradeLevel}
-                </div>
-              )}
-              
               {/* 상단 헤더 - 한 줄로! */}
               <div className="flex-shrink-0 mb-3 pb-2 border-b" style={{ borderColor: `${gradeColor}33` }}>
                 <div className="flex items-center justify-between gap-3">
@@ -825,6 +840,21 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                   <div className="absolute inset-0 border-2 border-double rounded"
                     style={{ borderColor: `${gradeColor}33` }}
                   />
+
+                  {/* ⬆️ 강화 레벨 표시 (이미지 칸 우상단) */}
+                  {upgradeLevel > 0 && upgradeAura && (
+                    <div 
+                      className="absolute top-1 right-1 z-20 px-2.5 py-1 rounded-full font-bold text-sm animate-pulse"
+                      style={{
+                        background: `linear-gradient(135deg, ${upgradeAura.color}, ${upgradeAura.pulseColor})`,
+                        boxShadow: `${upgradeAura.glow}, 0 4px 12px rgba(0,0,0,0.8)`,
+                        color: "white",
+                        textShadow: "0 2px 4px rgba(0,0,0,0.8)"
+                      }}
+                    >
+                      +{upgradeLevel}
+                    </div>
+                  )}
 
                   <PlayerImage
                     imageFileName={card.image}

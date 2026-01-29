@@ -235,4 +235,32 @@
     80% { transform: translateX(4px) rotate(2deg) scale(1.02); }
     90% { transform: translateX(-2px) rotate(-1deg) scale(1.01); }
   }
+
+  /* ⬆️ 강화 오라 펄스 애니메이션 */
+  @keyframes upgradePulse1 {
+    0%, 100% { opacity: 0.9; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+  }
+
+  @keyframes upgradePulse2 {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+  }
+
+  @keyframes upgradePulse3 {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.08); }
+  }
+
+  /* ⬆️ 파티클 애니메이션 */
+  @keyframes upgradeParticle {
+    0%, 100% { 
+      opacity: 0.4; 
+      transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% { 
+      opacity: 1; 
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+  }
 }
