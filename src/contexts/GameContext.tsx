@@ -146,6 +146,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       try {
         const gameData = await getGameDataDirect(accessToken);
         
+        console.log("🔍 GameContext - DB에서 받은 gameData:", gameData);
+        console.log("🔍 GameContext - gameData.is_admin:", gameData.is_admin);
+        
         // 🔥 팩별 천장 데이터 파싱
         let pityData = gameData.pity_data || {};
         let packStatistics = gameData.pack_statistics || {};
@@ -186,8 +189,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           }
         }));
         
+        console.log("✅ GameContext - isAdmin 설정됨:", gameData.is_admin || false);
+        
         setDbLoaded(true);
       } catch (error) {
+        console.error("❌ GameContext - DB 로드 실패:", error);
         // 에러 무시
       }
     };
@@ -692,7 +698,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 export function useGame() {
   const context = useContext(GameContext);
   if (!context) {
-    throw new Error("useGame must be used within GameProvider");
+    // 개발 환경에서만 에러, 프로덕션에서는 경고
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("useGame called outside GameProvider - returning null");
+    }
+    return null as any;
   }
   return context;
 }

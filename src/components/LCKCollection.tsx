@@ -37,6 +37,10 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   const [sortBy, setSortBy] = useState<"ovr" | "recent">("ovr");
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 🔥 디버깅: isAdmin 값 확인
+  console.log("🔍 LCKCollection - userData.isAdmin:", userData.isAdmin);
+  console.log("🔍 LCKCollection - userData 전체:", userData);
+
   // 고유 팀/연도 목록 추출
   const uniqueTeams = useMemo(() => {
     const teams = new Set(userData.ownedCards.map(c => c.team));

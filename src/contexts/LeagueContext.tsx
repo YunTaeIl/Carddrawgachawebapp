@@ -26,10 +26,17 @@ const LeagueContext = createContext<LeagueContextType | undefined>(undefined);
 const STORAGE_KEY = "lck_league_instance";
 
 export function LeagueProvider({ children }: { children: ReactNode }) {
-  const { userData, allCards, addCurrency } = useGame();
+  const gameContext = useGame();
   const { user } = useAuth();
   const [currentLeague, setCurrentLeague] = useState<LeagueInstance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // 🔥 GameContext가 로딩 중이면 대기
+  if (!gameContext) {
+    return <>{children}</>;
+  }
+  
+  const { userData, allCards, addCurrency } = gameContext;
 
   // DB에서 리그 불러오기 (초기 로드)
   useEffect(() => {

@@ -54,6 +54,8 @@ export async function getUserProfile(userId: string) {
 
 // 게임 데이터 조회
 export async function getGameData(userId: string) {
+  console.log("🔍 getGameData - userId:", userId);
+  
   // user_game_data와 user_profiles를 조인하여 is_admin 가져오기
   const { data, error } = await supabase
     .from("user_game_data")
@@ -66,13 +68,19 @@ export async function getGameData(userId: string) {
     .eq("user_id", userId)  // user_id를 키로 사용
     .single();
   
+  console.log("🔍 getGameData - raw data:", data);
+  console.log("🔍 getGameData - error:", error);
+  
   if (error) {
-    console.error("Get game data error:", error);
+    console.error("❌ Get game data error:", error);
     return null;
   }
   
   // is_admin 값을 최상위로 추출
   const isAdmin = data?.user_profiles?.is_admin || false;
+  
+  console.log("🔍 getGameData - isAdmin:", isAdmin);
+  console.log("🔍 getGameData - user_profiles:", data?.user_profiles);
   
   return {
     ...data,
