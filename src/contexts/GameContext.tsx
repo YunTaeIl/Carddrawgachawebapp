@@ -23,7 +23,6 @@ import {
   updateGameDataDirect, 
   addUserCardDirect, 
   upgradeUserCardDirect,
-  updateUserCardStats,
   deleteUserCard,
   getGameDataDirect,
   getUserCardsDirect,
@@ -544,9 +543,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         shards: userData.shards - cost
       };
 
-      // DB 저장
+      // DB 저장 (upgrade_level만 저장)
       if (isAuthenticated && accessToken) {
-        updateUserCardStats(accessToken, cardInstanceId, updatedCard.upgradeLevel, updatedCard.stats).catch(() => {});
+        upgradeUserCardDirect(accessToken, cardInstanceId, targetLevel).catch(() => {});
       }
 
       toast.success(`🎉 강화 성공! +${targetLevel}`);
