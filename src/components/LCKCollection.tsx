@@ -1,6 +1,6 @@
 // LCK 컬렉션 (인벤토리) 화면
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
@@ -53,6 +53,16 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   const [sortBy, setSortBy] = useState<"ovr" | "recent">("ovr");
   const [searchText, setSearchText] = useState<string>(""); // 🔍 검색어
   const [currentPage, setCurrentPage] = useState(1);
+
+  // 🔥 upgradeModalCard 실시간 업데이트 (강화 후 자동 갱신)
+  useEffect(() => {
+    if (upgradeModalCard) {
+      const updated = userData.ownedCards.find(c => c.instanceId === upgradeModalCard.instanceId);
+      if (updated) {
+        setUpgradeModalCard(updated);
+      }
+    }
+  }, [userData.ownedCards]);
 
   // 고유 팀/연도 목록 추출 (보유 카드 기준)
   const uniqueTeams = useMemo(() => {
@@ -204,23 +214,15 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         statChanges: result.statChanges
       });
 
-      // 강화 모달 닫기
-      setUpgradeModalCard(null);
-
-      // 선택된 카드 업데이트 (BREAK가 아닌 경우)
-      if (result.result !== "BREAK" && result.card) {
-        const updated = userData.ownedCards.find(c => c.instanceId === cardInstanceId);
-        if (updated) {
-          if (selectedCard?.instanceId === cardInstanceId) {
-            setSelectedCard(updated);
-          }
-        }
-      } else if (result.result === "BREAK") {
+      // 🔥 파괴 시에만 강화창 닫기
+      if (result.result === "BREAK") {
+        setUpgradeModalCard(null);
         // 파괴된 경우 선택 해제
         if (selectedCard?.instanceId === cardInstanceId) {
           setSelectedCard(null);
         }
       }
+      // 성공/유지 시에는 강화창 유지 (닫지 않음)
     }
   };
   
@@ -900,8 +902,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                     </DialogTitle>
                   </DialogHeader>
                   <div className="flex flex-col items-center gap-2 py-1">
-                    {/* 카드 */}
-                    <div className="scale-75 -my-4">
+                    {/* 카드 - 크기 키움 */}
+                    <div className="scale-90 -my-2">
                       <LCKHoloCard 
                         card={upgradeModalCard} 
                         size="small" 

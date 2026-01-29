@@ -558,6 +558,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       };
       updatedCard = card;
 
+      // DB 저장 (KEEP일 때도 기록 - upgradeLevel은 변경 없지만 시도 기록)
+      if (isAuthenticated && accessToken) {
+        upgradeUserCardDirect(accessToken, cardInstanceId, currentLevel).catch(() => {});
+      }
+
       toast.warning(`😐 강화 유지... +${currentLevel}`);
     } else {
       // BREAK - 카드 삭제
