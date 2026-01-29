@@ -36,6 +36,7 @@ interface GameContextType {
   upgradeCard: (cardInstanceId: string) => Promise<boolean>;
   craftCardWithShards: (grade: "A" | "S") => Promise<CraftResult | null>;
   craftLiveCardWithShards: (grade: "A" | "S") => Promise<CraftResult | null>;
+  craftSpecificCard: (cardId: string) => Promise<CraftResult | null>;
   
   // 스쿼드
   setSquadCard: (position: Position, card: UserCard | null) => void;
@@ -616,6 +617,81 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 🎯 지정 카드 제작 (미보유 전용)
+  const craftSpecificCard = async (cardId: string): Promise<CraftResult | null> => {
+    // 🔒 관리자 체크
+    if (!userData.isAdmin) {
+      toast.error("관리자 전용 기능입니다!", { icon: "🔒" });
+      return null;
+    }
+
+    // 카드 찾기
+    const targetCard = allCards.find(c => c.id === cardId);
+    
+    if (!targetCard) {
+      toast.error("카드를 찾을 수 없습니다!");
+      return null;
+    }
+    
+    // 이미 보유 중인지 확인
+    const alreadyOwned = userData.ownedCards.some(c => c.id === cardId);
+    if (alreadyOwned) {
+      toast.error("이미 보유한 카드입니다!", { icon: "⚠️" });
+      return null;
+    }
+    
+    // 등급별 비용 계산
+    const costs: Record<Grade, number> = {
+      "C": 4000,
+      "B": 35000,
+      "A": 70000,
+      "S": 100000,
+      "LIVE": 10000000
+    };
+    
+    const cost = costs[targetCard.grade];
+    
+    if (userData.shards < cost) {
+      toast.error(`샤드가 부족합니다! (필요: ${cost.toLocaleString()})`, {
+        icon: "💎"
+      });
+      return null;
+    }
+    
+    // 카드 생성
+    const newCard: UserCard = {
+      ...targetCard,
+      instanceId: `${targetCard.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      upgradeLevel: 0,
+      obtainedAt: Date.now()
+    };
+    
+    const newData: UserData = {
+      ...userData,
+      ownedCards: [...userData.ownedCards, newCard],
+      shards: userData.shards - cost
+    };
+    
+    setUserData(newData);
+    
+    // DB 저장 (로그인 시)
+    if (isAuthenticated && accessToken) {
+      addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+    }
+    
+    const gradeEmoji = targetCard.grade === "LIVE" ? "🔥" : targetCard.grade === "S" ? "✨" : targetCard.grade === "A" ? "⭐" : "📦";
+    toast.success(`${gradeEmoji} ${targetCard.name} 카드 제작 완료!`, {
+      icon: "🎉",
+      duration: 3000
+    });
+    
+    return {
+      card: newCard,
+      isDupe: false,
+      shardsGained: 0
+    };
+  };
+
   // 스쿼드 설정
   const setSquadCard = (position: Position, card: UserCard | null) => {
     setUserData({
@@ -676,6 +752,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     upgradeCard,
     craftCardWithShards,
     craftLiveCardWithShards,
+    craftSpecificCard,
     setSquadCard,
     saveSquadToDB,
     resetGame,
