@@ -1,6 +1,6 @@
 // LCK 홀로그램 카드 (앞/뒷면 플립 + 5각형 레이더 차트)
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { LCKCard, GRADE_COLORS, POSITION_NAMES, isLiveCard, LIVE_CARD_COLOR } from "@/types/lck";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { PlayerImage } from "@/components/PlayerImage";
@@ -29,6 +29,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showUpgradeButton, setShowUpgradeButton] = useState(false); // 🔧 강화 버튼 표시 상태
   const [logoError, setLogoError] = useState(false);
   const [logoUrlIndex, setLogoUrlIndex] = useState(0);
   
@@ -74,17 +75,55 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // 뒷면 상태에서 onBackClick이 있으면 강화 모달 열기
-    if (isFlipped && onBackClick) {
-      onBackClick();
+    if (disableFlip || forceStatic) {
+      if (onClick) onClick();
       return;
     }
-    // 앞면 상태에서는 플립
-    if (!disableFlip && !forceStatic) {
-      setIsFlipped(!isFlipped);
+    
+    // 앞면 → 뒷면
+    if (!isFlipped) {
+      setIsFlipped(true);
+      setShowUpgradeButton(false);
+      if (onClick) onClick();
     }
-    if (onClick && !isFlipped) onClick();
+    // 뒷면 → 강화 버튼 표시
+    else if (isFlipped && !showUpgradeButton && onBackClick) {
+      setShowUpgradeButton(true);
+    }
+    // 강화 버튼 표시 중 → 앞면으로 (버튼이 아닌 곳 클릭)
+    else if (showUpgradeButton) {
+      setIsFlipped(false);
+      setShowUpgradeButton(false);
+    }
   };
+  
+  // 강화 버튼 클릭
+  const handleUpgradeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onBackClick) {
+      onBackClick();
+      // 모달 열린 후 상태 리셋
+      setIsFlipped(false);
+      setShowUpgradeButton(false);
+    }
+  };
+
+  // 🔧 외부 클릭 시 앞면으로 복귀
+  useEffect(() => {
+    if (!showUpgradeButton || forceStatic) return;
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setIsFlipped(false);
+        setShowUpgradeButton(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUpgradeButton, forceStatic]);
 
   const sizeClasses = {
     small: "w-40 h-[293px]",
@@ -944,6 +983,25 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                   );
                 })}
               </div>
+
+              {/* 🔧 강화 버튼 (showUpgradeButton이 true일 때만 표시) */}
+              {showUpgradeButton && onBackClick && (
+                <div className="mt-3 animate-fadeIn">
+                  <button
+                    onClick={handleUpgradeClick}
+                    className="w-full py-3 px-4 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
+                    style={{
+                      background: `linear-gradient(135deg, ${gradeColor} 0%, ${gradeColor}CC 100%)`,
+                      color: card.grade === "S" || card.grade === "A" ? "#0A0E27" : "#FFFFFF",
+                      boxShadow: `0 4px 12px ${gradeColor}66, inset 0 1px 0 rgba(255,255,255,0.3)`
+                    }}
+                  >
+                    <span className="text-lg">⚡</span>
+                    강화하기
+                    <span className="text-lg">⚡</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Edge Highlight */}
