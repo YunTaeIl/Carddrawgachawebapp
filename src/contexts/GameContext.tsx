@@ -479,7 +479,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const upgradeCard = async (cardInstanceId: string): Promise<UpgradeResultData | null> => {
     const cardIndex = userData.ownedCards.findIndex(c => c.instanceId === cardInstanceId);
     if (cardIndex === -1) {
-      toast.error("카드를 찾을 수 없습니��!");
+      toast.error("카드를 찾을 수 없습니���!");
       return null;
     }
 
@@ -523,18 +523,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // 스탯 증가 계산
       statChanges = calculateUpgradeStatBonus(card.grade, targetLevel, card.position);
       
+      // 새로운 세부 스탯 계산
+      const newMechanics = card.stats.mechanics + statChanges.mechanics;
+      const newLaning = card.stats.laning + statChanges.laning;
+      const newTeamfight = card.stats.teamfight + statChanges.teamfight;
+      const newMacro = card.stats.macro + statChanges.macro;
+      const newClutch = card.stats.clutch + statChanges.clutch;
+      
+      // OVR 재계산 (세부 스탯의 평균)
+      const newOvr = Math.round((newMechanics + newLaning + newTeamfight + newMacro + newClutch) / 5);
+      
       // 카드 업데이트
       const newCards = [...userData.ownedCards];
       updatedCard = {
         ...card,
         upgradeLevel: targetLevel,
         stats: {
-          ovr: card.stats.ovr,
-          mechanics: card.stats.mechanics + statChanges.mechanics,
-          laning: card.stats.laning + statChanges.laning,
-          teamfight: card.stats.teamfight + statChanges.teamfight,
-          macro: card.stats.macro + statChanges.macro,
-          clutch: card.stats.clutch + statChanges.clutch
+          ovr: newOvr,
+          mechanics: newMechanics,
+          laning: newLaning,
+          teamfight: newTeamfight,
+          macro: newMacro,
+          clutch: newClutch
         }
       };
       newCards[cardIndex] = updatedCard;
