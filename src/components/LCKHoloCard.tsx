@@ -86,9 +86,13 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
       setShowUpgradeButton(false);
       if (onClick) onClick();
     }
-    // 뒷면 → 강화 버튼 표시
+    // 뒷면 → 강화 버튼 표시 (onBackClick 있을 때)
     else if (isFlipped && !showUpgradeButton && onBackClick) {
       setShowUpgradeButton(true);
+    }
+    // 뒷면 → 앞면으로 (onBackClick 없을 때)
+    else if (isFlipped && !showUpgradeButton && !onBackClick) {
+      setIsFlipped(false);
     }
     // 강화 버튼 표시 중 → 앞면으로 (버튼이 아닌 곳 클릭)
     else if (showUpgradeButton) {
