@@ -169,6 +169,50 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
   
   const displayOVR = card.stats.ovr + (upgradeLevel || 0) + (synergyBonus?.ovr || 0);
 
+  // ⬆️ 강화 등급별 오라 색상
+  const getUpgradeAura = () => {
+    if (!upgradeLevel || upgradeLevel === 0) return null;
+    
+    if (upgradeLevel >= 13) {
+      return {
+        color: "#FF0000",
+        intensity: "extreme",
+        glow: "0 0 60px #FF000099, 0 0 120px #FFD70066, 0 0 180px #FF000044",
+        pulseColor: "#FFD700"
+      };
+    } else if (upgradeLevel >= 10) {
+      return {
+        color: "#FF8C00",
+        intensity: "very-high",
+        glow: "0 0 50px #FF8C0099, 0 0 100px #FF8C0066, 0 0 150px #FF8C0044",
+        pulseColor: "#FFA500"
+      };
+    } else if (upgradeLevel >= 7) {
+      return {
+        color: "#FFD700",
+        intensity: "high",
+        glow: "0 0 40px #FFD70099, 0 0 80px #FFD70066, 0 0 120px #FFD70044",
+        pulseColor: "#FFED4E"
+      };
+    } else if (upgradeLevel >= 4) {
+      return {
+        color: "#9D4EDD",
+        intensity: "medium",
+        glow: "0 0 30px #9D4EDD99, 0 0 60px #9D4EDD66, 0 0 90px #9D4EDD44",
+        pulseColor: "#C77DFF"
+      };
+    } else {
+      return {
+        color: "#00D9FF",
+        intensity: "low",
+        glow: "0 0 20px #00D9FF99, 0 0 40px #00D9FF66, 0 0 60px #00D9FF44",
+        pulseColor: "#7DF9FF"
+      };
+    }
+  };
+
+  const upgradeAura = getUpgradeAura();
+
   // 5각형 레이더 차트 데이터
   const radarData = [
     { stat: "메카닉", value: card.stats.mechanics + (synergyBonus?.mec || 0), base: card.stats.mechanics },
@@ -243,6 +287,38 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
               background: `radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, ${gradeColor}66, transparent 70%)`
             }}
           />
+          
+          {/* ⬆️ 강화 오라 효과 */}
+          {upgradeAura && (
+            <>
+              {/* 펄싱 오라 링 */}
+              <div 
+                className="absolute -inset-1 rounded-2xl -z-10 animate-pulse"
+                style={{
+                  boxShadow: upgradeAura.glow,
+                  opacity: 0.8
+                }}
+              />
+              
+              {/* 회전하는 오라 */}
+              <div 
+                className="absolute -inset-2 rounded-2xl -z-10"
+                style={{
+                  background: `conic-gradient(
+                    from 0deg,
+                    ${upgradeAura.color}00,
+                    ${upgradeAura.color}88,
+                    ${upgradeAura.pulseColor}88,
+                    ${upgradeAura.color}88,
+                    ${upgradeAura.color}00
+                  )`,
+                  animation: "spin 3s linear infinite",
+                  filter: "blur(8px)",
+                  opacity: 0.6
+                }}
+              />
+            </>
+          )}
 
           {/* 카드 본체 */}
           <div 
@@ -667,6 +743,21 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                   }}
                 >
                   🔴 LIVE
+                </div>
+              )}
+              
+              {/* ⬆️ 강화 레벨 표시 (우측 상단) */}
+              {upgradeLevel > 0 && upgradeAura && (
+                <div 
+                  className="absolute -top-1 -right-1 z-20 px-2.5 py-1 rounded-full font-bold text-sm animate-pulse"
+                  style={{
+                    background: `linear-gradient(135deg, ${upgradeAura.color}, ${upgradeAura.pulseColor})`,
+                    boxShadow: `${upgradeAura.glow}, 0 4px 12px rgba(0,0,0,0.8)`,
+                    color: "white",
+                    textShadow: "0 2px 4px rgba(0,0,0,0.8)"
+                  }}
+                >
+                  +{upgradeLevel}
                 </div>
               )}
               

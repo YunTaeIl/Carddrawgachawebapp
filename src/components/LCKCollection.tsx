@@ -46,6 +46,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   const [selectedCard, setSelectedCard] = useState<UserCard | null>(null);
   const [upgradeModalCard, setUpgradeModalCard] = useState<UserCard | null>(null); // 🔧 강화 모달용
   const [craftResult, setCraftResult] = useState<CraftResult | null>(null); // 🔥 제작 결과 모달용
+  const [isUpgrading, setIsUpgrading] = useState(false); // ⬆️ 강화 중 애니메이션 상태
   const [filterGrade, setFilterGrade] = useState<Grade | "all">("all");
   const [filterPosition, setFilterPosition] = useState<Position | "all">("all");
   const [filterTeam, setFilterTeam] = useState<string>("all");
@@ -200,8 +201,17 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     const card = userData.ownedCards.find(c => c.instanceId === cardInstanceId);
     if (!card) return;
 
+    // ⬆️ 강화 애니메이션 시작
+    setIsUpgrading(true);
+
+    // 1초 대기 (애니메이션 효과)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const beforeLevel = card.upgradeLevel;
     const result = await upgradeCard(cardInstanceId);
+    
+    // ⬆️ 애니메이션 종료
+    setIsUpgrading(false);
     
     if (result) {
       // 결과 모달 표시
@@ -789,10 +799,23 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
 
         {/* 🎲 강화 결과 모달 */}
         <Dialog open={upgradeResult !== null} onOpenChange={() => setUpgradeResult(null)}>
-          <DialogContent className="max-w-md bg-[#12182A] text-[#EAF0FF] border-2 border-[#10B981]/50">
+          <DialogContent className="max-w-md bg-[#12182A] text-[#EAF0FF] border-2 border-[#10B981]/50 relative overflow-hidden">
             {upgradeResult && (
               <>
-                <DialogHeader>
+                {/* ⬆️ 결과별 폭발 효과 */}
+                <div 
+                  className="absolute inset-0 pointer-events-none z-0"
+                  style={{
+                    background: upgradeResult.result === "SUCCESS" 
+                      ? "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.3), transparent 70%)"
+                      : upgradeResult.result === "KEEP"
+                      ? "radial-gradient(circle at 50% 50%, rgba(255, 184, 28, 0.3), transparent 70%)"
+                      : "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3), transparent 70%)",
+                    animation: "pulse 1s ease-out"
+                  }}
+                />
+                
+                <DialogHeader className="relative z-10">
                   <DialogTitle className={`text-2xl text-center font-bold flex items-center justify-center gap-2 ${
                     upgradeResult.result === "SUCCESS" ? "text-[#10B981]" :
                     upgradeResult.result === "KEEP" ? "text-[#FFB81C]" :
@@ -904,14 +927,31 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                     </DialogTitle>
                   </DialogHeader>
                   <div className="flex flex-col items-center gap-2 py-1">
-                    {/* 카드 - 크기 키움 */}
-                    <div className="scale-90 -my-2">
+                    {/* 카드 - 크기 키움 + ⬆️ 강화 애니메이션 */}
+                    <div 
+                      className="scale-90 -my-2 transition-all duration-300"
+                      style={{
+                        animation: isUpgrading ? "upgradeShake 0.5s ease-in-out infinite" : "none",
+                        filter: isUpgrading ? "brightness(1.5) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))" : "none"
+                      }}
+                    >
                       <LCKHoloCard 
                         card={upgradeModalCard} 
                         size="small" 
                         upgradeLevel={upgradeModalCard.upgradeLevel}
                         disableFlip={true}
                       />
+                      
+                      {/* ⬆️ 강화 중 빛나는 효과 */}
+                      {isUpgrading && (
+                        <div 
+                          className="absolute inset-0 rounded-2xl pointer-events-none"
+                          style={{
+                            background: "radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent 70%)",
+                            animation: "pulse 0.5s ease-in-out infinite"
+                          }}
+                        />
+                      )}
                     </div>
 
                     {/* 카드 정보 */}
@@ -1015,10 +1055,12 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                     {/* 강화 버튼 */}
                     <Button
                       onClick={() => handleUpgrade(upgradeModalCard.instanceId)}
-                      disabled={!canAfford}
+                      disabled={!canAfford || isUpgrading}
                       className="w-full bg-[#10B981] hover:bg-[#10B981]/80 text-white font-bold py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {!canAfford 
+                      {isUpgrading 
+                        ? "⚡ 강화 중..." 
+                        : !canAfford 
                         ? "샤드 부족" 
                         : `⬆️ 강화하기 (${cost.toLocaleString()} 샤드)`
                       }
