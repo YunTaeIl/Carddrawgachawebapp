@@ -22,17 +22,39 @@ export async function getGameDataDirect(accessToken: string) {
     throw new Error("인증되지 않은 사용자입니다.");
   }
   
-  const { data, error } = await supabase
+  console.log("🔍 supabaseDirect - user.id:", user.id);
+  
+  // user_game_data 조회
+  const { data: gameData, error: gameError } = await supabase
     .from("user_game_data")
     .select("*")
-    .eq("user_id", user.id)  // user_id를 키로 사용
+    .eq("user_id", user.id)
     .single();
   
-  if (error) {
-    throw error;
+  if (gameError) {
+    throw gameError;
   }
   
-  return data;
+  console.log("🔍 supabaseDirect - gameData:", gameData);
+  
+  // user_profiles에서 is_admin 조회
+  const { data: profileData, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+  
+  console.log("🔍 supabaseDirect - profileData:", profileData);
+  console.log("🔍 supabaseDirect - profileError:", profileError);
+  
+  const isAdmin = profileData?.is_admin || false;
+  
+  console.log("🔍 supabaseDirect - final isAdmin:", isAdmin);
+  
+  return {
+    ...gameData,
+    is_admin: isAdmin
+  };
 }
 
 // 보유 카드 조회
