@@ -320,33 +320,6 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                   animation: "upgradePulse3 2s ease-in-out infinite 1s"
                 }}
               />
-              
-              {/* 빛나는 파티클들 */}
-              <div className="absolute -inset-4 -z-10 pointer-events-none">
-                {[...Array(12)].map((_, i) => {
-                  const angle = (i * 30);
-                  const radius = 105;
-                  const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
-                  const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
-                  
-                  return (
-                    <div
-                      key={i}
-                      className="absolute rounded-full"
-                      style={{
-                        left: `${x}%`,
-                        top: `${y}%`,
-                        width: "8px",
-                        height: "8px",
-                        background: `radial-gradient(circle, ${upgradeAura.pulseColor}, ${upgradeAura.color})`,
-                        boxShadow: `0 0 12px ${upgradeAura.color}, 0 0 24px ${upgradeAura.pulseColor}`,
-                        animation: `upgradeParticle 2s ease-in-out infinite ${i * 0.15}s`,
-                        transform: "translate(-50%, -50%)"
-                      }}
-                    />
-                  );
-                })}
-              </div>
             </>
           )}
 
