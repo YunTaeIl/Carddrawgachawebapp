@@ -994,16 +994,14 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                 {/* 강화 버튼 */}
                 <button
                   onClick={handleUpgradeClick}
-                  className="relative z-30 py-4 px-8 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all hover:scale-110 active:scale-95 shadow-2xl"
+                  className="relative z-30 py-3 px-6 rounded-lg font-bold text-base transition-all hover:scale-105 active:scale-95 shadow-2xl"
                   style={{
                     background: `linear-gradient(135deg, ${gradeColor} 0%, ${gradeColor}DD 50%, ${gradeColor} 100%)`,
                     color: card.grade === "S" || card.grade === "A" ? "#0A0E27" : "#FFFFFF",
                     boxShadow: `0 8px 32px ${gradeColor}99, 0 0 60px ${gradeColor}66, inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.4)`
                   }}
                 >
-                  <span className="text-2xl">⚡</span>
-                  <span className="text-xl">강화하기</span>
-                  <span className="text-2xl">⚡</span>
+                  강화하기
                 </button>
               </div>
             )}
