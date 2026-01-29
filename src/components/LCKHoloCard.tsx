@@ -983,26 +983,30 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                   );
                 })}
               </div>
-
-              {/* 🔧 강화 버튼 (showUpgradeButton이 true일 때만 표시) */}
-              {showUpgradeButton && onBackClick && (
-                <div className="mt-3 animate-fadeIn">
-                  <button
-                    onClick={handleUpgradeClick}
-                    className="w-full py-3 px-4 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
-                    style={{
-                      background: `linear-gradient(135deg, ${gradeColor} 0%, ${gradeColor}CC 100%)`,
-                      color: card.grade === "S" || card.grade === "A" ? "#0A0E27" : "#FFFFFF",
-                      boxShadow: `0 4px 12px ${gradeColor}66, inset 0 1px 0 rgba(255,255,255,0.3)`
-                    }}
-                  >
-                    <span className="text-lg">⚡</span>
-                    강화하기
-                    <span className="text-lg">⚡</span>
-                  </button>
-                </div>
-              )}
             </div>
+
+            {/* 🔧 강화 버튼 (카드 중앙 오버레이) */}
+            {showUpgradeButton && onBackClick && (
+              <div className="absolute inset-0 flex items-center justify-center z-20 animate-fadeIn">
+                {/* 반투명 배경 */}
+                <div className="absolute inset-0 bg-black/70 backdrop-blur-sm rounded-2xl" />
+                
+                {/* 강화 버튼 */}
+                <button
+                  onClick={handleUpgradeClick}
+                  className="relative z-30 py-4 px-8 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all hover:scale-110 active:scale-95 shadow-2xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${gradeColor} 0%, ${gradeColor}DD 50%, ${gradeColor} 100%)`,
+                    color: card.grade === "S" || card.grade === "A" ? "#0A0E27" : "#FFFFFF",
+                    boxShadow: `0 8px 32px ${gradeColor}99, 0 0 60px ${gradeColor}66, inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.4)`
+                  }}
+                >
+                  <span className="text-2xl">⚡</span>
+                  <span className="text-xl">강화하기</span>
+                  <span className="text-2xl">⚡</span>
+                </button>
+              </div>
+            )}
 
             {/* Edge Highlight */}
             <div
