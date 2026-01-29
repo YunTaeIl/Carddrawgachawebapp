@@ -13,7 +13,8 @@ import {
   UPGRADE_RATES,
   UPGRADE_COSTS,
   calculateUpgradeStatBonus,
-  UpgradeResultData
+  UpgradeResultData,
+  isLiveCard
 } from "@/types/lck";
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
 import { pullSingle, pullTen, updatePackPityState, craftCard, craftLiveCard, initializeCardPool } from "@/utils/gachaEngine";
@@ -189,8 +190,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // 재화 데이터 업데이트
         setUserData(prevData => ({
           ...prevData,
-          currency: gameData.currency,
-          shards: gameData.shards,
+          currency: gameData.currency || prevData.currency,
+          shards: gameData.shards ?? prevData.shards,
           lastCheckIn: gameData.last_check_in || undefined,
           isAdmin: gameData.is_admin || false,
           pityData,
@@ -351,7 +352,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ...userData,
       ownedCards: newCards,
       currency: userData.currency - cost,
-      shards: userData.shards + result.shardsGained,
+      shards: (userData.shards || 0) + (result.shardsGained || 0),
       pityData: {
         ...userData.pityData,
         [pack]: updatedPityState
@@ -368,6 +369,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
     if (isAuthenticated && accessToken && !result.isDupe) {
       addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+    }
+
+    // 🔥 LIVE 카드 중복 알림
+    if (result.isDupe && isLiveCard(result.card)) {
+      console.log(`🔥 LIVE 중복! ${result.card.name} → +${result.shardsGained} 샤드`);
     }
 
     return { ...result, card: newCard };
@@ -412,7 +418,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         newCards.push(userCard);
         newUserCards.push(userCard);
       } else {
-        totalShards += result.shardsGained;
+        totalShards += (result.shardsGained || 0);
       }
     });
 
@@ -430,7 +436,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ...userData,
       ownedCards: newCards,
       currency: userData.currency - cost,
-      shards: userData.shards + totalShards,
+      shards: (userData.shards || 0) + (totalShards || 0),
       pityData: {
         ...userData.pityData,
         [pack]: finalPityState
@@ -443,6 +449,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
 
     setUserData(newData);
+
+    // 🔥 LIVE 카드 중복 로그
+    results.forEach(r => {
+      if (r.isDupe && isLiveCard(r.card)) {
+        console.log(`🔥 LIVE 중복! ${r.card.name} (${r.card.grade}) → +${r.shardsGained} 샤드`);
+      }
+    });
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
     if (isAuthenticated && accessToken && newUserCards.length > 0) {
