@@ -268,10 +268,10 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     
     if (isLive) {
       // LIVE 카드는 등급에 따라 100배 비용
-      if (card.grade === "S") return 1000000; // 100만
-      if (card.grade === "A") return 300000;  // 30만
-      if (card.grade === "B") return 100000;  // 10만
-      if (card.grade === "C") return 40000;   // 4만
+      if (card.grade === "S") return 10000000;  // 1000만
+      if (card.grade === "A") return 7000000;   // 700만
+      if (card.grade === "B") return 3500000;   // 350만
+      if (card.grade === "C") return 400000;    // 40만
     }
     
     // 일반 카드
