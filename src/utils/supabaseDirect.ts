@@ -187,7 +187,7 @@ export async function addUserCardDirect(
   return data;
 }
 
-// 카드 강화
+// 카드 강화 (레벨만)
 export async function upgradeUserCardDirect(
   accessToken: string,
   instanceId: string,
@@ -217,6 +217,80 @@ export async function upgradeUserCardDirect(
   }
   
   return data;
+}
+
+// 🔧 카드 강화 (레벨 + 스탯)
+export async function updateUserCardStats(
+  accessToken: string,
+  instanceId: string,
+  newLevel: number,
+  stats: {
+    ovr: number;
+    mechanics: number;
+    laning: number;
+    teamfight: number;
+    macro: number;
+    clutch: number;
+  }
+) {
+  const supabase = createClient(
+    `https://${projectId}.supabase.co`,
+    publicAnonKey,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    }
+  );
+  
+  const { data, error } = await supabase
+    .from("user_cards")
+    .update({ 
+      upgrade_level: newLevel,
+      mechanics: stats.mechanics,
+      laning: stats.laning,
+      teamfight: stats.teamfight,
+      macro: stats.macro,
+      clutch: stats.clutch
+    })
+    .eq("instance_id", instanceId)
+    .select()
+    .single();
+  
+  if (error) {
+    throw error;
+  }
+  
+  return data;
+}
+
+// 🔧 카드 삭제 (파괴 시)
+export async function deleteUserCard(
+  accessToken: string,
+  instanceId: string
+) {
+  const supabase = createClient(
+    `https://${projectId}.supabase.co`,
+    publicAnonKey,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    }
+  );
+  
+  const { error } = await supabase
+    .from("user_cards")
+    .delete()
+    .eq("instance_id", instanceId);
+  
+  if (error) {
+    throw error;
+  }
 }
 
 // 스쿼드 저장

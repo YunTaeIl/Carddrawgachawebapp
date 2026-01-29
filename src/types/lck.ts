@@ -94,6 +94,37 @@ export interface GachaResult {
   isPity: boolean; // 천장으로 뽑았는지
 }
 
+// 🔧 강화 시스템 타입
+export type UpgradeResult = "SUCCESS" | "KEEP" | "BREAK";
+
+export interface UpgradeAttempt {
+  result: UpgradeResult;
+  beforeLevel: number;
+  afterLevel: number;
+  shardsCost: number;
+  timestamp: number;
+  statChanges?: {
+    mechanics: number;
+    laning: number;
+    teamfight: number;
+    macro: number;
+    clutch: number;
+  };
+}
+
+export interface UpgradeResultData {
+  result: UpgradeResult;
+  card?: UserCard; // SUCCESS/KEEP 시 업데이트된 카드
+  shardsCost: number;
+  statChanges?: {
+    mechanics: number;
+    laning: number;
+    teamfight: number;
+    macro: number;
+    clutch: number;
+  };
+}
+
 export interface Synergy {
   id: string;
   name: string;
@@ -170,8 +201,7 @@ export const GACHA_CONFIG = {
     B: 10,
     C: 3
   },
-  UPGRADE_COST: 100,
-  MAX_UPGRADE: 3,
+  MAX_UPGRADE: 15, // 🔧 최대 강화 단계
   CRAFT_COSTS: {
     A: 300,
     S: 900
@@ -197,6 +227,54 @@ export const GRADE_COLORS = {
 // 🔥 LIVE 카드 전용 색상 (등급과 별개)
 export const LIVE_CARD_COLOR = "#FF1493"; // 핑크 (DeepPink)
 
+// 🔧 강화 확률 테이블 (목표 단계별)
+export const UPGRADE_RATES: Record<number, { success: number; keep: number; break: number }> = {
+  1: { success: 95, keep: 5, break: 0 },
+  2: { success: 90, keep: 10, break: 0 },
+  3: { success: 85, keep: 15, break: 0 },
+  4: { success: 75, keep: 20, break: 5 },
+  5: { success: 65, keep: 25, break: 10 },
+  6: { success: 55, keep: 25, break: 20 },
+  7: { success: 45, keep: 25, break: 30 },
+  8: { success: 35, keep: 25, break: 40 },
+  9: { success: 25, keep: 25, break: 50 },
+  10: { success: 15, keep: 25, break: 60 },
+  11: { success: 12, keep: 23, break: 65 },
+  12: { success: 10, keep: 20, break: 70 },
+  13: { success: 8, keep: 17, break: 75 },
+  14: { success: 6, keep: 14, break: 80 },
+  15: { success: 5, keep: 10, break: 85 }
+};
+
+// 🔧 강화 비용 테이블 (등급별, 목표 단계별)
+export const UPGRADE_COSTS: Record<Grade, Record<number, number>> = {
+  C: {
+    1: 50, 2: 80, 3: 120, 4: 180, 5: 260, 6: 360, 7: 480, 8: 650, 9: 850, 10: 1100,
+    11: 1400, 12: 1800, 13: 2300, 14: 3000, 15: 4000
+  },
+  B: {
+    1: 80, 2: 130, 3: 200, 4: 300, 5: 450, 6: 650, 7: 900, 8: 1200, 9: 1600, 10: 2000,
+    11: 2600, 12: 3400, 13: 4500, 14: 6000, 15: 8000
+  },
+  A: {
+    1: 150, 2: 250, 3: 400, 4: 600, 5: 900, 6: 1300, 7: 1800, 8: 2500, 9: 3300, 10: 4200,
+    11: 5500, 12: 7200, 13: 9500, 14: 12500, 15: 16000
+  },
+  S: {
+    1: 300, 2: 500, 3: 800, 4: 1200, 5: 1800, 6: 2600, 7: 3600, 8: 4800, 9: 6200, 10: 8000,
+    11: 10500, 12: 13800, 13: 18000, 14: 23500, 15: 30000
+  }
+};
+
+// 🔧 포지션별 주스탯 정의
+export const POSITION_MAIN_STATS: Record<Position, (keyof CardStats)[]> = {
+  TOP: ["mechanics", "teamfight"],
+  JGL: ["macro", "mechanics"],
+  MID: ["mechanics", "laning"],
+  ADC: ["mechanics", "clutch"],
+  SUP: ["macro", "teamfight"]
+};
+
 export const POSITION_NAMES = {
   TOP: "탑",
   JGL: "정글",
@@ -204,3 +282,90 @@ export const POSITION_NAMES = {
   ADC: "원딜",
   SUP: "서포터"
 };
+
+// 🔧 강화 성공 시 스탯 증가량 계산
+export function calculateUpgradeStatBonus(
+  grade: Grade,
+  targetLevel: number,
+  position: Position
+): { mechanics: number; laning: number; teamfight: number; macro: number; clutch: number } {
+  const mainStats = POSITION_MAIN_STATS[position];
+  const allStats: (keyof CardStats)[] = ["mechanics", "laning", "teamfight", "macro", "clutch"];
+  
+  const bonus = {
+    mechanics: 0,
+    laning: 0,
+    teamfight: 0,
+    macro: 0,
+    clutch: 0
+  };
+
+  if (grade === "C" || grade === "B") {
+    // C, B: +1~+3은 주스탯만, +4~+15는 전 스탯 +1
+    if (targetLevel <= 3) {
+      mainStats.forEach(stat => {
+        bonus[stat] = 1;
+      });
+    } else {
+      allStats.forEach(stat => {
+        bonus[stat] = 1;
+      });
+    }
+  } else if (grade === "A") {
+    // A: +3~+6 전체 +1, +7~+12 전체 +2, +13~+14 전체 +3, +15 전체 +4
+    if (targetLevel <= 2) {
+      mainStats.forEach(stat => {
+        bonus[stat] = 1;
+      });
+    } else if (targetLevel <= 6) {
+      allStats.forEach(stat => {
+        bonus[stat] = 1;
+      });
+    } else if (targetLevel <= 12) {
+      allStats.forEach(stat => {
+        bonus[stat] = 2;
+      });
+    } else if (targetLevel <= 14) {
+      allStats.forEach(stat => {
+        bonus[stat] = 3;
+      });
+    } else {
+      allStats.forEach(stat => {
+        bonus[stat] = 4;
+      });
+    }
+  } else if (grade === "S") {
+    // S: +1~+2 주스탯만, +3 전체 +1, +4~+6 전체 +2, +7~+9 전체 +3, +10~+12 전체 +4, +13~+14 전체 +5, +15 전체 +6
+    if (targetLevel <= 2) {
+      mainStats.forEach(stat => {
+        bonus[stat] = 1;
+      });
+    } else if (targetLevel === 3) {
+      allStats.forEach(stat => {
+        bonus[stat] = 1;
+      });
+    } else if (targetLevel <= 6) {
+      allStats.forEach(stat => {
+        bonus[stat] = 2;
+      });
+    } else if (targetLevel <= 9) {
+      allStats.forEach(stat => {
+        bonus[stat] = 3;
+      });
+    } else if (targetLevel <= 12) {
+      allStats.forEach(stat => {
+        bonus[stat] = 4;
+      });
+    } else if (targetLevel <= 14) {
+      allStats.forEach(stat => {
+        bonus[stat] = 5;
+      });
+    } else {
+      allStats.forEach(stat => {
+        bonus[stat] = 6;
+      });
+    }
+  }
+
+  return bonus;
+}

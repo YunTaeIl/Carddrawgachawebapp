@@ -10,6 +10,7 @@ interface LCKHoloCardProps {
   card: LCKCard;
   size?: "small" | "medium" | "large";
   onClick?: () => void;
+  onBackClick?: () => void; // 뒷면 클릭 시 콜백
   upgradeLevel?: number;
   disableFlip?: boolean;
   forceStatic?: boolean; // 캡처용 정적 렌더링
@@ -23,7 +24,7 @@ interface LCKHoloCardProps {
   };
 }
 
-export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, disableFlip = false, forceStatic = false, synergyBonus }: LCKHoloCardProps) {
+export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgradeLevel = 0, disableFlip = false, forceStatic = false, synergyBonus }: LCKHoloCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
@@ -73,10 +74,16 @@ export function LCKHoloCard({ card, size = "medium", onClick, upgradeLevel = 0, 
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // 뒷면 상태에서 onBackClick이 있으면 강화 모달 열기
+    if (isFlipped && onBackClick) {
+      onBackClick();
+      return;
+    }
+    // 앞면 상태에서는 플립
     if (!disableFlip && !forceStatic) {
       setIsFlipped(!isFlipped);
     }
-    if (onClick) onClick();
+    if (onClick && !isFlipped) onClick();
   };
 
   const sizeClasses = {

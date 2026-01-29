@@ -4,8 +4,8 @@ import React, { useState, useMemo } from "react";
 import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X } from "lucide-react";
-import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG } from "@/types/lck";
+import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull } from "lucide-react";
+import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus } from "@/types/lck";
 import {
   Dialog,
   DialogContent,
@@ -27,9 +27,24 @@ interface LCKCollectionProps {
 const CARDS_PER_PAGE = 20; // 한 페이지당 카드 수
 
 export function LCKCollection({ onBack }: LCKCollectionProps) {
-  const { userData, allCards, upgradeCard, craftCardWithShards, craftLiveCardWithShards, craftSpecificCard } = useGame();
+  const gameContext = useGame();
+  
+  // 안전 가드
+  if (!gameContext) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0B0F1A] via-[#12182A] to-[#1A2332] flex items-center justify-center">
+        <div className="text-[#EAF0FF] text-center">
+          <div className="text-2xl mb-4">⚠️</div>
+          <div>게임 데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    );
+  }
+  
+  const { userData, allCards, upgradeCard, craftCardWithShards, craftLiveCardWithShards, craftSpecificCard } = gameContext;
   const [activeTab, setActiveTab] = useState<"owned" | "craft">("owned");
   const [selectedCard, setSelectedCard] = useState<UserCard | null>(null);
+  const [upgradeModalCard, setUpgradeModalCard] = useState<UserCard | null>(null); // 🔧 강화 모달용
   const [craftResult, setCraftResult] = useState<CraftResult | null>(null); // 🔥 제작 결과 모달용
   const [filterGrade, setFilterGrade] = useState<Grade | "all">("all");
   const [filterPosition, setFilterPosition] = useState<Position | "all">("all");
@@ -156,13 +171,55 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     setCurrentPage(1);
   };
 
-  const handleUpgrade = (cardInstanceId: string) => {
-    const success = upgradeCard(cardInstanceId);
-    if (success && selectedCard) {
-      // 선택된 카드 업데이트
-      const updated = userData.ownedCards.find(c => c.instanceId === cardInstanceId);
-      if (updated) {
-        setSelectedCard(updated);
+  const [upgradeResult, setUpgradeResult] = useState<{
+    result: import("@/types/lck").UpgradeResult;
+    card?: UserCard;
+    beforeLevel: number;
+    afterLevel: number;
+    shardsCost: number;
+    statChanges?: {
+      mechanics: number;
+      laning: number;
+      teamfight: number;
+      macro: number;
+      clutch: number;
+    };
+  } | null>(null);
+
+  const handleUpgrade = async (cardInstanceId: string) => {
+    const card = userData.ownedCards.find(c => c.instanceId === cardInstanceId);
+    if (!card) return;
+
+    const beforeLevel = card.upgradeLevel;
+    const result = await upgradeCard(cardInstanceId);
+    
+    if (result) {
+      // 결과 모달 표시
+      setUpgradeResult({
+        result: result.result,
+        card: result.card,
+        beforeLevel: beforeLevel,
+        afterLevel: result.result === "SUCCESS" ? beforeLevel + 1 : beforeLevel,
+        shardsCost: result.shardsCost,
+        statChanges: result.statChanges
+      });
+
+      // 강화 모달 닫기
+      setUpgradeModalCard(null);
+
+      // 선택된 카드 업데이트 (BREAK가 아닌 경우)
+      if (result.result !== "BREAK" && result.card) {
+        const updated = userData.ownedCards.find(c => c.instanceId === cardInstanceId);
+        if (updated) {
+          if (selectedCard?.instanceId === cardInstanceId) {
+            setSelectedCard(updated);
+          }
+        }
+      } else if (result.result === "BREAK") {
+        // 파괴된 경우 선택 해제
+        if (selectedCard?.instanceId === cardInstanceId) {
+          setSelectedCard(null);
+        }
       }
     }
   };
@@ -228,7 +285,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         </div>
 
         {/* 탭 */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <Button
             onClick={() => handleTabChange("owned")}
             className={activeTab === "owned" 
@@ -250,7 +307,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             }
           >
             {userData.isAdmin ? <Hammer className="w-4 h-4 mr-2" /> : <span className="mr-2">🔒</span>}
-            카드 제작소
+            카드 상점
             {userData.isAdmin && (
               <span className="ml-2 text-xs px-2 py-0.5 bg-red-500/30 text-red-300 rounded-full border border-red-400/50">
                 ADMIN
@@ -460,7 +517,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               </SelectContent>
             </Select>
 
-            {activeTab === "owned" && (
+            {(activeTab === "owned") && (
               <Select value={sortBy} onValueChange={handleFilterChange(setSortBy)}>
                 <SelectTrigger className="w-full sm:col-span-2 lg:col-span-2">
                   <SelectValue placeholder="정렬" />
@@ -480,7 +537,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 mb-8">
               {paginatedCards.map((card) => {
                 const isOwned = activeTab === "owned";
-                const craftCost = isOwned ? 0 : getCraftCost(card.grade);
+                const craftCost = !isOwned ? getCraftCost(card.grade) : 0;
                 const canCraft = userData.shards >= craftCost;
 
                 return (
@@ -492,7 +549,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                       <LCKHoloCard 
                         card={card} 
                         size="medium" 
-                        upgradeLevel={isOwned ? (card as UserCard).upgradeLevel : 0} 
+                        upgradeLevel={isOwned ? (card as UserCard).upgradeLevel : 0}
+                        onBackClick={isOwned && userData.isAdmin ? () => setUpgradeModalCard(card as UserCard) : undefined}
                       />
                     </div>
                     
@@ -713,6 +771,247 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                 </div>
               </>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* 🎲 강화 결과 모달 */}
+        <Dialog open={upgradeResult !== null} onOpenChange={() => setUpgradeResult(null)}>
+          <DialogContent className="max-w-md bg-[#12182A] text-[#EAF0FF] border-2 border-[#10B981]/50">
+            {upgradeResult && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className={`text-2xl text-center font-bold flex items-center justify-center gap-2 ${
+                    upgradeResult.result === "SUCCESS" ? "text-[#10B981]" :
+                    upgradeResult.result === "KEEP" ? "text-[#FFB81C]" :
+                    "text-red-400"
+                  }`}>
+                    {upgradeResult.result === "SUCCESS" && <><TrendingUp className="w-6 h-6" /> 강화 성공!</>}
+                    {upgradeResult.result === "KEEP" && <><Shield className="w-6 h-6" /> 강화 유지</>}
+                    {upgradeResult.result === "BREAK" && <><Skull className="w-6 h-6" /> 카드 파괴...</>}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col items-center gap-4 py-4">
+                  {/* 결과 메시지 */}
+                  {upgradeResult.result === "SUCCESS" && upgradeResult.card && (
+                    <>
+                      <div className="transform scale-90">
+                        <LCKHoloCard card={upgradeResult.card} size="medium" upgradeLevel={upgradeResult.afterLevel} disableFlip={true} />
+                      </div>
+                      <div className="text-center space-y-2">
+                        <h3 className="text-xl font-bold">{upgradeResult.card.name}</h3>
+                        <div className="text-lg font-bold text-[#10B981]">
+                          +{upgradeResult.beforeLevel} → +{upgradeResult.afterLevel}
+                        </div>
+                        {upgradeResult.statChanges && (
+                          <div className="bg-[#0B0F1A] p-3 rounded border border-[#10B981]/30">
+                            <div className="text-sm text-[#9AA6C3] mb-2">획득한 스탯</div>
+                            <div className="grid grid-cols-5 gap-2 text-xs">
+                              {(Object.entries(upgradeResult.statChanges) as [keyof typeof upgradeResult.statChanges, number][]).map(([stat, value]) => {
+                                const statNames = {
+                                  mechanics: "메카닉",
+                                  laning: "라인전",
+                                  teamfight: "한타",
+                                  macro: "운영",
+                                  clutch: "클러치"
+                                };
+                                return value > 0 && (
+                                  <div key={stat} className="text-center bg-[#10B981]/20 p-2 rounded">
+                                    <div className="text-[10px] text-[#9AA6C3] mb-1">{statNames[stat]}</div>
+                                    <div className="text-base font-bold text-[#10B981]">+{value}</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {upgradeResult.result === "KEEP" && upgradeResult.card && (
+                    <>
+                      <div className="transform scale-90">
+                        <LCKHoloCard card={upgradeResult.card} size="medium" upgradeLevel={upgradeResult.beforeLevel} disableFlip={true} />
+                      </div>
+                      <div className="text-center space-y-2">
+                        <h3 className="text-xl font-bold">{upgradeResult.card.name}</h3>
+                        <div className="text-lg font-bold text-[#FFB81C]">
+                          +{upgradeResult.beforeLevel} (유지됨)
+                        </div>
+                        <p className="text-sm text-[#9AA6C3]">
+                          강화에 실패했지만 카드는 안전합니다!
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  {upgradeResult.result === "BREAK" && (
+                    <div className="text-center space-y-4 py-8">
+                      <div className="text-6xl">💥</div>
+                      <h3 className="text-2xl font-bold text-red-400">카드가 파괴되었습니다!</h3>
+                      <p className="text-sm text-[#9AA6C3]">
+                        강화 실패로 카드가 영구 삭제되었습니다.<br/>
+                        소모한 샤드: {upgradeResult.shardsCost.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 확인 버튼 */}
+                  <Button
+                    onClick={() => setUpgradeResult(null)}
+                    className={`w-full font-bold ${
+                      upgradeResult.result === "SUCCESS" ? "bg-[#10B981] hover:bg-[#10B981]/80" :
+                      upgradeResult.result === "KEEP" ? "bg-[#FFB81C] hover:bg-[#FFB81C]/80 text-[#0B0F1A]" :
+                      "bg-red-500 hover:bg-red-600"
+                    }`}
+                  >
+                    확인
+                  </Button>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* 🔧 강화 모달 (카드 뒷면 클릭 시) */}
+        <Dialog open={upgradeModalCard !== null} onOpenChange={() => setUpgradeModalCard(null)}>
+          <DialogContent className="max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 border-[#10B981]/50 max-h-[90vh] overflow-y-auto">
+            {upgradeModalCard && (() => {
+              const targetLevel = upgradeModalCard.upgradeLevel + 1;
+              const rates = UPGRADE_RATES[targetLevel];
+              const cost = UPGRADE_COSTS[upgradeModalCard.grade][targetLevel];
+              const statBonus = calculateUpgradeStatBonus(upgradeModalCard.grade, targetLevel, upgradeModalCard.position);
+              const canAfford = userData.shards >= cost;
+              
+              return (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="text-lg text-center text-[#10B981] flex items-center justify-center gap-1.5">
+                      ⬆️ 카드 강화
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-col items-center gap-2 py-1">
+                    {/* 카드 */}
+                    <div className="scale-75 -my-4">
+                      <LCKHoloCard 
+                        card={upgradeModalCard} 
+                        size="small" 
+                        upgradeLevel={upgradeModalCard.upgradeLevel}
+                        disableFlip={true}
+                      />
+                    </div>
+
+                    {/* 카드 정보 */}
+                    <div className="text-center -mt-2">
+                      <h3 className="text-base font-bold">{upgradeModalCard.name}</h3>
+                      <div className="text-xs text-[#9AA6C3]">
+                        {upgradeModalCard.team} • {upgradeModalCard.year} • {upgradeModalCard.position}
+                      </div>
+                    </div>
+
+                    {/* 강화 레벨 */}
+                    <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#10B981]/30">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs text-[#9AA6C3]">강화 단계</span>
+                        <span className="text-sm font-bold text-[#10B981]">
+                          +{upgradeModalCard.upgradeLevel} → +{targetLevel}
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#12182A] rounded-full h-1.5">
+                        <div 
+                          className="bg-[#10B981] h-1.5 rounded-full transition-all"
+                          style={{ width: `${(upgradeModalCard.upgradeLevel / GACHA_CONFIG.MAX_UPGRADE) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 🎲 강화 확률 */}
+                    <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#9AA6C3]/30">
+                      <div className="text-xs text-[#9AA6C3] mb-1.5 text-center font-bold">강화 확률</div>
+                      <div className="grid grid-cols-3 gap-1 text-xs">
+                        <div className="bg-[#10B981]/20 border border-[#10B981]/50 rounded p-1.5 text-center">
+                          <div className="flex items-center justify-center gap-1 mb-0.5">
+                            <TrendingUp className="w-3 h-3 text-[#10B981]" />
+                            <span className="text-[#10B981] font-bold">성공</span>
+                          </div>
+                          <div className="text-base font-bold text-[#10B981]">{rates.success}%</div>
+                        </div>
+                        <div className="bg-[#FFB81C]/20 border border-[#FFB81C]/50 rounded p-1.5 text-center">
+                          <div className="flex items-center justify-center gap-1 mb-0.5">
+                            <Shield className="w-3 h-3 text-[#FFB81C]" />
+                            <span className="text-[#FFB81C] font-bold">유지</span>
+                          </div>
+                          <div className="text-base font-bold text-[#FFB81C]">{rates.keep}%</div>
+                        </div>
+                        <div className="bg-red-500/20 border border-red-500/50 rounded p-1.5 text-center">
+                          <div className="flex items-center justify-center gap-1 mb-0.5">
+                            <Skull className="w-3 h-3 text-red-400" />
+                            <span className="text-red-400 font-bold">파괴</span>
+                          </div>
+                          <div className="text-base font-bold text-red-400">{rates.break}%</div>
+                        </div>
+                      </div>
+                      {rates.break > 0 && (
+                        <div className="mt-2 text-xs text-red-400 text-center">
+                          ⚠️ 파괴 시 카드가 영구 삭제됩니다!
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 📊 성공 시 스탯 증가 */}
+                    <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#10B981]/30">
+                      <div className="text-xs text-[#9AA6C3] mb-1 text-center font-bold">성공 시 획득 스탯</div>
+                      <div className="grid grid-cols-5 gap-1 text-xs">
+                        {(["mechanics", "laning", "teamfight", "macro", "clutch"] as const).map((stat) => {
+                          const statNames = {
+                            mechanics: "메카닉",
+                            laning: "라인전",
+                            teamfight: "한타",
+                            macro: "운영",
+                            clutch: "클러치"
+                          };
+                          const bonus = statBonus[stat];
+                          return (
+                            <div key={stat} className={`text-center p-1 rounded ${bonus > 0 ? "bg-[#10B981]/20" : "bg-[#12182A]"}`}>
+                              <div className="text-[10px] text-[#9AA6C3] mb-0.5 truncate">{statNames[stat]}</div>
+                              <div className={`text-sm font-bold ${bonus > 0 ? "text-[#10B981]" : "text-gray-500"}`}>
+                                {bonus > 0 ? `+${bonus}` : "-"}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* 비용 */}
+                    <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#D4AF37]/30">
+                      <div className="flex justify-between items-center text-xs mb-1">
+                        <span className="text-[#9AA6C3]">강화 비용</span>
+                        <span className="font-bold text-[#D4AF37]">
+                          💎 {cost.toLocaleString()} 샤드
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[#9AA6C3]">보유 샤드</span>
+                        <span className={`font-bold ${canAfford ? "text-[#10B981]" : "text-red-400"}`}>
+                          💎 {userData.shards.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 강화 버튼 */}
+                    <Button
+                      onClick={() => handleUpgrade(upgradeModalCard.instanceId)}
+                      disabled={!canAfford}
+                      className="w-full bg-[#10B981] hover:bg-[#10B981]/80 text-white font-bold py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {!canAfford 
+                        ? "샤드 부족" 
+                        : `⬆️ 강화하기 (${cost.toLocaleString()} 샤드)`
+                      }
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
           </DialogContent>
         </Dialog>
       </div>

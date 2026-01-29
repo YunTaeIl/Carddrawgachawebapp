@@ -1,7 +1,20 @@
 // 게임 전역 상태 관리 (DB 동기화 포함)
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
-import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position, CardPackType, PackPityState } from "@/types/lck";
+import { 
+  UserData, 
+  UserCard, 
+  LCKCard, 
+  GachaResult, 
+  GACHA_CONFIG, 
+  Position, 
+  CardPackType, 
+  PackPityState,
+  UPGRADE_RATES,
+  UPGRADE_COSTS,
+  calculateUpgradeStatBonus,
+  UpgradeResultData
+} from "@/types/lck";
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
 import { pullSingle, pullTen, updatePackPityState, craftCard, craftLiveCard, initializeCardPool } from "@/utils/gachaEngine";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +22,8 @@ import {
   updateGameDataDirect, 
   addUserCardDirect, 
   upgradeUserCardDirect,
+  updateUserCardStats,
+  deleteUserCard,
   getGameDataDirect,
   getUserCardsDirect,
   saveUserSquadDirect,
@@ -33,7 +48,7 @@ interface GameContextType {
   pullTenGacha: (packType?: CardPackType) => Promise<GachaResult[] | null>;
   
   // 샤드
-  upgradeCard: (cardInstanceId: string) => Promise<boolean>;
+  upgradeCard: (cardInstanceId: string) => Promise<UpgradeResultData | null>;
   craftCardWithShards: (grade: "A" | "S") => Promise<CraftResult | null>;
   craftLiveCardWithShards: (grade: "A" | "S") => Promise<CraftResult | null>;
   craftSpecificCard: (cardId: string) => Promise<CraftResult | null>;
@@ -448,46 +463,125 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // 카드 강화
-  const upgradeCard = async (cardInstanceId: string): Promise<boolean> => {
+  // 🔧 카드 강화 (확률형 - SUCCESS/KEEP/BREAK)
+  const upgradeCard = async (cardInstanceId: string): Promise<UpgradeResultData | null> => {
     const cardIndex = userData.ownedCards.findIndex(c => c.instanceId === cardInstanceId);
     if (cardIndex === -1) {
       toast.error("카드를 찾을 수 없습니다!");
-      return false;
+      return null;
     }
 
     const card = userData.ownedCards[cardIndex];
     const currentLevel = card.upgradeLevel;
+    const targetLevel = currentLevel + 1;
     
-    if (currentLevel >= 10) {
+    if (currentLevel >= GACHA_CONFIG.MAX_UPGRADE) {
       toast.error("최대 강화 레벨입니다!");
-      return false;
+      return null;
     }
 
-    const cost = GACHA_CONFIG.UPGRADE_COST[currentLevel + 1];
+    // 강화 비용
+    const cost = UPGRADE_COSTS[card.grade][targetLevel];
     if (userData.shards < cost) {
-      toast.error(`샤드가 부족합니다! (필요: ${cost})`);
-      return false;
+      toast.error(`샤드가 부족합니다! (필요: ${cost.toLocaleString()})`);
+      return null;
     }
 
-    const newCards = [...userData.ownedCards];
-    newCards[cardIndex] = { ...card, upgradeLevel: currentLevel + 1 };
+    // 확률 계산
+    const rates = UPGRADE_RATES[targetLevel];
+    const roll = Math.random() * 100;
+    
+    let result: "SUCCESS" | "KEEP" | "BREAK";
+    if (roll < rates.success) {
+      result = "SUCCESS";
+    } else if (roll < rates.success + rates.keep) {
+      result = "KEEP";
+    } else {
+      result = "BREAK";
+    }
 
-    const newData: UserData = {
-      ...userData,
-      ownedCards: newCards,
-      shards: userData.shards - cost
-    };
+    // 결과에 따른 처리
+    let newData: UserData;
+    let updatedCard: UserCard | undefined;
+    let statChanges: any = undefined;
+
+    if (result === "SUCCESS") {
+      // 스탯 증가 계산
+      statChanges = calculateUpgradeStatBonus(card.grade, targetLevel, card.position);
+      
+      // 카드 업데이트
+      const newCards = [...userData.ownedCards];
+      updatedCard = {
+        ...card,
+        upgradeLevel: targetLevel,
+        stats: {
+          ovr: card.stats.ovr,
+          mechanics: card.stats.mechanics + statChanges.mechanics,
+          laning: card.stats.laning + statChanges.laning,
+          teamfight: card.stats.teamfight + statChanges.teamfight,
+          macro: card.stats.macro + statChanges.macro,
+          clutch: card.stats.clutch + statChanges.clutch
+        }
+      };
+      newCards[cardIndex] = updatedCard;
+
+      newData = {
+        ...userData,
+        ownedCards: newCards,
+        shards: userData.shards - cost
+      };
+
+      // DB 저장
+      if (isAuthenticated && accessToken) {
+        updateUserCardStats(accessToken, cardInstanceId, updatedCard.upgradeLevel, updatedCard.stats).catch(() => {});
+      }
+
+      toast.success(`🎉 강화 성공! +${targetLevel}`);
+    } else if (result === "KEEP") {
+      // 샤드만 차감
+      newData = {
+        ...userData,
+        shards: userData.shards - cost
+      };
+      updatedCard = card;
+
+      toast.warning(`😐 강화 유지... +${currentLevel}`);
+    } else {
+      // BREAK - 카드 삭제
+      const newCards = userData.ownedCards.filter(c => c.instanceId !== cardInstanceId);
+      
+      // 스쿼드에서도 제거
+      const newSquad = { ...userData.squad };
+      Object.keys(newSquad).forEach(pos => {
+        const p = pos as Position;
+        if (newSquad[p]?.instanceId === cardInstanceId) {
+          newSquad[p] = null;
+        }
+      });
+
+      newData = {
+        ...userData,
+        ownedCards: newCards,
+        squad: newSquad,
+        shards: userData.shards - cost
+      };
+
+      // DB에서 삭제
+      if (isAuthenticated && accessToken) {
+        deleteUserCard(accessToken, cardInstanceId).catch(() => {});
+      }
+
+      toast.error(`💥 강화 실패! 카드가 파괴되었습니다...`);
+    }
 
     setUserData(newData);
 
-    // DB 저장 (로그인 시)
-    if (isAuthenticated && accessToken) {
-      upgradeUserCardDirect(accessToken, cardInstanceId, newCards[cardIndex].upgradeLevel).catch(() => {});
-    }
-
-    toast.success(`강화 성공! Lv.${currentLevel + 1}`);
-    return true;
+    return {
+      result,
+      card: updatedCard,
+      shardsCost: cost,
+      statChanges
+    };
   };
 
   // 샤드로 카드 제작
