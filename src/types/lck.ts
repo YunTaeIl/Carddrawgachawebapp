@@ -212,9 +212,11 @@ export const GACHA_CONFIG = {
     S: 90000
   },
   LIVE_SHARD_VALUES: {
+    S: 10000,
     A: 3000,
-    S: 10000
-  }
+    B: 1000,
+    C: 300
+  } as const
 };
 
 export const GRADE_COLORS = {

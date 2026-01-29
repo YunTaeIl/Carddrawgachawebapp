@@ -235,12 +235,23 @@ export function pullSingle(pityState: PackPityState, ownedCardIds: string[], pac
   const isDupe = ownedCardIds.includes(selectedCard.id);
   let shardsGained = 0;
   if (isDupe) {
-    if (isLiveCard(selectedCard)) {
-      // LIVE 카드는 A/S 등급만 존재
-      const grade = selectedCard.grade as "A" | "S";
-      shardsGained = GACHA_CONFIG.LIVE_SHARD_VALUES[grade] || 0;
+    const isLive = isLiveCard(selectedCard);
+    console.log(`🔍 중복 카드 체크:`, {
+      name: selectedCard.name,
+      year: selectedCard.year,
+      grade: selectedCard.grade,
+      isLive,
+      LIVE_VALUES: GACHA_CONFIG.LIVE_SHARD_VALUES,
+      NORMAL_VALUES: GACHA_CONFIG.SHARD_VALUES
+    });
+    
+    if (isLive) {
+      // LIVE 카드는 모든 등급 가능
+      shardsGained = GACHA_CONFIG.LIVE_SHARD_VALUES[selectedCard.grade] || 0;
+      console.log(`✨ LIVE 중복! ${selectedCard.name} (${selectedCard.grade}) → ${shardsGained} 샤드`);
     } else {
       shardsGained = GACHA_CONFIG.SHARD_VALUES[selectedCard.grade] || 0;
+      console.log(`📦 일반 중복: ${selectedCard.name} (${selectedCard.grade}) → ${shardsGained} 샤드`);
     }
   }
 
