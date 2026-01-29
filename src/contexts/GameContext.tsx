@@ -479,7 +479,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const upgradeCard = async (cardInstanceId: string): Promise<UpgradeResultData | null> => {
     const cardIndex = userData.ownedCards.findIndex(c => c.instanceId === cardInstanceId);
     if (cardIndex === -1) {
-      toast.error("카드를 찾을 수 없습니다!");
+      toast.error("카드를 찾을 수 없습니��!");
       return null;
     }
 
@@ -492,8 +492,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    // 강화 비용
-    const cost = UPGRADE_COSTS[card.grade][targetLevel];
+    // 강화 비용 (🔥 LIVE 카드는 100배)
+    const baseCost = UPGRADE_COSTS[card.grade][targetLevel];
+    const cost = isLiveCard(card) ? baseCost * 100 : baseCost;
+    
     if (userData.shards < cost) {
       toast.error(`샤드가 부족합니다! (필요: ${cost.toLocaleString()})`);
       return null;

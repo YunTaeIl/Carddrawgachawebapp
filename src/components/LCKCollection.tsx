@@ -5,7 +5,7 @@ import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull } from "lucide-react";
-import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus } from "@/types/lck";
+import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, isLiveCard } from "@/types/lck";
 import {
   Dialog,
   DialogContent,
@@ -890,7 +890,9 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             {upgradeModalCard && (() => {
               const targetLevel = upgradeModalCard.upgradeLevel + 1;
               const rates = UPGRADE_RATES[targetLevel];
-              const cost = UPGRADE_COSTS[upgradeModalCard.grade][targetLevel];
+              // 🔥 LIVE 카드는 강화 비용 100배
+              const baseCost = UPGRADE_COSTS[upgradeModalCard.grade][targetLevel];
+              const cost = isLiveCard(upgradeModalCard) ? baseCost * 100 : baseCost;
               const statBonus = calculateUpgradeStatBonus(upgradeModalCard.grade, targetLevel, upgradeModalCard.position);
               const canAfford = userData.shards >= cost;
               
