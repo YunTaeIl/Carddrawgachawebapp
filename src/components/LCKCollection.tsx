@@ -250,15 +250,26 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   };
 
   // 🎯 등급별 제작 비용 계산
-  const getCraftCost = (grade: Grade): number => {
+  const getCraftCost = (card: LCKCard): number => {
+    // 🔥 LIVE 카드 체크
+    const isLive = card.year === 2026;
+    
+    if (isLive) {
+      // LIVE 카드는 등급에 따라 100배 비용
+      if (card.grade === "S") return 1000000; // 100만
+      if (card.grade === "A") return 300000;  // 30만
+      if (card.grade === "B") return 100000;  // 10만
+      if (card.grade === "C") return 40000;   // 4만
+    }
+    
+    // 일반 카드
     const costs: Record<Grade, number> = {
       "C": 4000,
       "B": 35000,
       "A": 70000,
-      "S": 100000,
-      "LIVE": 10000000
+      "S": 100000
     };
-    return costs[grade];
+    return costs[card.grade] || 0;
   };
 
   return (
@@ -537,7 +548,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 mb-8">
               {paginatedCards.map((card) => {
                 const isOwned = activeTab === "owned";
-                const craftCost = !isOwned ? getCraftCost(card.grade) : 0;
+                const craftCost = !isOwned ? getCraftCost(card) : 0;
                 const canCraft = userData.shards >= craftCost;
 
                 return (
