@@ -732,12 +732,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // 🎯 지정 카드 제작 (미보유 전용)
   const craftSpecificCard = async (cardId: string): Promise<CraftResult | null> => {
-    // 🔒 관리자 체크
-    if (!userData.isAdmin) {
-      toast.error("관리자 전용 기능입니다!", { icon: "🔒" });
-      return null;
-    }
-
     // 카드 찾기
     const targetCard = allCards.find(c => c.id === cardId);
     

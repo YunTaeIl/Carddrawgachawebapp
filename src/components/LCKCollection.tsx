@@ -320,22 +320,14 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             보유 카드
           </Button>
           <Button
-            onClick={() => userData.isAdmin && handleTabChange("craft")}
-            disabled={!userData.isAdmin}
+            onClick={() => handleTabChange("craft")}
             className={activeTab === "craft" 
               ? "bg-[#D4AF37] text-[#0B0F1A] hover:bg-[#D4AF37]/90" 
-              : userData.isAdmin
-              ? "bg-[#12182A] text-[#9AA6C3] hover:bg-[#12182A]/80"
-              : "bg-[#12182A] text-gray-600 cursor-not-allowed opacity-50"
+              : "bg-[#12182A] text-[#9AA6C3] hover:bg-[#12182A]/80"
             }
           >
-            {userData.isAdmin ? <Hammer className="w-4 h-4 mr-2" /> : <span className="mr-2">🔒</span>}
+            <Hammer className="w-4 h-4 mr-2" />
             카드 상점
-            {userData.isAdmin && (
-              <span className="ml-2 text-xs px-2 py-0.5 bg-red-500/30 text-red-300 rounded-full border border-red-400/50">
-                ADMIN
-              </span>
-            )}
           </Button>
         </div>
 
@@ -387,11 +379,6 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                   <span className="text-xs px-3 py-1 bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-300 rounded-full border border-pink-400/50 font-bold">
                     🔥 2026 LIVE SEASON
                   </span>
-                  {userData.isAdmin && (
-                    <span className="text-xs px-2 py-1 bg-gradient-to-r from-red-500/30 to-orange-500/30 text-red-300 rounded-full border border-red-400/50 font-bold">
-                      👑 ADMIN
-                    </span>
-                  )}
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -405,19 +392,13 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         </div>
                         <div className="text-sm text-pink-300 font-bold">{GACHA_CONFIG.LIVE_CRAFT_COSTS.A.toLocaleString()} 샤드</div>
                       </div>
-                      {!userData.isAdmin ? (
-                        <div className="w-full py-2 text-center text-gray-500 text-sm border-2 border-gray-700 rounded-lg bg-gray-800/50">
-                          🔒 관리자 전용
-                        </div>
-                      ) : (
-                        <Button
-                          onClick={() => handleCraftCard("LIVE-A")}
-                          disabled={userData.shards < GACHA_CONFIG.LIVE_CRAFT_COSTS.A}
-                          className="w-full bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white font-bold"
-                        >
-                          제작
-                        </Button>
-                      )}
+                      <Button
+                        onClick={() => handleCraftCard("LIVE-A")}
+                        disabled={userData.shards < GACHA_CONFIG.LIVE_CRAFT_COSTS.A}
+                        className="w-full bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        제작
+                      </Button>
                     </div>
                   </div>
 
@@ -431,19 +412,13 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         </div>
                         <div className="text-sm text-pink-300 font-bold">{GACHA_CONFIG.LIVE_CRAFT_COSTS.S.toLocaleString()} 샤드</div>
                       </div>
-                      {!userData.isAdmin ? (
-                        <div className="w-full py-2 text-center text-gray-500 text-sm border-2 border-gray-700 rounded-lg bg-gray-800/50">
-                          🔒 관리자 전용
-                        </div>
-                      ) : (
-                        <Button
-                          onClick={() => handleCraftCard("LIVE-S")}
-                          disabled={userData.shards < GACHA_CONFIG.LIVE_CRAFT_COSTS.S}
-                          className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-500/30"
-                        >
-                          제작
-                        </Button>
-                      )}
+                      <Button
+                        onClick={() => handleCraftCard("LIVE-S")}
+                        disabled={userData.shards < GACHA_CONFIG.LIVE_CRAFT_COSTS.S}
+                        className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        제작
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -573,12 +548,12 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         card={card} 
                         size="medium" 
                         upgradeLevel={isOwned ? (card as UserCard).upgradeLevel : 0}
-                        onBackClick={isOwned && userData.isAdmin ? () => setUpgradeModalCard(card as UserCard) : undefined}
+                        onBackClick={isOwned ? () => setUpgradeModalCard(card as UserCard) : undefined}
                       />
                     </div>
                     
                     {/* 제작소 탭에서만 제작 버튼 표시 */}
-                    {activeTab === "craft" && userData.isAdmin && (
+                    {activeTab === "craft" && (
                       <Button
                         onClick={() => handleCraftSpecific(card.id)}
                         disabled={!canCraft}
@@ -640,12 +615,6 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               <>
                 <p className="text-lg mb-2">카드가 없습니다</p>
                 <p className="text-sm">가챠를 통해 카드를 획득하세요!</p>
-              </>
-            ) : !userData.isAdmin ? (
-              <>
-                <p className="text-4xl mb-4">🔒</p>
-                <p className="text-xl mb-2 font-bold text-red-400">관리자 전용 기능</p>
-                <p className="text-sm">카드 지정 제작은 관리자만 사용할 수 있습니다.</p>
               </>
             ) : (
               <>
