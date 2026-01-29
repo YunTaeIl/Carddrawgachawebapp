@@ -84,6 +84,7 @@ export interface UserData {
     SUP: UserCard | null;
   };
   lastCheckIn?: string; // 마지막 출석 체크 시간
+  isAdmin?: boolean; // 관리자 여부
 }
 
 export interface GachaResult {
@@ -174,6 +175,15 @@ export const GACHA_CONFIG = {
   CRAFT_COSTS: {
     A: 300,
     S: 900
+  },
+  // 🔥 LIVE 카드 전용
+  LIVE_CRAFT_COSTS: {
+    A: 30000,
+    S: 90000
+  },
+  LIVE_SHARD_VALUES: {
+    A: 3000,
+    S: 10000
   }
 };
 

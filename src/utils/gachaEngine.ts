@@ -92,6 +92,17 @@ function initializePackPools() {
     gradeMap.set("C", filteredPool.filter(c => c.grade === "C"));
     
     cachedPackPools.set(packType, gradeMap);
+    
+    // 🔥 LIVE 팩 디버깅
+    if (packType === "live_pack") {
+      console.log("🔥 LIVE 팩 초기화:", {
+        총_카드: filteredPool.length,
+        S등급: gradeMap.get("S")?.length || 0,
+        A등급: gradeMap.get("A")?.length || 0,
+        B등급: gradeMap.get("B")?.length || 0,
+        C등급: gradeMap.get("C")?.length || 0
+      });
+    }
   }
 }
 
@@ -127,7 +138,7 @@ function filterCardPoolByPack(pool: LCKCard[], packType: CardPackType): LCKCard[
 }
 
 // 등급별 카드 가져오기 (카드팩별 캐시 사용)
-function getCardsByGradeCached(grade: Grade, packType: CardPackType = "standard"): LCKCard[] {
+export function getCardsByGradeCached(grade: Grade, packType: CardPackType = "standard"): LCKCard[] {
   // 🔥 standard 팩도 캐시된 팩 풀 사용 (LIVE 제외됨)
   const packPool = cachedPackPools.get(packType);
   if (packPool) {
@@ -322,4 +333,44 @@ export function craftCard(grade: "A" | "S"): LCKCard {
   }
   
   return cards[Math.floor(Math.random() * cards.length)];
+}
+
+/**
+ * 🔥 LIVE 카드 제작 (2026 시즌 선수만)
+ */
+export function craftLiveCard(grade: "A" | "S"): LCKCard {
+  try {
+    // LIVE 팩에서 해당 등급 선수만 선택
+    const cards = getCardsByGradeCached(grade, "live_pack");
+    
+    console.log(`🔥 LIVE ${grade} 카드 풀:`, cards.length, "장");
+    
+    if (cards.length === 0) {
+      // 디버깅 정보 추가
+      console.error("❌ LIVE 카드 제작 실패 - 상세 정보:");
+      console.error("  - 요청 등급:", grade);
+      console.error("  - 현재 LIVE 시즌:", CURRENT_LIVE_SEASON);
+      console.error("  - 전체 카드 풀:", cachedCardPool?.length || 0);
+      console.error("  - LIVE 팩 캐시 존재:", cachedPackPools.has("live_pack"));
+      
+      // 전체 카드 중 2026년 카드 확인
+      if (cachedCardPool) {
+        const liveCards = cachedCardPool.filter(c => c.year === CURRENT_LIVE_SEASON);
+        console.error("  - 2026년 카드 총:", liveCards.length, "장");
+        console.error("  - 2026년 카드 등급별:", {
+          S: liveCards.filter(c => c.grade === "S").length,
+          A: liveCards.filter(c => c.grade === "A").length,
+          B: liveCards.filter(c => c.grade === "B").length,
+          C: liveCards.filter(c => c.grade === "C").length
+        });
+      }
+      
+      throw new Error(`LIVE ${grade} 등급 카드가 데이터베이스에 존재하지 않습니다. 2026 시즌 선수 데이터를 확인해주세요.`);
+    }
+    
+    return cards[Math.floor(Math.random() * cards.length)];
+  } catch (error) {
+    console.error("❌ craftLiveCard error:", error);
+    throw error;
+  }
 }

@@ -27,7 +27,7 @@ interface LCKCollectionProps {
 const CARDS_PER_PAGE = 20; // 한 페이지당 카드 수
 
 export function LCKCollection({ onBack }: LCKCollectionProps) {
-  const { userData, upgradeCard, craftCardWithShards } = useGame();
+  const { userData, upgradeCard, craftCardWithShards, craftLiveCardWithShards } = useGame();
   const [selectedCard, setSelectedCard] = useState<UserCard | null>(null);
   const [craftResult, setCraftResult] = useState<CraftResult | null>(null); // 🔥 제작 결과 모달용
   const [filterGrade, setFilterGrade] = useState<Grade | "all">("all");
@@ -101,8 +101,17 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   };
   
   // 🔥 샤드로 카드 제작 핸들러
-  const handleCraftCard = async (grade: "A" | "S") => {
-    const result = await craftCardWithShards(grade);
+  const handleCraftCard = async (grade: "A" | "S" | "LIVE-A" | "LIVE-S") => {
+    let result;
+    
+    if (grade === "LIVE-A") {
+      result = await craftLiveCardWithShards("A");
+    } else if (grade === "LIVE-S") {
+      result = await craftLiveCardWithShards("S");
+    } else {
+      result = await craftCardWithShards(grade);
+    }
+    
     if (result) {
       setCraftResult(result); // 모달 열기
     }
@@ -142,7 +151,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
             <div className="bg-[#0B0F1A] p-4 rounded-lg border border-[#B7C2D6]/50">
               <div className="flex justify-between items-center mb-3">
                 <div className="text-base sm:text-lg font-bold text-[#B7C2D6]">A 등급 제작</div>
@@ -169,6 +178,74 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               >
                 제작
               </Button>
+            </div>
+          </div>
+
+          {/* LIVE 등급 제작 (프리미엄) */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs px-3 py-1 bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-300 rounded-full border border-pink-400/50 font-bold">
+                🔥 2026 LIVE SEASON
+              </span>
+              {userData.isAdmin && (
+                <span className="text-xs px-2 py-1 bg-gradient-to-r from-red-500/30 to-orange-500/30 text-red-300 rounded-full border border-red-400/50 font-bold">
+                  👑 ADMIN
+                </span>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {/* LIVE A 등급 */}
+              <div className="bg-gradient-to-br from-pink-500/15 to-purple-500/15 p-4 rounded-lg border-2 border-pink-400/50 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-purple-500/5 to-pink-500/5 animate-pulse" />
+                <div className="relative">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-base sm:text-lg font-bold bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+                      LIVE A 등급
+                    </div>
+                    <div className="text-sm text-pink-300 font-bold">{GACHA_CONFIG.LIVE_CRAFT_COSTS.A.toLocaleString()} 샤드</div>
+                  </div>
+                  {!userData.isAdmin ? (
+                    <div className="w-full py-2 text-center text-gray-500 text-sm border-2 border-gray-700 rounded-lg bg-gray-800/50">
+                      🔒 관리자 전용
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => handleCraftCard("LIVE-A")}
+                      disabled={userData.shards < GACHA_CONFIG.LIVE_CRAFT_COSTS.A}
+                      className="w-full bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white font-bold"
+                    >
+                      제작
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* LIVE S 등급 */}
+              <div className="bg-gradient-to-br from-pink-500/20 to-purple-500/20 p-4 rounded-lg border-2 border-pink-500/60 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-pink-500/10 animate-pulse" />
+                <div className="relative">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-base sm:text-lg font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+                      LIVE S 등급
+                    </div>
+                    <div className="text-sm text-pink-300 font-bold">{GACHA_CONFIG.LIVE_CRAFT_COSTS.S.toLocaleString()} 샤드</div>
+                  </div>
+                  {!userData.isAdmin ? (
+                    <div className="w-full py-2 text-center text-gray-500 text-sm border-2 border-gray-700 rounded-lg bg-gray-800/50">
+                      🔒 관리자 전용
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => handleCraftCard("LIVE-S")}
+                      disabled={userData.shards < GACHA_CONFIG.LIVE_CRAFT_COSTS.S}
+                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg shadow-pink-500/30"
+                    >
+                      제작
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

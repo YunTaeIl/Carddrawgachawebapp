@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { UserData, UserCard, LCKCard, GachaResult, GACHA_CONFIG, Position, CardPackType, PackPityState } from "@/types/lck";
 import { loadUserData, saveUserData, getDefaultUserData } from "@/utils/localStorage";
-import { pullSingle, pullTen, updatePackPityState, craftCard, initializeCardPool } from "@/utils/gachaEngine";
+import { pullSingle, pullTen, updatePackPityState, craftCard, craftLiveCard, initializeCardPool } from "@/utils/gachaEngine";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   updateGameDataDirect, 
@@ -35,6 +35,7 @@ interface GameContextType {
   // 샤드
   upgradeCard: (cardInstanceId: string) => Promise<boolean>;
   craftCardWithShards: (grade: "A" | "S") => Promise<CraftResult | null>;
+  craftLiveCardWithShards: (grade: "A" | "S") => Promise<CraftResult | null>;
   
   // 스쿼드
   setSquadCard: (position: Position, card: UserCard | null) => void;
@@ -51,11 +52,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const accessToken = auth?.accessToken ?? null;
-  const [userData, setUserData] = useState<UserData>(getDefaultUserData());
+  
+  // 안전한 초기화
+  const [userData, setUserData] = useState<UserData>(() => {
+    try {
+      const defaultData = getDefaultUserData();
+      console.log("✅ Default user data loaded");
+      return defaultData;
+    } catch (error) {
+      console.error("❌ getDefaultUserData error:", error);
+      // 최소한의 안전한 기본값
+      return {
+        currency: 1000,
+        shards: 0,
+        ownedCards: [],
+        squad: { TOP: null, JGL: null, MID: null, ADC: null, SUP: null },
+        pityData: { standard: { s_pity_stack: 0, a_pity_stack: 0 } },
+        packStatistics: {}
+      } as UserData;
+    }
+  });
+  
   const [isLoading, setIsLoading] = useState(true);
   const [cardPool, setCardPool] = useState<LCKCard[]>([]);
-  const [allCards, setAllCards] = useState<LCKCard[]>([]); // 추가
-  const [dbLoaded, setDbLoaded] = useState(false); // DB 로드 완료 플래그
+  const [allCards, setAllCards] = useState<LCKCard[]>([]);
+  const [dbLoaded, setDbLoaded] = useState(false);
   
   // DB 저장 디바운스용
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -155,6 +176,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           currency: gameData.currency,
           shards: gameData.shards,
           lastCheckIn: gameData.last_check_in || undefined,
+          isAdmin: gameData.is_admin || false,
           pityData,
           packStatistics,
           gachaState: {
@@ -523,6 +545,77 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
   };
 
+  // 🔥 LIVE 카드 제작 (프리미엄)
+  const craftLiveCardWithShards = async (grade: "A" | "S"): Promise<CraftResult | null> => {
+    try {
+      const cost = GACHA_CONFIG.LIVE_CRAFT_COSTS[grade];
+      
+      if (userData.shards < cost) {
+        toast.error(`샤드가 부족합니다! (필요: ${cost.toLocaleString()})`, {
+          icon: "💎"
+        });
+        return null;
+      }
+
+      const craftedCard = craftLiveCard(grade);
+      
+      // 🔥 중복 체크: 이미 보유한 카드인지 확인
+      const isDupe = userData.ownedCards.some(c => c.id === craftedCard.id);
+      
+      // 🔥 LIVE 카드 중복 시 샤드 보상
+      const shardsGained = isDupe ? GACHA_CONFIG.LIVE_SHARD_VALUES[grade] : 0;
+      
+      const newCard: UserCard = {
+        ...craftedCard,
+        instanceId: `${craftedCard.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        upgradeLevel: 0,
+        obtainedAt: Date.now()
+      };
+      
+      // 중복이면 카드 추가하지 않고, 샤드만 지급
+      const newCards = isDupe 
+        ? userData.ownedCards 
+        : [...userData.ownedCards, newCard];
+      
+      const newData: UserData = {
+        ...userData,
+        ownedCards: newCards,
+        shards: userData.shards - cost + shardsGained
+      };
+
+      setUserData(newData);
+
+      // DB 저장 (로그인 시) - 중복이 아닐 때만 카드 추가
+      if (isAuthenticated && accessToken && !isDupe) {
+        addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+      }
+
+      if (isDupe) {
+        toast.success(`🔥 중복 LIVE 카드! +${shardsGained.toLocaleString()} 샤드 획득`, { 
+          icon: "✨",
+          duration: 3500 
+        });
+      } else {
+        toast.success(`🔥 LIVE ${grade}등급 카드 제작 완료!`, {
+          icon: "🎊",
+          duration: 3000
+        });
+      }
+      
+      return {
+        card: newCard,
+        isDupe,
+        shardsGained
+      };
+    } catch (error) {
+      console.error("❌ craftLiveCardWithShards error:", error);
+      toast.error(`LIVE 카드 제작 실패: ${error}`, {
+        icon: "❌"
+      });
+      return null;
+    }
+  };
+
   // 스쿼드 설정
   const setSquadCard = (position: Position, card: UserCard | null) => {
     setUserData({
@@ -582,6 +675,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     pullTenGacha,
     upgradeCard,
     craftCardWithShards,
+    craftLiveCardWithShards,
     setSquadCard,
     saveSquadToDB,
     resetGame,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GameProvider } from "@/contexts/GameContext";
 import { LeagueProvider } from "@/contexts/LeagueContext";
@@ -219,14 +219,40 @@ function AppContent() {
 
 // LCK 가챠 메인 앱
 function App() {
-  // 최소한의 디버그 UI를 먼저 표시
   const [mounted, setMounted] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
   
   React.useEffect(() => {
+    console.log("🚀 App mounting...");
     setMounted(true);
   }, []);
   
+  // 에러 발생 시
+  if (error) {
+    console.error("❌ App error:", error);
+    return (
+      <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <div className="text-2xl font-bold text-red-500 mb-4">
+            앱 오류
+          </div>
+          <div className="text-[#9AA6C3] mb-4 text-sm">
+            {error.message || String(error)}
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-[#FFB81C] text-[#0B0F1A] rounded font-bold hover:bg-[#FFB81C]/80"
+          >
+            새로고침
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // 마운트 대기 중
   if (!mounted) {
+    console.log("⏳ Waiting for mount...");
     return (
       <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
         <div className="text-center">
@@ -241,15 +267,67 @@ function App() {
     );
   }
   
+  // 메인 렌더링
+  console.log("✅ Rendering main app...");
+  
   return (
-    <AuthProvider>
-      <GameProvider>
-        <LeagueProvider>
-          <AppContent />
-        </LeagueProvider>
-      </GameProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <GameProvider>
+          <LeagueProvider>
+            <AppContent />
+          </LeagueProvider>
+        </GameProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
+}
+
+// 에러 바운더리 컴포넌트
+class ErrorBoundary extends React.Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error("🔥 ErrorBoundary caught:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-6">
+          <div className="text-center max-w-md">
+            <div className="text-2xl font-bold text-red-500 mb-4">
+              렌더링 오류 발생
+            </div>
+            <div className="text-[#9AA6C3] mb-4 text-sm break-words">
+              {this.state.error?.message || "알 수 없는 오류"}
+            </div>
+            <div className="text-xs text-[#9AA6C3]/60 mb-4 max-h-40 overflow-auto">
+              {this.state.error?.stack}
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-[#FFB81C] text-[#0B0F1A] rounded font-bold hover:bg-[#FFB81C]/80"
+            >
+              새로고침
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 export default App;
