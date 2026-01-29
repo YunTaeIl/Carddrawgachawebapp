@@ -1,6 +1,6 @@
 // LCK 가챠 엔진: 확률 계산, 천장 시스템, 샤드 지급
 
-import { LCKCard, GachaResult, GACHA_CONFIG, Grade, Position, CURRENT_LIVE_SEASON, PackPityState, CardPackType, isLiveCard } from "@/types/lck";
+import { LCKCard, GachaResult, GACHA_CONFIG, Grade, Position, CURRENT_LIVE_SEASON, PackPityState, CardPackType } from "@/types/lck";
 import { getCardPool, getCardsByGrade } from "@/data/supabaseCards";
 import { SAMPLE_CARDS } from "@/data/sampleCards";
 
@@ -231,16 +231,9 @@ export function pullSingle(pityState: PackPityState, ownedCardIds: string[], pac
     throw new Error("카드를 선택할 수 없습니다. 카드 풀이 비어있거나 초기화되지 않았습니다.");
   }
 
-  // 중복 체크 (🔥 LIVE 카드는 100배 샤드!)
+  // 중복 체크
   const isDupe = ownedCardIds.includes(selectedCard.id);
-  let shardsGained = 0;
-  if (isDupe) {
-    if (isLiveCard(selectedCard)) {
-      shardsGained = GACHA_CONFIG.LIVE_SHARD_VALUES[selectedCard.grade as "A" | "S"];
-    } else {
-      shardsGained = GACHA_CONFIG.SHARD_VALUES[selectedCard.grade];
-    }
-  }
+  const shardsGained = isDupe ? GACHA_CONFIG.SHARD_VALUES[selectedCard.grade] : 0;
 
   return {
     card: selectedCard,
@@ -292,20 +285,10 @@ export function pullTen(pityState: PackPityState, ownedCardIds: string[], packTy
     const replacementCard = aCards[Math.floor(Math.random() * aCards.length)];
     const isDupe = tempOwnedIds.includes(replacementCard.id);
     
-    // 🔥 LIVE 카드 중복 시 100배 샤드
-    let shardsGained = 0;
-    if (isDupe) {
-      if (isLiveCard(replacementCard)) {
-        shardsGained = GACHA_CONFIG.LIVE_SHARD_VALUES.A;
-      } else {
-        shardsGained = GACHA_CONFIG.SHARD_VALUES.A;
-      }
-    }
-    
     results[9] = {
       card: replacementCard,
       isDupe,
-      shardsGained,
+      shardsGained: isDupe ? GACHA_CONFIG.SHARD_VALUES.A : 0,
       isPity: true
     };
   }
