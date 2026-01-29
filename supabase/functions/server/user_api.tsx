@@ -54,8 +54,6 @@ export async function getUserProfile(userId: string) {
 
 // 게임 데이터 조회
 export async function getGameData(userId: string) {
-  console.log("🔍 getGameData - userId:", userId);
-  
   // 먼저 game_data 조회
   const { data: gameData, error: gameError } = await supabase
     .from("user_game_data")
@@ -64,11 +62,9 @@ export async function getGameData(userId: string) {
     .single();
   
   if (gameError) {
-    console.error("❌ Get game data error:", gameError);
+    console.error("Get game data error:", gameError);
     return null;
   }
-  
-  console.log("🔍 getGameData - gameData:", gameData);
   
   // 별도로 user_profiles에서 is_admin 조회
   const { data: profileData, error: profileError } = await supabase
@@ -77,12 +73,7 @@ export async function getGameData(userId: string) {
     .eq("id", userId)
     .single();
   
-  console.log("🔍 getGameData - profileData:", profileData);
-  console.log("🔍 getGameData - profileError:", profileError);
-  
   const isAdmin = profileData?.is_admin || false;
-  
-  console.log("🔍 getGameData - final isAdmin:", isAdmin);
   
   return {
     ...gameData,

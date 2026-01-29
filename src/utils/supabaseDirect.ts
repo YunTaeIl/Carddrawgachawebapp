@@ -22,8 +22,6 @@ export async function getGameDataDirect(accessToken: string) {
     throw new Error("인증되지 않은 사용자입니다.");
   }
   
-  console.log("🔍 supabaseDirect - user.id:", user.id);
-  
   // user_game_data 조회
   const { data: gameData, error: gameError } = await supabase
     .from("user_game_data")
@@ -35,8 +33,6 @@ export async function getGameDataDirect(accessToken: string) {
     throw gameError;
   }
   
-  console.log("🔍 supabaseDirect - gameData:", gameData);
-  
   // user_profiles에서 is_admin 조회
   const { data: profileData, error: profileError } = await supabase
     .from("user_profiles")
@@ -44,12 +40,7 @@ export async function getGameDataDirect(accessToken: string) {
     .eq("id", user.id)
     .single();
   
-  console.log("🔍 supabaseDirect - profileData:", profileData);
-  console.log("🔍 supabaseDirect - profileError:", profileError);
-  
   const isAdmin = profileData?.is_admin || false;
-  
-  console.log("🔍 supabaseDirect - final isAdmin:", isAdmin);
   
   return {
     ...gameData,

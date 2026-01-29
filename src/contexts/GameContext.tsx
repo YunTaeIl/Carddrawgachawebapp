@@ -146,9 +146,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       try {
         const gameData = await getGameDataDirect(accessToken);
         
-        console.log("🔍 GameContext - DB에서 받은 gameData:", gameData);
-        console.log("🔍 GameContext - gameData.is_admin:", gameData.is_admin);
-        
         // 🔥 팩별 천장 데이터 파싱
         let pityData = gameData.pity_data || {};
         let packStatistics = gameData.pack_statistics || {};
@@ -189,11 +186,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           }
         }));
         
-        console.log("✅ GameContext - isAdmin 설정됨:", gameData.is_admin || false);
-        
         setDbLoaded(true);
       } catch (error) {
-        console.error("❌ GameContext - DB 로드 실패:", error);
         // 에러 무시
       }
     };
