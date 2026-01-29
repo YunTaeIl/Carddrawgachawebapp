@@ -56,34 +56,36 @@ export async function getUserProfile(userId: string) {
 export async function getGameData(userId: string) {
   console.log("🔍 getGameData - userId:", userId);
   
-  // user_game_data와 user_profiles를 조인하여 is_admin 가져오기
-  const { data, error } = await supabase
+  // 먼저 game_data 조회
+  const { data: gameData, error: gameError } = await supabase
     .from("user_game_data")
-    .select(`
-      *,
-      user_profiles!inner (
-        is_admin
-      )
-    `)
-    .eq("user_id", userId)  // user_id를 키로 사용
+    .select("*")
+    .eq("user_id", userId)
     .single();
   
-  console.log("🔍 getGameData - raw data:", data);
-  console.log("🔍 getGameData - error:", error);
-  
-  if (error) {
-    console.error("❌ Get game data error:", error);
+  if (gameError) {
+    console.error("❌ Get game data error:", gameError);
     return null;
   }
   
-  // is_admin 값을 최상위로 추출
-  const isAdmin = data?.user_profiles?.is_admin || false;
+  console.log("🔍 getGameData - gameData:", gameData);
   
-  console.log("🔍 getGameData - isAdmin:", isAdmin);
-  console.log("🔍 getGameData - user_profiles:", data?.user_profiles);
+  // 별도로 user_profiles에서 is_admin 조회
+  const { data: profileData, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", userId)
+    .single();
+  
+  console.log("🔍 getGameData - profileData:", profileData);
+  console.log("🔍 getGameData - profileError:", profileError);
+  
+  const isAdmin = profileData?.is_admin || false;
+  
+  console.log("🔍 getGameData - final isAdmin:", isAdmin);
   
   return {
-    ...data,
+    ...gameData,
     is_admin: isAdmin
   };
 }
