@@ -66,10 +66,31 @@ export function PreGamePlanningPhase({
   series,
   setSeries
 }: PreGamePlanningPhaseProps) {
-  // 플레이어 팀 플랜 (플레이어가 홈팀이라고 가정)
-  const [selectedPlans, setSelectedPlans] = useState<GamePlanType[]>([]);
-  const [riskLevel, setRiskLevel] = useState<number>(50);
-  const [priorityLink, setPriorityLink] = useState<PriorityLink>("MID_JGL");
+  // 🔥 localStorage에서 이전 전략 불러오기
+  const loadSavedStrategy = () => {
+    try {
+      const saved = localStorage.getItem('lastCoachStrategy');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('전략 불러오기 실패:', e);
+    }
+    return null;
+  };
+
+  const savedStrategy = loadSavedStrategy();
+
+  // 플레이어 팀 플랜 (이전 전략으로 초기화)
+  const [selectedPlans, setSelectedPlans] = useState<GamePlanType[]>(
+    savedStrategy?.gamePlan || []
+  );
+  const [riskLevel, setRiskLevel] = useState<number>(
+    savedStrategy?.riskLevel || 50
+  );
+  const [priorityLink, setPriorityLink] = useState<PriorityLink>(
+    savedStrategy?.priorityLink || "MID_JGL"
+  );
 
   const handleStartGame = () => {
     // AI 팀 플랜 랜덤 생성
@@ -90,6 +111,13 @@ export function PreGamePlanningPhase({
       riskLevel,
       priorityLink
     };
+
+    // 🔥 선택한 전략을 localStorage에 저장
+    try {
+      localStorage.setItem('lastCoachStrategy', JSON.stringify(playerPlan));
+    } catch (e) {
+      console.error('전략 저장 실패:', e);
+    }
 
     const aiPlan: CoachPlan = {
       gamePlan: aiPlans,
@@ -118,6 +146,13 @@ export function PreGamePlanningPhase({
 
   const canStart = selectedPlans.length >= 1;
 
+  // 🔥 전략 초기화 버튼
+  const handleReset = () => {
+    setSelectedPlans([]);
+    setRiskLevel(50);
+    setPriorityLink("MID_JGL");
+  };
+
   return (
     <div className="w-full h-full flex items-center justify-center p-8">
       <div className="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-8 border border-white/10">
@@ -129,6 +164,12 @@ export function PreGamePlanningPhase({
           <p className="text-slate-400">
             경기 운영 방향을 설정하세요 (최대 2개 선택)
           </p>
+          {/* 🔥 이전 전략 사용 중 표시 */}
+          {savedStrategy && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <span className="text-xs text-blue-400">💡 이전 전략이 자동으로 선택되었습니다</span>
+            </div>
+          )}
         </div>
 
         {/* 게임 플랜 선택 */}
@@ -230,14 +271,26 @@ export function PreGamePlanningPhase({
           </div>
         </div>
 
-        {/* 시작 버튼 */}
-        <Button
-          onClick={handleStartGame}
-          disabled={!canStart}
-          className="w-full py-6 text-lg font-bold"
-        >
-          경기 시작
-        </Button>
+        {/* 버튼 영역 */}
+        <div className="flex gap-3">
+          {/* 🔥 초기화 버튼 */}
+          <Button
+            onClick={handleReset}
+            variant="outline"
+            className="py-6 text-lg font-bold border-slate-600 hover:bg-slate-800"
+          >
+            초기화
+          </Button>
+          
+          {/* 시작 버튼 */}
+          <Button
+            onClick={handleStartGame}
+            disabled={!canStart}
+            className="flex-1 py-6 text-lg font-bold"
+          >
+            경기 시작
+          </Button>
+        </div>
 
         {!canStart && (
           <p className="text-center text-red-400 text-sm mt-2">

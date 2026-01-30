@@ -2,13 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@supabase/supabase-js";
-import { createClient } from "@supabase/supabase-js";
-import { projectId, publicAnonKey } from "@/utils/supabase/info";
-
-const supabase = createClient(
-  `https://${projectId}.supabase.co`,
-  publicAnonKey
-);
+import { supabase } from "@/utils/supabaseAuth";
 
 interface AuthContextType {
   user: User | null;
@@ -46,6 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       );
       
+      if (!response.ok) {
+        console.error("❌ Server responded with error:", response.status, response.statusText);
+        return;
+      }
+      
       const result = await response.json();
       console.log("🔥 initializeUser result:", result);
       
@@ -56,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("❌ initializeUserIfNeeded error:", error);
+      // 네트워크 에러는 무시 (서버가 아직 준비 안됐을 수 있음)
     }
   };
 

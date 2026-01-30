@@ -10,16 +10,11 @@ import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calen
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
-import { projectId, publicAnonKey } from '/utils/supabase/info';
-import { createClient } from "@supabase/supabase-js";
+import { projectId } from '/utils/supabase/info';
+import { supabase } from "@/utils/supabaseAuth";
 import { generateShareURL } from "@/utils/squadEncryption";
 import { Page } from "@/components/Sidebar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
-
-const supabase = createClient(
-  `https://${projectId}.supabase.co`,
-  publicAnonKey
-);
 
 interface LCKHomeProps {
   onNavigate: (page: Page) => void;

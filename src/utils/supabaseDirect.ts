@@ -1,21 +1,9 @@
 // Supabase 직접 접근 (클라이언트용)
-import { createClient } from "@supabase/supabase-js";
-import { projectId, publicAnonKey } from "@/utils/supabase/info";
+// 🔥 싱글톤 인스턴스 재사용 - 중복 생성 방지
+import { supabase } from "@/utils/supabaseAuth";
 
 // 게임 데이터 조회
 export async function getGameDataDirect(accessToken: string) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -50,18 +38,6 @@ export async function getGameDataDirect(accessToken: string) {
 
 // 보유 카드 조회
 export async function getUserCardsDirect(accessToken: string) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
   if (authError || !user) {
@@ -111,18 +87,6 @@ export async function updateGameDataDirect(
     pack_statistics?: any; // 🔥 JSONB
   }
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -150,18 +114,6 @@ export async function addUserCardDirect(
   instanceId: string,
   upgradeLevel: number = 0
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -193,18 +145,6 @@ export async function upgradeUserCardDirect(
   instanceId: string,
   newLevel: number
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { data, error } = await supabase
     .from("user_cards")
     .update({ upgrade_level: newLevel })
@@ -233,18 +173,6 @@ export async function updateUserCardStats(
     clutch: number;
   }
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { data, error } = await supabase
     .from("user_cards")
     .update({ 
@@ -271,18 +199,6 @@ export async function deleteUserCard(
   accessToken: string,
   instanceId: string
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { error } = await supabase
     .from("user_cards")
     .delete()
@@ -304,18 +220,6 @@ export async function saveUserSquadDirect(
     sup_card_instance_id?: string | null;
   }
 ) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
   if (authError || !user) {
@@ -342,18 +246,6 @@ export async function saveUserSquadDirect(
 
 // 스쿼드 불러오기
 export async function getUserSquadDirect(accessToken: string) {
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    }
-  );
-  
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
   if (authError || !user) {

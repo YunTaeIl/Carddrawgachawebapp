@@ -5,11 +5,15 @@ import { projectId, publicAnonKey } from '@/utils/supabase/info';
 
 const supabaseUrl = `https://${projectId}.supabase.co`;
 
+// 🔥 싱글톤 Supabase 클라이언트 (중복 생성 방지)
 export const supabase = createClient(supabaseUrl, publicAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: window.localStorage,
+    storageKey: 'sb-legends-manager-auth-token',
+    flowType: 'pkce'
   }
 });
 
