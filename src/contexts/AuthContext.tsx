@@ -25,9 +25,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   // 🆕 유저 초기화 (DB에 없으면 생성)
-  const initializeUserIfNeeded = async (userId: string, accessToken: string) => {
+  const initializeUserIfNeeded = async (userId: string, accessToken: string, retryCount = 0) => {
     try {
-      console.log("🔥 initializeUserIfNeeded called for:", userId);
+      console.log("🔥 initializeUserIfNeeded called for:", userId, "retry:", retryCount);
+      console.log("🔑 Token (first 20 chars):", accessToken?.substring(0, 20) + "...");
+      
+      // 토큰이 없으면 스킵
+      if (!accessToken) {
+        console.warn("⚠️ No access token available, skipping initialization");
+        return;
+      }
       
       // 서버의 /init-user 호출
       const response = await fetch(
@@ -42,7 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       
       if (!response.ok) {
-        console.error("❌ Server responded with error:", response.status, response.statusText);
+        const errorText = await response.text().catch(() => "");
+        console.error("❌ Server responded with error:", response.status, response.statusText, errorText);
+        
+        // 401은 토큰 문제 - 최대 2번까지 재시도 (1초 후)
+        if (response.status === 401 && retryCount < 2) {
+          console.warn(`⚠️ 401 Unauthorized - Retrying in 1 second... (attempt ${retryCount + 1}/2)`);
+          setTimeout(() => {
+            initializeUserIfNeeded(userId, accessToken, retryCount + 1);
+          }, 1000);
+        }
         return;
       }
       
