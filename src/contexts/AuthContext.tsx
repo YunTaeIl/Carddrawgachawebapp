@@ -29,6 +29,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // 🆕 유저 초기화 (DB에 없으면 생성)
+  const initializeUserIfNeeded = async (userId: string, accessToken: string) => {
+    try {
+      console.log("🔥 initializeUserIfNeeded called for:", userId);
+      
+      // 서버의 /init-user 호출
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/user/init`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      
+      const result = await response.json();
+      console.log("🔥 initializeUser result:", result);
+      
+      if (!result.success) {
+        console.error("❌ Failed to initialize user:", result.error);
+      } else {
+        console.log("✅ User initialized successfully");
+      }
+    } catch (error) {
+      console.error("❌ initializeUserIfNeeded error:", error);
+    }
+  };
+
   // 🔐 user_profiles에서 is_admin 확인
   const checkAdminStatus = async (userId: string) => {
     try {
@@ -53,12 +83,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 초기 세션 확인
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAccessToken(session?.access_token ?? null);
       
-      // 유저가 있으면 admin 상태 체크
-      if (session?.user?.id) {
+      // 유저가 있으면 초기화 및 admin 상태 체크
+      if (session?.user?.id && session?.access_token) {
+        await initializeUserIfNeeded(session.user.id, session.access_token);
         checkAdminStatus(session.user.id);
       }
       
@@ -69,10 +100,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // 인증 상태 변경 리스너
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔥 Auth state changed:", event);
+      
       const newUser = session?.user ?? null;
       setUser(newUser);
       setAccessToken(session?.access_token ?? null);
+      
+      // 🆕 SIGNED_IN 이벤트 시 유저 초기화
+      if (event === 'SIGNED_IN' && session?.user?.id && session?.access_token) {
+        console.log("🔥 SIGNED_IN event - initializing user...");
+        await initializeUserIfNeeded(session.user.id, session.access_token);
+      }
       
       // 유저가 있으면 admin 상태 체크
       if (session?.user?.id) {

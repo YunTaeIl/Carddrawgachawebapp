@@ -54,6 +54,29 @@ app.get("/make-server-ffd115c0/cards/:id", async (c) => {
 
 // ==================== 유저 API ====================
 
+// 🆕 유저 초기화 (OAuth 로그인 후 호출)
+app.post("/make-server-ffd115c0/user/init", async (c) => {
+  try {
+    const user = await userApi.getUserFromToken(c.req.header("Authorization"));
+    if (!user) {
+      return c.json({ success: false, error: "Unauthorized" }, 401);
+    }
+    
+    console.log("🔥 Initializing user:", user.id, user.email);
+    
+    const result = await userApi.initializeUser(
+      user.id, 
+      user.email || "",
+      user.user_metadata?.full_name || user.user_metadata?.name
+    );
+    
+    return c.json({ success: true, ...result });
+  } catch (error) {
+    console.log(`Error initializing user: ${error}`);
+    return c.json({ success: false, error: String(error) }, 500);
+  }
+});
+
 // 유저 프로필 조회
 app.get("/make-server-ffd115c0/user/profile", async (c) => {
   try {

@@ -36,6 +36,108 @@ export async function getUserFromToken(authHeader: string | null) {
   return user;
 }
 
+// 🆕 유저 초기화 (OAuth 로그인 후 자동 생성)
+export async function initializeUser(userId: string, email: string, displayName?: string) {
+  console.log("🔥 initializeUser called for:", userId, email);
+  
+  try {
+    // 1. user_profiles 확인 및 생성
+    const { data: existingProfile } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    
+    if (!existingProfile) {
+      console.log("📝 Creating user_profiles...");
+      const { error: profileError } = await supabase
+        .from("user_profiles")
+        .insert({
+          id: userId,
+          email: email,
+          username: displayName || email.split("@")[0],
+          is_admin: false,
+          created_at: new Date().toISOString()
+        });
+      
+      if (profileError) {
+        console.error("❌ Failed to create user_profiles:", profileError);
+        throw profileError;
+      }
+      console.log("✅ user_profiles created");
+    } else {
+      console.log("✅ user_profiles already exists");
+    }
+    
+    // 2. user_game_data 확인 및 생성
+    const { data: existingGameData } = await supabase
+      .from("user_game_data")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    
+    if (!existingGameData) {
+      console.log("📝 Creating user_game_data...");
+      const { error: gameDataError } = await supabase
+        .from("user_game_data")
+        .insert({
+          id: userId,
+          currency: 50000,
+          shards: 0,
+          s_pity_stack: 0,
+          a_pity_stack: 0,
+          total_pulls: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (gameDataError) {
+        console.error("❌ Failed to create user_game_data:", gameDataError);
+        throw gameDataError;
+      }
+      console.log("✅ user_game_data created");
+    } else {
+      console.log("✅ user_game_data already exists");
+    }
+    
+    // 3. user_squads 확인 및 생성
+    const { data: existingSquad } = await supabase
+      .from("user_squads")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    
+    if (!existingSquad) {
+      console.log("📝 Creating user_squads...");
+      const { error: squadError } = await supabase
+        .from("user_squads")
+        .insert({
+          user_id: userId,
+          top_card_instance_id: null,
+          jgl_card_instance_id: null,
+          mid_card_instance_id: null,
+          adc_card_instance_id: null,
+          sup_card_instance_id: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (squadError) {
+        console.error("❌ Failed to create user_squads:", squadError);
+        throw squadError;
+      }
+      console.log("✅ user_squads created");
+    } else {
+      console.log("✅ user_squads already exists");
+    }
+    
+    return { success: true, message: "User initialized successfully" };
+  } catch (error) {
+    console.error("❌ initializeUser failed:", error);
+    throw error;
+  }
+}
+
 // 유저 프로필 조회
 export async function getUserProfile(userId: string) {
   const { data, error } = await supabase
@@ -58,7 +160,7 @@ export async function getGameData(userId: string) {
   const { data: gameData, error: gameError } = await supabase
     .from("user_game_data")
     .select("*")
-    .eq("user_id", userId)
+    .eq("id", userId)
     .single();
   
   if (gameError) {
@@ -95,7 +197,7 @@ export async function updateGameData(
   const { data, error } = await supabase
     .from("user_game_data")
     .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("user_id", userId)  // user_id를 키로 사용
+    .eq("id", userId)  // id를 키로 사용
     .select()
     .single();
   
@@ -251,7 +353,7 @@ export async function checkDailyAttendance(userId: string) {
       last_check_in: now.toISOString(),
       updated_at: now.toISOString()
     })
-    .eq("user_id", userId)  // user_id를 키로 사용
+    .eq("id", userId)  // id를 키로 사용
     .select()
     .single();
   
