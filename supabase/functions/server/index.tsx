@@ -54,6 +54,38 @@ app.get("/make-server-ffd115c0/cards/:id", async (c) => {
 
 // ==================== 유저 API ====================
 
+// 🔍 디버그: 환경 변수 및 토큰 검증 테스트
+app.get("/make-server-ffd115c0/debug/auth", async (c) => {
+  const authHeader = c.req.header("Authorization");
+  
+  console.log("🔍 DEBUG /debug/auth called");
+  console.log("🔍 Auth header present:", !!authHeader);
+  console.log("🔍 SUPABASE_URL:", Deno.env.get("SUPABASE_URL") ? "SET" : "MISSING");
+  console.log("🔍 SUPABASE_ANON_KEY:", Deno.env.get("SUPABASE_ANON_KEY") ? "SET" : "MISSING");
+  
+  if (!authHeader) {
+    return c.json({ error: "No auth header" });
+  }
+  
+  const token = authHeader.substring(7);
+  console.log("🔍 Token length:", token.length);
+  console.log("🔍 Token first 50 chars:", token.substring(0, 50));
+  
+  // 토큰 검증 시도
+  try {
+    const user = await userApi.getUserFromToken(authHeader);
+    return c.json({ 
+      success: !!user, 
+      userId: user?.id,
+      email: user?.email,
+      tokenLength: token.length
+    });
+  } catch (error) {
+    console.error("🔍 Error:", error);
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
 // 🆕 유저 초기화 (OAuth 로그인 후 호출)
 app.post("/make-server-ffd115c0/user/init", async (c) => {
   try {

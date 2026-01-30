@@ -63,8 +63,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       
       if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        console.error("❌ Server responded with error:", response.status, errorText);
+        let errorDetail = "";
+        try {
+          const errorJson = await response.json();
+          errorDetail = JSON.stringify(errorJson);
+          console.error("❌ Server error (JSON):", errorJson);
+        } catch {
+          errorDetail = await response.text().catch(() => "");
+          console.error("❌ Server error (text):", errorDetail);
+        }
+        console.error("❌ Response status:", response.status);
+        console.error("❌ Response headers:", Object.fromEntries(response.headers.entries()));
         
         // 401은 토큰 문제 - 최대 2번까지 재시도 (1.5초 후)
         if (response.status === 401 && retryCount < 2) {

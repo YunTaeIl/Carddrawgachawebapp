@@ -1,15 +1,24 @@
 // 유저 데이터 관리 API
 import { createClient } from "jsr:@supabase/supabase-js@2.49.8";
 
+// 🔥 프로젝트 설정 (환경 변수 우선, 없으면 기본값)
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://qpzfzemhljgzscojkxnj.supabase.co";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwemZ6ZW1obGpnenNjb2preG5qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2NDM5MTksImV4cCI6MjA4NDIxOTkxOX0.N78bAvRQFVBtrpib9SB-ljsNXokv2nxZsU-aHGCdSAE";
+
+console.log("🔧 [STARTUP] SUPABASE_URL:", SUPABASE_URL);
+console.log("🔧 [STARTUP] SERVICE_ROLE_KEY:", SUPABASE_SERVICE_ROLE_KEY ? `SET (${SUPABASE_SERVICE_ROLE_KEY.length} chars)` : "MISSING!");
+console.log("🔧 [STARTUP] ANON_KEY:", SUPABASE_ANON_KEY.length, "chars");
+
 const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY,
 );
 
 // 유저 인증용 클라이언트 (ANON KEY 사용)
 const supabaseAuth = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_ANON_KEY")!,
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
 );
 
 // 유저 인증 확인
