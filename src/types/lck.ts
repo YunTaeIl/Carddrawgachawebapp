@@ -371,3 +371,30 @@ export function calculateUpgradeStatBonus(
 
   return bonus;
 }
+
+// 🔥 강화 레벨 1부터 currentLevel까지의 누적 스탯 보너스 계산
+export function getTotalUpgradeBonus(
+  grade: Grade,
+  currentLevel: number,
+  position: Position
+): { mechanics: number; laning: number; teamfight: number; macro: number; clutch: number } {
+  const total = {
+    mechanics: 0,
+    laning: 0,
+    teamfight: 0,
+    macro: 0,
+    clutch: 0
+  };
+
+  // 레벨 1부터 currentLevel까지 누적
+  for (let level = 1; level <= currentLevel; level++) {
+    const bonus = calculateUpgradeStatBonus(grade, level, position);
+    total.mechanics += bonus.mechanics;
+    total.laning += bonus.laning;
+    total.teamfight += bonus.teamfight;
+    total.macro += bonus.macro;
+    total.clutch += bonus.clutch;
+  }
+
+  return total;
+}

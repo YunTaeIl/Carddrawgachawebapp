@@ -5,7 +5,7 @@ import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull } from "lucide-react";
-import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, isLiveCard } from "@/types/lck";
+import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, getTotalUpgradeBonus, isLiveCard } from "@/types/lck";
 import {
   Dialog,
   DialogContent,
@@ -654,35 +654,70 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                     <div className="bg-[#0B0F1A] p-4 rounded-lg">
                       <h4 className="font-bold mb-3">스탯</h4>
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-[#9AA6C3]">OVR</span>
-                          <span className="font-bold text-lg">
-                            {selectedCard.stats.ovr + selectedCard.upgradeLevel}
-                            {selectedCard.upgradeLevel > 0 && (
-                              <span className="text-green-400 text-sm ml-1">+{selectedCard.upgradeLevel}</span>
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#9AA6C3]">메카닉</span>
-                          <span>{selectedCard.stats.mechanics}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#9AA6C3]">라인</span>
-                          <span>{selectedCard.stats.laning}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#9AA6C3]">한타</span>
-                          <span>{selectedCard.stats.teamfight}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#9AA6C3]">운영</span>
-                          <span>{selectedCard.stats.macro}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#9AA6C3]">클러치</span>
-                          <span>{selectedCard.stats.clutch}</span>
-                        </div>
+                        {(() => {
+                          const upgradeBonus = selectedCard.upgradeLevel > 0
+                            ? getTotalUpgradeBonus(selectedCard.grade, selectedCard.upgradeLevel, selectedCard.position)
+                            : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+                          
+                          return (
+                            <>
+                              <div className="flex justify-between">
+                                <span className="text-[#9AA6C3]">OVR</span>
+                                <span className="font-bold text-lg">
+                                  {selectedCard.stats.ovr + selectedCard.upgradeLevel}
+                                  {selectedCard.upgradeLevel > 0 && (
+                                    <span className="text-green-400 text-sm ml-1">+{selectedCard.upgradeLevel}</span>
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-[#9AA6C3]">메카닉</span>
+                                <span>
+                                  {selectedCard.stats.mechanics + upgradeBonus.mechanics}
+                                  {upgradeBonus.mechanics > 0 && (
+                                    <span className="text-green-400 text-sm ml-1">+{upgradeBonus.mechanics}</span>
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-[#9AA6C3]">라인</span>
+                                <span>
+                                  {selectedCard.stats.laning + upgradeBonus.laning}
+                                  {upgradeBonus.laning > 0 && (
+                                    <span className="text-green-400 text-sm ml-1">+{upgradeBonus.laning}</span>
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-[#9AA6C3]">한타</span>
+                                <span>
+                                  {selectedCard.stats.teamfight + upgradeBonus.teamfight}
+                                  {upgradeBonus.teamfight > 0 && (
+                                    <span className="text-green-400 text-sm ml-1">+{upgradeBonus.teamfight}</span>
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-[#9AA6C3]">운영</span>
+                                <span>
+                                  {selectedCard.stats.macro + upgradeBonus.macro}
+                                  {upgradeBonus.macro > 0 && (
+                                    <span className="text-green-400 text-sm ml-1">+{upgradeBonus.macro}</span>
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-[#9AA6C3]">클러치</span>
+                                <span>
+                                  {selectedCard.stats.clutch + upgradeBonus.clutch}
+                                  {upgradeBonus.clutch > 0 && (
+                                    <span className="text-green-400 text-sm ml-1">+{upgradeBonus.clutch}</span>
+                                  )}
+                                </span>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
 

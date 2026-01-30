@@ -5,7 +5,7 @@ import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { GACHA_CONFIG } from "@/types/lck";
+import { GACHA_CONFIG, getTotalUpgradeBonus } from "@/types/lck";
 import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calendar, Copy, Check } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
@@ -64,20 +64,50 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       
       const bonus = cardBonuses[card.id] || { ovr: 0, mec: 0, lan: 0, tf: 0, mac: 0, clu: 0 };
       
+      // 🔥 강화 레벨에 따른 누적 스탯 보너스 계산
+      const upgradeBonus = card.upgradeLevel > 0
+        ? getTotalUpgradeBonus(card.grade, card.upgradeLevel, card.position)
+        : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+      
       totalOVR += card.stats.ovr + card.upgradeLevel + bonus.ovr;
-      totalMechanics += card.stats.mechanics + bonus.mec;
-      totalLaning += card.stats.laning + bonus.lan;
-      totalTeamfight += card.stats.teamfight + bonus.tf;
-      totalMacro += card.stats.macro + bonus.mac;
-      totalClutch += card.stats.clutch + bonus.clu;
+      totalMechanics += card.stats.mechanics + upgradeBonus.mechanics + bonus.mec;
+      totalLaning += card.stats.laning + upgradeBonus.laning + bonus.lan;
+      totalTeamfight += card.stats.teamfight + upgradeBonus.teamfight + bonus.tf;
+      totalMacro += card.stats.macro + upgradeBonus.macro + bonus.mac;
+      totalClutch += card.stats.clutch + upgradeBonus.clutch + bonus.clu;
     }
     
     const baseOVR = deployedCards.reduce((sum, card) => sum + card!.stats.ovr + card!.upgradeLevel, 0);
-    const baseMechanics = deployedCards.reduce((sum, card) => sum + card!.stats.mechanics, 0);
-    const baseLaning = deployedCards.reduce((sum, card) => sum + card!.stats.laning, 0);
-    const baseTeamfight = deployedCards.reduce((sum, card) => sum + card!.stats.teamfight, 0);
-    const baseMacro = deployedCards.reduce((sum, card) => sum + card!.stats.macro, 0);
-    const baseClutch = deployedCards.reduce((sum, card) => sum + card!.stats.clutch, 0);
+    const baseMechanics = deployedCards.reduce((sum, card) => {
+      const upgradeBonus = card!.upgradeLevel > 0
+        ? getTotalUpgradeBonus(card!.grade, card!.upgradeLevel, card!.position)
+        : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+      return sum + card!.stats.mechanics + upgradeBonus.mechanics;
+    }, 0);
+    const baseLaning = deployedCards.reduce((sum, card) => {
+      const upgradeBonus = card!.upgradeLevel > 0
+        ? getTotalUpgradeBonus(card!.grade, card!.upgradeLevel, card!.position)
+        : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+      return sum + card!.stats.laning + upgradeBonus.laning;
+    }, 0);
+    const baseTeamfight = deployedCards.reduce((sum, card) => {
+      const upgradeBonus = card!.upgradeLevel > 0
+        ? getTotalUpgradeBonus(card!.grade, card!.upgradeLevel, card!.position)
+        : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+      return sum + card!.stats.teamfight + upgradeBonus.teamfight;
+    }, 0);
+    const baseMacro = deployedCards.reduce((sum, card) => {
+      const upgradeBonus = card!.upgradeLevel > 0
+        ? getTotalUpgradeBonus(card!.grade, card!.upgradeLevel, card!.position)
+        : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+      return sum + card!.stats.macro + upgradeBonus.macro;
+    }, 0);
+    const baseClutch = deployedCards.reduce((sum, card) => {
+      const upgradeBonus = card!.upgradeLevel > 0
+        ? getTotalUpgradeBonus(card!.grade, card!.upgradeLevel, card!.position)
+        : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+      return sum + card!.stats.clutch + upgradeBonus.clutch;
+    }, 0);
     
     return {
       baseOVR,

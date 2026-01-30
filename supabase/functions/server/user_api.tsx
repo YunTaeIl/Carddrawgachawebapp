@@ -78,10 +78,10 @@ export async function initializeUser(userId: string, email: string, displayName?
         .from("user_profiles")
         .insert({
           id: userId,
-          email: email,
           username: finalUsername,  // 중복 처리된 username
           is_admin: false,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
       
       if (profileError) {

@@ -25,29 +25,47 @@ import {
   COACH_CALL_CONFIGS
 } from "./config";
 import { getKoreanTeamName } from "@/utils/teamNames";
-import { LCKCard } from "@/types/lck";
+import { LCKCard, getTotalUpgradeBonus } from "@/types/lck";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 // ========== 초기화 ==========
 
 /**
- * 카드 스탯 구조 정규화 (stats가 없으면 생성)
+ * 카드 스탯 구조 정규화 (stats가 없으면 생성 + 강화 보너스 적용)
  */
 function normalizeCardStats(card: LCKCard): LCKCard {
+  // 🔥 강화 레벨에 따른 누적 스탯 보너스 계산
+  const upgradeLevel = (card as any).upgradeLevel || 0;
+  const upgradeBonus = upgradeLevel > 0
+    ? getTotalUpgradeBonus(card.grade, upgradeLevel, card.position)
+    : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+  
   if (!card.stats) {
     return {
       ...card,
       stats: {
-        ovr: (card as any).ovr ?? 0,
-        mechanics: (card as any).mechanics ?? 0,
-        laning: (card as any).laning ?? 0,
-        teamfight: (card as any).teamfight ?? 0,
-        macro: (card as any).macro ?? 0,
-        clutch: (card as any).clutch ?? 0,
+        ovr: ((card as any).ovr ?? 0) + upgradeLevel,
+        mechanics: ((card as any).mechanics ?? 0) + upgradeBonus.mechanics,
+        laning: ((card as any).laning ?? 0) + upgradeBonus.laning,
+        teamfight: ((card as any).teamfight ?? 0) + upgradeBonus.teamfight,
+        macro: ((card as any).macro ?? 0) + upgradeBonus.macro,
+        clutch: ((card as any).clutch ?? 0) + upgradeBonus.clutch,
       }
     };
   }
-  return card;
+  
+  // stats가 있는 경우에도 강화 보너스 적용
+  return {
+    ...card,
+    stats: {
+      ovr: card.stats.ovr + upgradeLevel,
+      mechanics: card.stats.mechanics + upgradeBonus.mechanics,
+      laning: card.stats.laning + upgradeBonus.laning,
+      teamfight: card.stats.teamfight + upgradeBonus.teamfight,
+      macro: card.stats.macro + upgradeBonus.macro,
+      clutch: card.stats.clutch + upgradeBonus.clutch,
+    }
+  };
 }
 
 /**

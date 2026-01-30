@@ -1,7 +1,7 @@
 // LCK 홀로그램 카드 (앞/뒷면 플립 + 5각형 레이더 차트)
 
 import React, { useRef, useState, useEffect } from "react";
-import { LCKCard, GRADE_COLORS, POSITION_NAMES, isLiveCard, LIVE_CARD_COLOR } from "@/types/lck";
+import { LCKCard, GRADE_COLORS, POSITION_NAMES, isLiveCard, LIVE_CARD_COLOR, getTotalUpgradeBonus } from "@/types/lck";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { PlayerImage } from "@/components/PlayerImage";
 import { getTeamLogoUrls } from "@/utils/teamLogos";
@@ -217,13 +217,18 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
 
   const upgradeAura = getUpgradeAura();
 
+  // 🔥 강화 레벨에 따른 누적 스탯 보너스 계산
+  const upgradeBonus = upgradeLevel > 0
+    ? getTotalUpgradeBonus(card.grade, upgradeLevel, card.position)
+    : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
+
   // 5각형 레이더 차트 데이터
   const radarData = [
-    { stat: "메카닉", value: card.stats.mechanics + (synergyBonus?.mec || 0), base: card.stats.mechanics },
-    { stat: "라인전", value: card.stats.laning + (synergyBonus?.lan || 0), base: card.stats.laning },
-    { stat: "한타", value: card.stats.teamfight + (synergyBonus?.tf || 0), base: card.stats.teamfight },
-    { stat: "운영", value: card.stats.macro + (synergyBonus?.mac || 0), base: card.stats.macro },
-    { stat: "클러치", value: card.stats.clutch + (synergyBonus?.clu || 0), base: card.stats.clutch },
+    { stat: "메카닉", value: card.stats.mechanics + upgradeBonus.mechanics + (synergyBonus?.mec || 0), base: card.stats.mechanics },
+    { stat: "라인전", value: card.stats.laning + upgradeBonus.laning + (synergyBonus?.lan || 0), base: card.stats.laning },
+    { stat: "한타", value: card.stats.teamfight + upgradeBonus.teamfight + (synergyBonus?.tf || 0), base: card.stats.teamfight },
+    { stat: "운영", value: card.stats.macro + upgradeBonus.macro + (synergyBonus?.mac || 0), base: card.stats.macro },
+    { stat: "클러치", value: card.stats.clutch + upgradeBonus.clutch + (synergyBonus?.clu || 0), base: card.stats.clutch },
   ];
 
   // 등급별 테두리 스타일
@@ -907,9 +912,9 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
-                      <span>{card.stats.mechanics + (synergyBonus?.mec || 0)}</span>
-                      {synergyBonus && synergyBonus.mec > 0 && (
-                        <span className="text-[9px] font-black">(+{synergyBonus.mec})</span>
+                      <span>{card.stats.mechanics + upgradeBonus.mechanics + (synergyBonus?.mec || 0)}</span>
+                      {(upgradeBonus.mechanics > 0 || (synergyBonus && synergyBonus.mec > 0)) && (
+                        <span className="text-[9px] font-black">(+{upgradeBonus.mechanics + (synergyBonus?.mec || 0)})</span>
                       )}
                     </div>
                   </div>
@@ -923,9 +928,9 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
-                      <span>{card.stats.teamfight + (synergyBonus?.tf || 0)}</span>
-                      {synergyBonus && synergyBonus.tf > 0 && (
-                        <span className="text-[9px] font-black">(+{synergyBonus.tf})</span>
+                      <span>{card.stats.teamfight + upgradeBonus.teamfight + (synergyBonus?.tf || 0)}</span>
+                      {(upgradeBonus.teamfight > 0 || (synergyBonus && synergyBonus.tf > 0)) && (
+                        <span className="text-[9px] font-black">(+{upgradeBonus.teamfight + (synergyBonus?.tf || 0)})</span>
                       )}
                     </div>
                   </div>
@@ -939,9 +944,9 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                         boxShadow: `inset 0 1px 1px ${gradeColor}44`
                       }}
                     >
-                      <span>{card.stats.clutch + (synergyBonus?.clu || 0)}</span>
-                      {synergyBonus && synergyBonus.clu > 0 && (
-                        <span className="text-[9px] font-black">(+{synergyBonus.clu})</span>
+                      <span>{card.stats.clutch + upgradeBonus.clutch + (synergyBonus?.clu || 0)}</span>
+                      {(upgradeBonus.clutch > 0 || (synergyBonus && synergyBonus.clu > 0)) && (
+                        <span className="text-[9px] font-black">(+{upgradeBonus.clutch + (synergyBonus?.clu || 0)})</span>
                       )}
                     </div>
                   </div>
