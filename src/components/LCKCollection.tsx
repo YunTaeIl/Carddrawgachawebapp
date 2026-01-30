@@ -271,11 +271,10 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     const isLive = card.year === 2026;
     
     if (isLive) {
-      // LIVE 카드는 등급에 따라 100배 비용
-      if (card.grade === "S") return 10000000;  // 1000만
-      if (card.grade === "A") return 7000000;   // 700만
-      if (card.grade === "B") return 3500000;   // 350만
-      if (card.grade === "C") return 400000;    // 40만
+      // LIVE 카드는 GACHA_CONFIG의 가격 사용
+      if (card.grade === "S") return GACHA_CONFIG.LIVE_CRAFT_COSTS.S;  // 9만
+      if (card.grade === "A") return GACHA_CONFIG.LIVE_CRAFT_COSTS.A;  // 3만
+      // B, C 등급은 LIVE가 없으므로 일반 카드로 처리
     }
     
     // 일반 카드
