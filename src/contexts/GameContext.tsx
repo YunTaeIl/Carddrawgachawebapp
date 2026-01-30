@@ -135,10 +135,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
         
         // 카드 풀 초기화 (로그인 여부 상관없이 필수)
-        const pool = await initializeCardPool();
-        setCardPool(pool);
-        setAllCards(pool); // allCards도 동일하게 설정
+        try {
+          console.log("[GameContext] 카드 풀 초기화 시작...");
+          const pool = await initializeCardPool();
+          console.log(`[GameContext] 카드 풀 로드 완료: ${pool.length}장`);
+          setCardPool(pool);
+          setAllCards(pool); // allCards도 동일하게 설정
+        } catch (poolError: any) {
+          console.error("[GameContext] 카드 풀 초기화 실패:", poolError);
+          toast.error("카드 데이터를 불러오는데 실패했습니다. 샘플 데이터로 진행합니다.", {
+            icon: "⚠️"
+          });
+          // Fallback: 샘플 카드 사용
+          const { SAMPLE_CARDS } = await import("@/data/sampleCards");
+          setCardPool(SAMPLE_CARDS);
+          setAllCards(SAMPLE_CARDS);
+        }
       } catch (error) {
+        console.error("[GameContext] 초기 데이터 로드 실패:", error);
         // 에러가 나도 기본 데이터로 진행
         setUserData(getDefaultUserData());
       } finally {
@@ -741,13 +755,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // 🎯 지정 카드 제작 (미보유 전용)
   const craftSpecificCard = async (cardId: string): Promise<CraftResult | null> => {
-    // 카드 찾기
-    const targetCard = allCards.find(c => c.id === cardId);
-    
-    if (!targetCard) {
-      toast.error("카드를 찾을 수 없습니다!");
-      return null;
-    }
+    try {
+      console.log(`[craftSpecificCard] 카드 제작 시작: ${cardId}`);
+      console.log(`[craftSpecificCard] allCards 개수: ${allCards.length}`);
+      
+      // 카드 찾기
+      const targetCard = allCards.find(c => c.id === cardId);
+      
+      if (!targetCard) {
+        console.error(`[craftSpecificCard] 카드를 찾을 수 없음: ${cardId}`);
+        toast.error("카드를 찾을 수 없습니다!");
+        return null;
+      }
     
     // 이미 보유 중인지 확인
     const alreadyOwned = userData.ownedCards.some(c => c.id === cardId);
@@ -760,6 +779,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // 🔥 LIVE 카드 체크 (year === 2026)
     const isLive = targetCard.year === 2026;
     
+    // 🔍 디버깅
+    console.log(`[craftSpecificCard] 카드: ${targetCard.name}, 연도: ${targetCard.year}, 등급: ${targetCard.grade}, LIVE: ${isLive}`);
+    
     let cost: number;
     if (isLive) {
       // LIVE 카드는 등급에 따라 100배 비용
@@ -771,6 +793,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         "LIVE": 10000000
       };
       cost = liveCosts[targetCard.grade];
+      console.log(`[craftSpecificCard] LIVE 카드 비용: ${cost.toLocaleString()} 샤드`);
     } else {
       // 일반 카드
       const normalCosts: Record<Grade, number> = {
@@ -781,6 +804,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         "LIVE": 10000000
       };
       cost = normalCosts[targetCard.grade];
+      console.log(`[craftSpecificCard] 일반 카드 비용: ${cost.toLocaleString()} 샤드`);
     }
     
     if (userData.shards < cost) {
@@ -797,6 +821,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       upgradeLevel: 0,
       obtainedAt: Date.now()
     };
+    
+    // 🔍 차감 전후 샤드 로그
+    console.log(`[craftSpecificCard] 차감 전 샤드: ${userData.shards.toLocaleString()}, 차감 금액: ${cost.toLocaleString()}, 차감 후: ${(userData.shards - cost).toLocaleString()}`);
     
     const newData: UserData = {
       ...userData,
@@ -822,6 +849,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       isDupe: false,
       shardsGained: 0
     };
+    } catch (error: any) {
+      console.error("[craftSpecificCard] 에러 발생:", error);
+      toast.error(`카드 제작 실패: ${error.message || "알 수 없는 오류"}`, {
+        icon: "❌"
+      });
+      return null;
+    }
   };
 
   // 스쿼드 설정

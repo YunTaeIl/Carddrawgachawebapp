@@ -40,23 +40,30 @@ function convertServerCard(serverCard: ServerCard): LCKCard {
 // 모든 카드 가져오기
 export async function fetchAllCards(): Promise<LCKCard[]> {
   try {
+    console.log(`[fetchAllCards] API 호출 시작: ${API_URL}/cards`);
     const response = await fetch(`${API_URL}/cards`, {
       headers: {
         Authorization: `Bearer ${publicAnonKey}`,
       },
     });
 
+    console.log(`[fetchAllCards] 응답 상태: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
       throw new Error(`Failed to fetch cards: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log(`[fetchAllCards] 응답 데이터:`, data);
+    
     if (!data.success) {
       throw new Error(data.error || "Failed to fetch cards");
     }
 
+    console.log(`[fetchAllCards] 카드 ${data.cards.length}장 로드 완료`);
     return data.cards.map(convertServerCard);
-  } catch (error) {
+  } catch (error: any) {
+    console.error("[fetchAllCards] 에러 발생:", error);
     throw error;
   }
 }
