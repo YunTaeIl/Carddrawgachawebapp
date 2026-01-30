@@ -381,98 +381,61 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                 }}
               />
               
-              {/* 🔥 불꽃 파티클 이펙트 (+3 이상) */}
+              {/* 🔥 불꽃 파티클 이펙트 (+3 이상) - 카드 테두리를 따라 일렁임 */}
               {upgradeAura.flame && (
-                <>
-                  {/* 상승하는 불꽃 파티클 (하단만) */}
-                  <div className="absolute -inset-2 pointer-events-none overflow-hidden -z-10">
-                    {[...Array(12)].map((_, i) => {
-                      const delay = i * 0.4;
-                      const x = 15 + (i * 6) % 70;
-                      return (
-                        <div
-                          key={`flame-${i}`}
-                          className="absolute"
-                          style={{
-                            left: `${x}%`,
-                            bottom: "-5%",
-                            width: `${3 + Math.random() * 5}px`,
-                            height: `${6 + Math.random() * 10}px`,
-                            background: `linear-gradient(to top, ${upgradeAura.flameColors?.[0]}, ${upgradeAura.flameColors?.[1]}, transparent)`,
-                            borderRadius: "50% 50% 0 0",
-                            filter: "blur(2px)",
-                            opacity: 0.7,
-                            animation: `flameRise ${2 + Math.random()}s ease-in infinite ${delay}s`,
-                            boxShadow: `0 0 8px ${upgradeAura.color}88`
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                  
-                  {/* 좌우 타오르는 불꽃 (가장자리만) */}
-                  <div className="absolute -inset-1 pointer-events-none -z-10">
-                    {/* 왼쪽 불꽃 */}
-                    {[...Array(4)].map((_, i) => (
-                      <div
-                        key={`flame-left-${i}`}
-                        className="absolute"
-                        style={{
-                          left: "-2%",
-                          top: `${25 + i * 15}%`,
-                          width: `${4 + Math.random() * 6}px`,
-                          height: `${8 + Math.random() * 12}px`,
-                          background: `radial-gradient(ellipse at bottom, ${upgradeAura.flameColors?.[0]}, ${upgradeAura.flameColors?.[1]}, transparent)`,
-                          borderRadius: "50%",
-                          filter: "blur(2px)",
-                          opacity: 0.6,
-                          animation: `flameDance ${1.5 + Math.random()}s ease-in-out infinite ${i * 0.2}s`,
-                          transformOrigin: "bottom center"
-                        }}
-                      />
-                    ))}
+                <div className="absolute inset-0 pointer-events-none -z-10 rounded-2xl overflow-visible">
+                  {/* 테두리를 따라 불꽃 배치 */}
+                  {[...Array(24)].map((_, i) => {
+                    const angle = (i / 24) * 360; // 24개를 360도로 분산
+                    const isCorner = i % 6 === 0; // 모서리 위치
+                    const size = isCorner ? 8 : 5;
                     
-                    {/* 오른쪽 불꽃 */}
-                    {[...Array(4)].map((_, i) => (
+                    return (
                       <div
-                        key={`flame-right-${i}`}
+                        key={`flame-${i}`}
                         className="absolute"
                         style={{
-                          right: "-2%",
-                          top: `${25 + i * 15}%`,
-                          width: `${4 + Math.random() * 6}px`,
-                          height: `${8 + Math.random() * 12}px`,
-                          background: `radial-gradient(ellipse at bottom, ${upgradeAura.flameColors?.[0]}, ${upgradeAura.flameColors?.[1]}, transparent)`,
-                          borderRadius: "50%",
-                          filter: "blur(2px)",
-                          opacity: 0.6,
-                          animation: `flameDance ${1.5 + Math.random()}s ease-in-out infinite ${i * 0.2}s`,
-                          transformOrigin: "bottom center"
+                          left: '50%',
+                          top: '50%',
+                          width: `${size}px`,
+                          height: `${size * 2}px`,
+                          marginLeft: `${Math.cos(angle * Math.PI / 180) * (size === 8 ? 155 : 150)}px`,
+                          marginTop: `${Math.sin(angle * Math.PI / 180) * (size === 8 ? 280 : 275)}px`,
+                          background: `linear-gradient(to top, ${upgradeAura.flameColors?.[0]}, ${upgradeAura.flameColors?.[1]}, transparent)`,
+                          borderRadius: '50% 50% 0 0',
+                          filter: 'blur(1.5px)',
+                          opacity: 0.8,
+                          animation: `flameFlicker ${1 + Math.random() * 0.5}s ease-in-out infinite ${i * 0.05}s`,
+                          transformOrigin: 'bottom center',
+                          boxShadow: `0 0 8px ${upgradeAura.color}99`
                         }}
                       />
-                    ))}
-                  </div>
+                    );
+                  })}
                   
-                  {/* 불꽃 불씨 (카드 주변만) */}
-                  <div className="absolute -inset-3 pointer-events-none overflow-hidden -z-10">
-                    {[...Array(10)].map((_, i) => (
+                  {/* 추가 광채 효과 */}
+                  {[...Array(12)].map((_, i) => {
+                    const angle = (i / 12) * 360;
+                    return (
                       <div
-                        key={`spark-${i}`}
+                        key={`glow-${i}`}
                         className="absolute rounded-full"
                         style={{
-                          left: `${10 + Math.random() * 80}%`,
-                          top: `${10 + Math.random() * 80}%`,
-                          width: `${2 + Math.random() * 3}px`,
-                          height: `${2 + Math.random() * 3}px`,
-                          background: upgradeAura.pulseColor,
-                          boxShadow: `0 0 6px ${upgradeAura.color}`,
-                          opacity: 0.7,
-                          animation: `sparkFloat ${2 + Math.random() * 2}s ease-in-out infinite ${Math.random() * 2}s`
+                          left: '50%',
+                          top: '50%',
+                          width: '4px',
+                          height: '4px',
+                          marginLeft: `${Math.cos(angle * Math.PI / 180) * 150}px`,
+                          marginTop: `${Math.sin(angle * Math.PI / 180) * 275}px`,
+                          background: `radial-gradient(circle, ${upgradeAura.pulseColor}, transparent)`,
+                          opacity: 0.9,
+                          animation: `glowPulse ${1.5 + Math.random()}s ease-in-out infinite ${i * 0.1}s`,
+                          boxShadow: `0 0 12px ${upgradeAura.color}cc`
                         }}
                       />
-                    ))}
-                  </div>
-                </>
+                    );
+                  })}
+                </div>
               )}
             </>
           )}
