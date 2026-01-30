@@ -742,31 +742,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
     
     // 등급별 비용 계산
-    // 🔥 LIVE 카드 체크 (year === 2026)
-    const isLive = targetCard.year === 2026;
+    const costs: Record<Grade, number> = {
+      "C": 4000,
+      "B": 35000,
+      "A": 70000,
+      "S": 100000,
+      "LIVE": 10000000
+    };
     
-    let cost: number;
-    if (isLive) {
-      // LIVE 카드는 등급에 따라 100배 비용
-      const liveCosts: Record<Grade, number> = {
-        "S": 10000000,  // 1000만
-        "A": 7000000,   // 700만
-        "B": 3500000,   // 350만
-        "C": 400000,    // 40만
-        "LIVE": 10000000 // 사용 안함
-      };
-      cost = liveCosts[targetCard.grade];
-    } else {
-      // 일반 카드
-      const normalCosts: Record<Grade, number> = {
-        "C": 4000,
-        "B": 35000,
-        "A": 70000,
-        "S": 100000,
-        "LIVE": 10000000 // 사용 안함
-      };
-      cost = normalCosts[targetCard.grade];
-    }
+    const cost = costs[targetCard.grade];
     
     if (userData.shards < cost) {
       toast.error(`샤드가 부족합니다! (필요: ${cost.toLocaleString()})`, {
