@@ -1,24 +1,15 @@
 // 유저 데이터 관리 API
 import { createClient } from "jsr:@supabase/supabase-js@2.49.8";
 
-// 🔥 프로젝트 설정 (환경 변수 우선, 없으면 기본값)
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://qpzfzemhljgzscojkxnj.supabase.co";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwemZ6ZW1obGpnenNjb2preG5qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2NDM5MTksImV4cCI6MjA4NDIxOTkxOX0.N78bAvRQFVBtrpib9SB-ljsNXokv2nxZsU-aHGCdSAE";
-
-console.log("🔧 [STARTUP] SUPABASE_URL:", SUPABASE_URL);
-console.log("🔧 [STARTUP] SERVICE_ROLE_KEY:", SUPABASE_SERVICE_ROLE_KEY ? `SET (${SUPABASE_SERVICE_ROLE_KEY.length} chars)` : "MISSING!");
-console.log("🔧 [STARTUP] ANON_KEY:", SUPABASE_ANON_KEY.length, "chars");
-
 const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
 // 유저 인증용 클라이언트 (ANON KEY 사용)
 const supabaseAuth = createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_ANON_KEY")!,
 );
 
 // 유저 인증 확인
@@ -26,37 +17,23 @@ export async function getUserFromToken(authHeader: string | null) {
   console.log("🔐 getUserFromToken called, authHeader:", authHeader ? `Bearer ${authHeader.substring(7, 20)}...` : "NULL");
   
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.error("❌ Invalid auth header format - authHeader:", authHeader);
+    console.error("❌ Invalid auth header format");
     return null;
   }
   
   const token = authHeader.substring(7);
-  console.log("🔑 Extracted token (first 30 chars):", token.substring(0, 30) + "...");
-  console.log("🔑 Token length:", token.length);
+  console.log("🔑 Extracted token:", token.substring(0, 20) + "...");
   
-  try {
-    // ANON KEY 클라이언트로 사용자 확인
-    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
-    
-    if (error) {
-      console.error("❌ Auth error:", JSON.stringify(error, null, 2));
-      console.error("❌ Error name:", error.name);
-      console.error("❌ Error message:", error.message);
-      console.error("❌ Error status:", error.status);
-      return null;
-    }
-    
-    if (!user) {
-      console.error("❌ No user returned from auth.getUser()");
-      return null;
-    }
-    
-    console.log("✅ User authenticated:", user.id, user.email);
-    return user;
-  } catch (err) {
-    console.error("❌ Exception in getUserFromToken:", err);
+  // ANON KEY 클라이언트로 사용자 확인
+  const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
+  
+  if (error || !user) {
+    console.error("❌ Auth error:", error);
     return null;
   }
+  
+  console.log("✅ User authenticated:", user.id);
+  return user;
 }
 
 // 🆕 유저 초기화 (OAuth 로그인 후 자동 생성)

@@ -54,56 +54,15 @@ app.get("/make-server-ffd115c0/cards/:id", async (c) => {
 
 // ==================== 유저 API ====================
 
-// 🔍 디버그: 환경 변수 및 토큰 검증 테스트
-app.get("/make-server-ffd115c0/debug/auth", async (c) => {
-  const authHeader = c.req.header("Authorization");
-  
-  console.log("🔍 DEBUG /debug/auth called");
-  console.log("🔍 Auth header present:", !!authHeader);
-  console.log("🔍 SUPABASE_URL:", Deno.env.get("SUPABASE_URL") ? "SET" : "MISSING");
-  console.log("🔍 SUPABASE_ANON_KEY:", Deno.env.get("SUPABASE_ANON_KEY") ? "SET" : "MISSING");
-  
-  if (!authHeader) {
-    return c.json({ error: "No auth header" });
-  }
-  
-  const token = authHeader.substring(7);
-  console.log("🔍 Token length:", token.length);
-  console.log("🔍 Token first 50 chars:", token.substring(0, 50));
-  
-  // 토큰 검증 시도
-  try {
-    const user = await userApi.getUserFromToken(authHeader);
-    return c.json({ 
-      success: !!user, 
-      userId: user?.id,
-      email: user?.email,
-      tokenLength: token.length
-    });
-  } catch (error) {
-    console.error("🔍 Error:", error);
-    return c.json({ error: String(error) }, 500);
-  }
-});
-
 // 🆕 유저 초기화 (OAuth 로그인 후 호출)
 app.post("/make-server-ffd115c0/user/init", async (c) => {
   try {
-    const authHeader = c.req.header("Authorization");
-    console.log("🔥 /user/init called with auth header:", authHeader ? "Present" : "Missing");
-    
-    const user = await userApi.getUserFromToken(authHeader);
+    const user = await userApi.getUserFromToken(c.req.header("Authorization"));
     if (!user) {
-      console.error("❌ getUserFromToken returned null");
-      return c.json({ 
-        success: false, 
-        code: 401,
-        message: "Invalid JWT",
-        error: "User authentication failed - token may be expired or invalid" 
-      }, 401);
+      return c.json({ success: false, error: "Unauthorized" }, 401);
     }
     
-    console.log("✅ User authenticated, initializing:", user.id, user.email);
+    console.log("🔥 Initializing user:", user.id, user.email);
     
     const result = await userApi.initializeUser(
       user.id, 
@@ -113,7 +72,7 @@ app.post("/make-server-ffd115c0/user/init", async (c) => {
     
     return c.json({ success: true, ...result });
   } catch (error) {
-    console.error("❌ Error initializing user:", error);
+    console.log(`Error initializing user: ${error}`);
     return c.json({ success: false, error: String(error) }, 500);
   }
 });

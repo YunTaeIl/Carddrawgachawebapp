@@ -222,11 +222,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     
     let newSeasonState = currentLeague.seasonState;
     if (allPlayerMatchesCompleted && currentLeague.seasonState === "regular") {
-      // 🔥 플레이어의 모든 경기 완료
-      // ⚠️ 주의: 여기서는 seasonState를 변경하지 않음!
-      // - 5위 안: UI에서 "플레이오프 시작" 버튼 클릭 시 advanceToPlayoffs() 호출 → "playoffs"로 변경
-      // - 6위 이하: UI에서 "시즌 결과 확인" 버튼 클릭 시 finishSeason() 호출 → "finished"로 변경
-      console.log("[LEAGUE] 정규시즌 완료! 플레이어 순위:", newStandings.findIndex(s => s.isPlayer) + 1);
+      // 플레이어의 모든 경기 완료
     }
     
     const updatedLeague = {
@@ -234,7 +230,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       matches: simulatedMatches,
       currentPoints: newPoints,
       standings: newStandings,
-      seasonState: newSeasonState, // 여전히 "regular"로 유지
+      seasonState: newSeasonState,
       updatedAt: new Date().toISOString()
     };
     
@@ -366,15 +362,9 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     // 🔥 결승전이 끝났는지 확인
     const isFinalsCompleted = bracket.finals.isCompleted;
     
-    // 🔥 결승전이 끝났으면 시즌을 finished 상태로 변경
-    // ⚠️ 단, 플레이어가 결승에 참여한 경우는 finishSeason()으로 처리해야 함 (보상 지급 위해)
-    // → 플레이어가 결승에 없는 경우만 여기서 finished로 변경
-    const isPlayerInFinals = bracket.finals.team1Id === currentLeague.playerTeamId || 
-                              bracket.finals.team2Id === currentLeague.playerTeamId;
-    
-    if (isFinalsCompleted && !isPlayerInFinals) {
-      // 플레이어가 결승 전에 탈락 → 자동으로 finished 처리
-      console.log("[LEAGUE] 결승전 완료 (플레이어 불참) → 시즌 종료");
+    // 🔥 결승전이 끝났으면 시즌을 finished 상태로 변경 (단, finishSeason으로 처리되지 않은 경우만)
+    if (isFinalsCompleted) {
+      // 시즌 종료 상태로 변경 (포인트는 이미 finishSeason에서 지급됨)
       setCurrentLeague({
         ...currentLeague,
         seasonState: "finished",
@@ -383,7 +373,6 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
         updatedAt: new Date().toISOString()
       });
     } else {
-      // 결승전 진행 중 OR 플레이어가 결승에 참여 (finishSeason으로 처리)
       setCurrentLeague({
         ...currentLeague,
         playoffBracket: bracket,

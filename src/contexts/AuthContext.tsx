@@ -24,82 +24,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // 🆕 유저 초기화 (DB에 없으면 생성) - 클라이언트에서 직접 처리
-  const initializeUserIfNeeded = async (userId: string, userEmail: string | null, displayName?: string) => {
+  // 🆕 유저 초기화 (DB에 없으면 생성)
+  const initializeUserIfNeeded = async (userId: string, accessToken: string, retryCount = 0) => {
     try {
-      console.log("🔥 initializeUserIfNeeded called for:", userId, userEmail);
+      console.log("🔥 initializeUserIfNeeded called for:", userId, "retry:", retryCount);
+      console.log("🔑 Token (first 20 chars):", accessToken?.substring(0, 20) + "...");
       
-      // 1. user_profiles 확인
-      const { data: existingProfile, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-      
-      if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = not found
-        console.error("❌ Error checking profile:", profileError);
+      // 토큰이 없으면 스킵
+      if (!accessToken) {
+        console.warn("⚠️ No access token available, skipping initialization");
         return;
       }
       
-      if (!existingProfile) {
-        console.log("📝 Creating user_profiles...");
-        const { error: insertError } = await supabase
-          .from("user_profiles")
-          .insert({
-            id: userId,
-            username: displayName || userEmail?.split("@")[0] || `User_${userId.substring(0, 8)}`,
-            display_name: displayName || null,
-            email: userEmail,
-            gold: 0,
-            shards: 0,
-            is_admin: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-        
-        if (insertError) {
-          console.error("❌ Failed to create profile:", insertError);
-          return;
+      // 서버의 /init-user 호출
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/user/init`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          }
         }
-        console.log("✅ Profile created");
+      );
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        console.error("❌ Server responded with error:", response.status, response.statusText, errorText);
+        
+        // 401은 토큰 문제 - 최대 2번까지 재시도 (1초 후)
+        if (response.status === 401 && retryCount < 2) {
+          console.warn(`⚠️ 401 Unauthorized - Retrying in 1 second... (attempt ${retryCount + 1}/2)`);
+          setTimeout(() => {
+            initializeUserIfNeeded(userId, accessToken, retryCount + 1);
+          }, 1000);
+        }
+        return;
+      }
+      
+      const result = await response.json();
+      console.log("🔥 initializeUser result:", result);
+      
+      if (!result.success) {
+        console.error("❌ Failed to initialize user:", result.error);
       } else {
-        console.log("✅ Profile already exists");
+        console.log("✅ User initialized successfully");
       }
-      
-      // 2. user_inventory 확인 (스타터 덱 지급)
-      const { data: existingInventory, error: invError } = await supabase
-        .from("user_inventory")
-        .select("*")
-        .eq("user_id", userId)
-        .limit(1);
-      
-      if (invError) {
-        console.error("❌ Error checking inventory:", invError);
-        return;
-      }
-      
-      if (!existingInventory || existingInventory.length === 0) {
-        console.log("🎁 Giving starter gold and shards...");
-        // 스타터 골드 지급 (서버 없이는 트랜잭션이 어려우니 간단히 처리)
-        const { error: updateError } = await supabase
-          .from("user_profiles")
-          .update({
-            gold: 5000, // 스타터 골드
-            shards: 100, // 스타터 샤드
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", userId);
-        
-        if (updateError) {
-          console.error("❌ Failed to give starter items:", updateError);
-        } else {
-          console.log("✅ Starter items given!");
-        }
-      }
-      
-      console.log("✅ User initialization complete");
     } catch (error) {
       console.error("❌ initializeUserIfNeeded error:", error);
+      // 네트워크 에러는 무시 (서버가 아직 준비 안됐을 수 있음)
     }
   };
 
@@ -132,12 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken(session?.access_token ?? null);
       
       // 유저가 있으면 초기화 및 admin 상태 체크
-      if (session?.user?.id) {
-        await initializeUserIfNeeded(
-          session.user.id, 
-          session.user.email, 
-          session.user.user_metadata?.full_name || session.user.user_metadata?.name
-        );
+      if (session?.user?.id && session?.access_token) {
+        await initializeUserIfNeeded(session.user.id, session.access_token);
         checkAdminStatus(session.user.id);
       }
       
@@ -156,13 +125,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken(session?.access_token ?? null);
       
       // 🆕 SIGNED_IN 이벤트 시 유저 초기화
-      if (event === 'SIGNED_IN' && session?.user?.id) {
+      if (event === 'SIGNED_IN' && session?.user?.id && session?.access_token) {
         console.log("🔥 SIGNED_IN event - initializing user...");
-        await initializeUserIfNeeded(
-          session.user.id,
-          session.user.email,
-          session.user.user_metadata?.full_name || session.user.user_metadata?.name
-        );
+        await initializeUserIfNeeded(session.user.id, session.access_token);
       }
       
       // 유저가 있으면 admin 상태 체크
