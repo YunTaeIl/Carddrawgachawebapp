@@ -14,29 +14,22 @@ let cachedPackPools: Map<CardPackType, Map<Grade, LCKCard[]>> = new Map();
 // 카드 풀 초기화 (앱 시작 시 한번만)
 export async function initializeCardPool() {
   if (cachedCardPool && cachedCardPool.length > 0) {
-    console.log("✅ 캐시된 카드 풀 사용:", cachedCardPool.length, "장");
     return cachedCardPool;
   }
   
   try {
-    console.log("🔄 카드 풀 가져오는 중...");
     cachedCardPool = await getCardPool();
     
     // 카드가 없으면 샘플 데이터 사용
     if (!cachedCardPool || cachedCardPool.length === 0) {
-      console.log("⚠️ 서버 카드 없음, 샘플 데이터 사용");
       cachedCardPool = SAMPLE_CARDS;
-    } else {
-      console.log("✅ 서버에서 카드 로드 성공:", cachedCardPool.length, "장");
     }
   } catch (error) {
-    console.error("❌ 카드 풀 로드 에러, 샘플 데이터 사용:", error);
     cachedCardPool = SAMPLE_CARDS;
   }
   
   // 최종 검증
   if (!cachedCardPool || cachedCardPool.length === 0) {
-    console.error("❌ 샘플 카드도 없음!");
     cachedCardPool = [];
   }
   
@@ -45,13 +38,6 @@ export async function initializeCardPool() {
   cachedGradeMap.set("A", cachedCardPool.filter(c => c.grade === "A"));
   cachedGradeMap.set("B", cachedCardPool.filter(c => c.grade === "B"));
   cachedGradeMap.set("C", cachedCardPool.filter(c => c.grade === "C"));
-  
-  console.log("📊 등급별 카드 수:", {
-    S: cachedGradeMap.get("S")?.length,
-    A: cachedGradeMap.get("A")?.length,
-    B: cachedGradeMap.get("B")?.length,
-    C: cachedGradeMap.get("C")?.length
-  });
   
   // 🔥 카드팩별 캐시도 초기화
   initializePackPools();
@@ -92,17 +78,6 @@ function initializePackPools() {
     gradeMap.set("C", filteredPool.filter(c => c.grade === "C"));
     
     cachedPackPools.set(packType, gradeMap);
-    
-    // 🔥 LIVE 팩 디버깅
-    if (packType === "live_pack") {
-      console.log("🔥 LIVE 팩 초기화:", {
-        총_카드: filteredPool.length,
-        S등급: gradeMap.get("S")?.length || 0,
-        A등급: gradeMap.get("A")?.length || 0,
-        B등급: gradeMap.get("B")?.length || 0,
-        C등급: gradeMap.get("C")?.length || 0
-      });
-    }
   }
 }
 
@@ -236,22 +211,12 @@ export function pullSingle(pityState: PackPityState, ownedCardIds: string[], pac
   let shardsGained = 0;
   if (isDupe) {
     const isLive = isLiveCard(selectedCard);
-    console.log(`🔍 중복 카드 체크:`, {
-      name: selectedCard.name,
-      year: selectedCard.year,
-      grade: selectedCard.grade,
-      isLive,
-      LIVE_VALUES: GACHA_CONFIG.LIVE_SHARD_VALUES,
-      NORMAL_VALUES: GACHA_CONFIG.SHARD_VALUES
-    });
     
     if (isLive) {
       // LIVE 카드는 모든 등급 가능
       shardsGained = GACHA_CONFIG.LIVE_SHARD_VALUES[selectedCard.grade] || 0;
-      console.log(`✨ LIVE 중복! ${selectedCard.name} (${selectedCard.grade}) → ${shardsGained} 샤드`);
     } else {
       shardsGained = GACHA_CONFIG.SHARD_VALUES[selectedCard.grade] || 0;
-      console.log(`📦 일반 중복: ${selectedCard.name} (${selectedCard.grade}) → ${shardsGained} 샤드`);
     }
   }
 
@@ -373,34 +338,12 @@ export function craftLiveCard(grade: "A" | "S"): LCKCard {
     // LIVE 팩에서 해당 등급 선수만 선택
     const cards = getCardsByGradeCached(grade, "live_pack");
     
-    console.log(`🔥 LIVE ${grade} 카드 풀:`, cards.length, "장");
-    
     if (cards.length === 0) {
-      // 디버깅 정보 추가
-      console.error("❌ LIVE 카드 제작 실패 - 상세 정보:");
-      console.error("  - 요청 등급:", grade);
-      console.error("  - 현재 LIVE 시즌:", CURRENT_LIVE_SEASON);
-      console.error("  - 전체 카드 풀:", cachedCardPool?.length || 0);
-      console.error("  - LIVE 팩 캐시 존재:", cachedPackPools.has("live_pack"));
-      
-      // 전체 카드 중 2026년 카드 확인
-      if (cachedCardPool) {
-        const liveCards = cachedCardPool.filter(c => c.year === CURRENT_LIVE_SEASON);
-        console.error("  - 2026년 카드 총:", liveCards.length, "장");
-        console.error("  - 2026년 카드 등급별:", {
-          S: liveCards.filter(c => c.grade === "S").length,
-          A: liveCards.filter(c => c.grade === "A").length,
-          B: liveCards.filter(c => c.grade === "B").length,
-          C: liveCards.filter(c => c.grade === "C").length
-        });
-      }
-      
       throw new Error(`LIVE ${grade} 등급 카드가 데이터베이스에 존재하지 않습니다. 2026 시즌 선수 데이터를 확인해주세요.`);
     }
     
     return cards[Math.floor(Math.random() * cards.length)];
   } catch (error) {
-    console.error("❌ craftLiveCard error:", error);
     throw error;
   }
 }

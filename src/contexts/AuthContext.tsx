@@ -26,41 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 🆕 유저 초기화 (DB에 없으면 생성) - 실패해도 무시 (클라이언트에서 처리)
   const initializeUserIfNeeded = async (userId: string, accessToken: string) => {
     try {
-      console.log("🔥 initializeUserIfNeeded called for:", userId);
-      console.log("⚠️ 서버 호출 스킵 - 클라이언트에서 DB 직접 처리");
-      
       // 서버 호출을 제거하고 클라이언트에서 직접 처리하도록 함
       // GameContext에서 getGameDataDirect 호출 시 자동으로 초기화됨
       return;
-      
-      /* 기존 서버 호출 코드 (401 에러로 주석 처리)
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/user/init`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      
-      if (!response.ok) {
-        console.error("❌ Server responded with error:", response.status, response.statusText);
-        return;
-      }
-      
-      const result = await response.json();
-      console.log("🔥 initializeUser result:", result);
-      
-      if (!result.success) {
-        console.error("❌ Failed to initialize user:", result.error);
-      } else {
-        console.log("✅ User initialized successfully");
-      }
-      */
     } catch (error) {
-      console.error("❌ initializeUserIfNeeded error:", error);
       // 네트워크 에러는 무시 (서버가 아직 준비 안됐을 수 있음)
     }
   };
@@ -75,14 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
       
       if (error) {
-        console.error("Admin status check error:", error);
         setIsAdmin(false);
         return;
       }
       
       setIsAdmin(data?.is_admin ?? false);
     } catch (error) {
-      console.error("Admin check failed:", error);
       setIsAdmin(false);
     }
   };
@@ -101,21 +68,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setIsLoading(false);
     }).catch((error) => {
-      console.error("Session error:", error);
       setIsLoading(false);
     });
 
     // 인증 상태 변경 리스너
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔥 Auth state changed:", event);
-      
       const newUser = session?.user ?? null;
       setUser(newUser);
       setAccessToken(session?.access_token ?? null);
       
       // 🆕 SIGNED_IN 이벤트 시 유저 초기화
       if (event === 'SIGNED_IN' && session?.user?.id && session?.access_token) {
-        console.log("🔥 SIGNED_IN event - initializing user...");
         await initializeUserIfNeeded(session.user.id, session.access_token);
       }
       
@@ -137,12 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInGoogle = async () => {
-    console.log("🔵🔵🔵 signInGoogle 함수 호출됨!");
-    console.log("🔵 현재 URL:", window.location.href);
-    
     try {
-      console.log("🔵 signInWithOAuth 호출 직전...");
-      
       const result = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -154,40 +112,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
       
-      console.log("🔍🔍🔍 FULL RESULT:", JSON.stringify(result, null, 2));
-      console.log("🔍 data:", result.data);
-      console.log("🔍 data.url:", result.data?.url);
-      console.log("🔍 error:", result.error);
-      
       if (result.error) {
-        console.error("🔴🔴🔴 Google 로그인 에러:", result.error);
-        console.error("🔴 에러 메시지:", result.error.message);
-        console.error("🔴 에러 코드:", result.error.status);
         alert(`Google OAuth 에러: ${result.error.message}`);
         throw result.error;
       }
       
       if (!result.data?.url) {
-        console.error("❌❌❌ data.url이 없습니다!");
         alert("Google OAuth URL을 받지 못했습니다. Supabase 설정을 확인하세요.");
         throw new Error("No OAuth URL returned");
       }
-      
-      console.log("✅ OAuth URL 받음:", result.data.url);
-      console.log("🚀🚀🚀 리다이렉트 시작...");
       
       // 명시적 리다이렉트
       window.location.href = result.data.url;
       
     } catch (err: any) {
-      console.error("💥💥💥 예외 발생:", err);
-      console.error("에러:", err);
       throw err;
     }
   };
 
   const signInKakao = async () => {
-    console.log("🔵 Kakao 로그인 시도 중...");
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
       options: {
@@ -196,7 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (error) {
-      console.error("🔴 Kakao 로그인 에러:", error);
       throw error;
     }
     

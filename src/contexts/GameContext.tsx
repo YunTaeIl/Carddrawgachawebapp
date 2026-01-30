@@ -73,10 +73,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [userData, setUserData] = useState<UserData>(() => {
     try {
       const defaultData = getDefaultUserData();
-      console.log("✅ Default user data loaded");
       return defaultData;
     } catch (error) {
-      console.error("❌ getDefaultUserData error:", error);
       // 최소한의 안전한 기본값
       return {
         currency: 1000,
@@ -117,7 +115,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           pack_statistics: data.packStatistics // 🔥 JSONB
         });
       } catch (error: any) {
-        console.error("DB 저장 실패:", error);
+        // DB 저장 실패 시 무시
       }
     }, 1000);
   };
@@ -141,7 +139,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setCardPool(pool);
         setAllCards(pool); // allCards도 동일하게 설정
       } catch (error) {
-        console.error("GameContext init error:", error);
         // 에러가 나도 기본 데이터로 진행
         setUserData(getDefaultUserData());
       } finally {
@@ -204,12 +201,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         
         setDbLoaded(true);
       } catch (error: any) {
-        console.error("❌ DB 재화 데이터 로드 실패:", error);
-        
         // 🆕 데이터가 없으면 초기화 (신규 유저)
         if (error?.message?.includes("not found") || error?.code === "PGRST116") {
-          console.log("🆕 신규 유저 - 초기 데이터 생성 중...");
-          
           try {
             // 기본 데이터로 DB에 생성
             const defaultData = getDefaultUserData();
@@ -223,17 +216,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
               pack_statistics: defaultData.packStatistics
             });
             
-            console.log("✅ 신규 유저 데이터 생성 완료");
             setUserData(defaultData);
             setDbLoaded(true);
           } catch (initError) {
-            console.error("❌ 신규 유저 초기화 실패:", initError);
             // 실패해도 기본 데이터로 진행
             setUserData(getDefaultUserData());
           }
         } else {
           // 다른 에러는 기본 데이터로 진행
-          console.warn("⚠️ DB 에러 - 기본 데이터 사용");
           setUserData(prev => ({ ...prev }));
         }
       }
@@ -402,9 +392,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     // 🔥 LIVE 카드 중복 알림
-    if (result.isDupe && isLiveCard(result.card)) {
-      console.log(`🔥 LIVE 중복! ${result.card.name} → +${result.shardsGained} 샤드`);
-    }
+    // LIVE 중복 처리는 이미 완료됨
 
     return { ...result, card: newCard };
   };
@@ -482,9 +470,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     // 🔥 LIVE 카드 중복 로그
     results.forEach(r => {
-      if (r.isDupe && isLiveCard(r.card)) {
-        console.log(`🔥 LIVE 중복! ${r.card.name} (${r.card.grade}) → +${r.shardsGained} 샤드`);
-      }
+      // LIVE 중복 처리는 이미 완료됨
     });
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
@@ -763,7 +749,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         shardsGained
       };
     } catch (error) {
-      console.error("❌ craftLiveCardWithShards error:", error);
       toast.error(`LIVE 카드 제작 실패: ${error}`, {
         icon: "❌"
       });
@@ -917,10 +902,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 export function useGame() {
   const context = useContext(GameContext);
   if (!context) {
-    // 개발 환경에서만 에러, 프로덕션에서는 경고
-    if (process.env.NODE_ENV === 'development') {
-      console.warn("useGame called outside GameProvider - returning null");
-    }
     return null as any;
   }
   return context;
