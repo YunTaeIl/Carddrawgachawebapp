@@ -23,12 +23,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // 🆕 유저 초기화 (DB에 없으면 생성)
+  // 🆕 유저 초기화 (DB에 없으면 생성) - 실패해도 무시 (클라이언트에서 처리)
   const initializeUserIfNeeded = async (userId: string, accessToken: string) => {
     try {
       console.log("🔥 initializeUserIfNeeded called for:", userId);
+      console.log("⚠️ 서버 호출 스킵 - 클라이언트에서 DB 직접 처리");
       
-      // 서버의 /init-user 호출
+      // 서버 호출을 제거하고 클라이언트에서 직접 처리하도록 함
+      // GameContext에서 getGameDataDirect 호출 시 자동으로 초기화됨
+      return;
+      
+      /* 기존 서버 호출 코드 (401 에러로 주석 처리)
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/user/init`,
         {
@@ -53,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         console.log("✅ User initialized successfully");
       }
+      */
     } catch (error) {
       console.error("❌ initializeUserIfNeeded error:", error);
       // 네트워크 에러는 무시 (서버가 아직 준비 안됐을 수 있음)

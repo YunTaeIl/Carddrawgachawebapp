@@ -203,8 +203,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }));
         
         setDbLoaded(true);
-      } catch (error) {
-        // 에러 무시
+      } catch (error: any) {
+        console.error("❌ DB 재화 데이터 로드 실패:", error);
+        
+        // 🆕 데이터가 없으면 초기화 (신규 유저)
+        if (error?.message?.includes("not found") || error?.code === "PGRST116") {
+          console.log("🆕 신규 유저 - 초기 데이터 생성 중...");
+          
+          try {
+            // 기본 데이터로 DB에 생성
+            const defaultData = getDefaultUserData();
+            await updateGameDataDirect(accessToken, {
+              currency: defaultData.currency,
+              shards: defaultData.shards,
+              s_pity_stack: 0,
+              a_pity_stack: 0,
+              total_pulls: 0,
+              pity_data: defaultData.pityData,
+              pack_statistics: defaultData.packStatistics
+            });
+            
+            console.log("✅ 신규 유저 데이터 생성 완료");
+            setUserData(defaultData);
+            setDbLoaded(true);
+          } catch (initError) {
+            console.error("❌ 신규 유저 초기화 실패:", initError);
+            // 실패해도 기본 데이터로 진행
+            setUserData(getDefaultUserData());
+          }
+        } else {
+          // 다른 에러는 기본 데이터로 진행
+          console.warn("⚠️ DB 에러 - 기본 데이터 사용");
+          setUserData(prev => ({ ...prev }));
+        }
       }
     };
 
