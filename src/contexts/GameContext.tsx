@@ -520,32 +520,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
     let statChanges: any = undefined;
 
     if (result === "SUCCESS") {
-      // 스탯 증가 계산
+      // 🔥 스탯 증가 계산 (이번 레벨의 보너스만)
       statChanges = calculateUpgradeStatBonus(card.grade, targetLevel, card.position);
       
-      // 새로운 세부 스탯 계산
-      const newMechanics = card.stats.mechanics + statChanges.mechanics;
-      const newLaning = card.stats.laning + statChanges.laning;
-      const newTeamfight = card.stats.teamfight + statChanges.teamfight;
-      const newMacro = card.stats.macro + statChanges.macro;
-      const newClutch = card.stats.clutch + statChanges.clutch;
-      
-      // OVR 재계산 (세부 스탯의 평균)
-      const newOvr = Math.round((newMechanics + newLaning + newTeamfight + newMacro + newClutch) / 5);
-      
-      // 카드 업데이트
+      // 🔥 카드 업데이트: stats는 원본 그대로, upgradeLevel만 증가!
+      // 표시할 때 calculateEnhancedOVR이 알아서 보너스를 계산함
       const newCards = [...userData.ownedCards];
       updatedCard = {
         ...card,
-        upgradeLevel: targetLevel,
-        stats: {
-          ovr: newOvr,
-          mechanics: newMechanics,
-          laning: newLaning,
-          teamfight: newTeamfight,
-          macro: newMacro,
-          clutch: newClutch
-        }
+        upgradeLevel: targetLevel
+        // stats는 변경하지 않음! (원본 유지)
       };
       newCards[cardIndex] = updatedCard;
 
