@@ -50,12 +50,36 @@ export async function initializeUser(userId: string, email: string, displayName?
     
     if (!existingProfile) {
       console.log("📝 Creating user_profiles...");
+      
+      // username 중복 처리 (윤태일 -> 윤태일1 -> 윤태일2 ...)
+      let baseUsername = displayName || email.split("@")[0];
+      let finalUsername = baseUsername;
+      let suffix = 0;
+      let usernameExists = true;
+      
+      while (usernameExists) {
+        const { data: existingUser } = await supabase
+          .from("user_profiles")
+          .select("username")
+          .eq("username", finalUsername)
+          .single();
+        
+        if (!existingUser) {
+          usernameExists = false;
+        } else {
+          suffix += 1;
+          finalUsername = baseUsername + suffix;
+        }
+      }
+      
+      console.log(`📝 Final username: ${finalUsername}`);
+      
       const { error: profileError } = await supabase
         .from("user_profiles")
         .insert({
           id: userId,
           email: email,
-          username: displayName || email.split("@")[0],
+          username: finalUsername,  // 중복 처리된 username
           is_admin: false,
           created_at: new Date().toISOString()
         });

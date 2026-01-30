@@ -2,8 +2,12 @@
 
 ## ⚠️ 중요: Google OAuth 로그인 문제 해결
 
-현재 Google OAuth 로그인 후 유저가 DB에 생성되지 않는 문제가 있습니다.
-이는 트리거 함수가 존재하지 않는 컬럼(`avatar_url`)을 참조하기 때문입니다.
+현재 Google OAuth 로그인 후 `user_profiles`가 생성되지 않는 문제가 있습니다.
+
+**원인:**
+1. 트리거 함수가 존재하지 않는 컬럼(`avatar_url`)을 참조
+2. **username 중복 시 UNIQUE 제약 위반** → INSERT 실패
+   - 예: 카카오로 "윤태일" 가입 → Google로 "윤태일@gmail.com" 가입 시 충돌
 
 ## 🚀 해결 방법
 
@@ -23,16 +27,17 @@
 2. `20250130_fix_user_profiles_schema.sql` 내용 복사
 3. 실행 (Run)
 
-#### Step 2: 트리거 수정
-파일: `20250130_fix_user_trigger.sql`
+#### Step 2: 트리거 수정 (username 중복 처리 포함)
+파일: `20250130_fix_user_trigger_v2.sql` ⭐ **최신 버전**
 
 ```sql
--- 트리거 함수 재생성 (avatar_url 제거, email/is_admin 추가)
+-- 트리거 함수 재생성 (username 중복 시 자동으로 번호 붙이기)
+-- 윤태일 -> 윤태일1 -> 윤태일2 ...
 ```
 
 **실행 방법:**
 1. Supabase Dashboard → SQL Editor
-2. `20250130_fix_user_trigger.sql` 내용 복사
+2. `20250130_fix_user_trigger_v2.sql` 내용 복사
 3. 실행 (Run)
 
 ### 2️⃣ 실행 확인
@@ -80,7 +85,7 @@ SELECT * FROM user_squads WHERE user_id = 'YOUR_USER_ID';
 ## 📊 트리거 동작 방식
 
 ```
-Google OAuth 로그인
+Google OAuth 로그인 (윤태일@gmail.com)
        ↓
 auth.users에 INSERT
        ↓
@@ -88,8 +93,11 @@ auth.users에 INSERT
        ↓
 handle_new_user() 함수 실행
        ↓
+username 중복 체크:
+  "윤태일" 이미 존재? → "윤태일1" 생성 ✅
+       ↓
 3개 테이블 자동 생성:
-  ├─ user_profiles (email, username, is_admin)
+  ├─ user_profiles (email, username="윤태일1", is_admin)
   ├─ user_game_data (20,000 RP 지급)
   └─ user_squads (빈 스쿼드)
 ```
