@@ -359,12 +359,27 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       bracket.finals.team2Id = winnerId;
     }
     
-    setCurrentLeague({
-      ...currentLeague,
-      playoffBracket: bracket,
-      currentPoints: newPoints,
-      updatedAt: new Date().toISOString()
-    });
+    // 🔥 결승전이 끝났는지 확인
+    const isFinalsCompleted = bracket.finals.isCompleted;
+    
+    // 🔥 결승전이 끝났으면 시즌을 finished 상태로 변경 (단, finishSeason으로 처리되지 않은 경우만)
+    if (isFinalsCompleted) {
+      // 시즌 종료 상태로 변경 (포인트는 이미 finishSeason에서 지급됨)
+      setCurrentLeague({
+        ...currentLeague,
+        seasonState: "finished",
+        playoffBracket: bracket,
+        currentPoints: newPoints,
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      setCurrentLeague({
+        ...currentLeague,
+        playoffBracket: bracket,
+        currentPoints: newPoints,
+        updatedAt: new Date().toISOString()
+      });
+    }
   };
 
   /**

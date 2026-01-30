@@ -41,9 +41,8 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
   // 🔥 시즌이 종료되면 자동으로 결과 페이지로 이동
   React.useEffect(() => {
     if (currentLeague?.seasonState === "finished" && currentRoute !== "result") {
-      setTimeout(() => {
-        setCurrentRoute("result");
-      }, 500);
+      // 🔥 즉시 전환 (지연 없이)
+      setCurrentRoute("result");
     }
   }, [currentLeague?.seasonState, currentRoute]);
 
