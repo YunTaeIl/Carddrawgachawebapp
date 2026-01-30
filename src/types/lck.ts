@@ -302,71 +302,48 @@ export function calculateUpgradeStatBonus(
     clutch: 0
   };
 
-  if (grade === "C" || grade === "B") {
-    // C, B: +1~+3은 주스탯만, +4~+15는 전 스탯 +1
-    if (targetLevel <= 3) {
-      mainStats.forEach(stat => {
-        bonus[stat] = 1;
-      });
-    } else {
-      allStats.forEach(stat => {
-        bonus[stat] = 1;
-      });
-    }
-  } else if (grade === "A") {
-    // A: +3~+6 전체 +1, +7~+12 전체 +2, +13~+14 전체 +3, +15 전체 +4
-    if (targetLevel <= 2) {
-      mainStats.forEach(stat => {
-        bonus[stat] = 1;
-      });
-    } else if (targetLevel <= 6) {
-      allStats.forEach(stat => {
-        bonus[stat] = 1;
-      });
-    } else if (targetLevel <= 12) {
-      allStats.forEach(stat => {
-        bonus[stat] = 2;
-      });
-    } else if (targetLevel <= 14) {
-      allStats.forEach(stat => {
-        bonus[stat] = 3;
-      });
-    } else {
-      allStats.forEach(stat => {
-        bonus[stat] = 4;
-      });
-    }
-  } else if (grade === "S") {
-    // S: +1~+2 주스탯만, +3 전체 +1, +4~+6 전체 +2, +7~+9 전체 +3, +10~+12 전체 +4, +13~+14 전체 +5, +15 전체 +6
-    if (targetLevel <= 2) {
-      mainStats.forEach(stat => {
-        bonus[stat] = 1;
-      });
-    } else if (targetLevel === 3) {
-      allStats.forEach(stat => {
-        bonus[stat] = 1;
-      });
-    } else if (targetLevel <= 6) {
-      allStats.forEach(stat => {
-        bonus[stat] = 2;
-      });
-    } else if (targetLevel <= 9) {
-      allStats.forEach(stat => {
-        bonus[stat] = 3;
-      });
-    } else if (targetLevel <= 12) {
-      allStats.forEach(stat => {
-        bonus[stat] = 4;
-      });
-    } else if (targetLevel <= 14) {
-      allStats.forEach(stat => {
-        bonus[stat] = 5;
-      });
-    } else {
-      allStats.forEach(stat => {
-        bonus[stat] = 6;
-      });
-    }
+  // 🔥 모든 등급 동일한 증감량
+  // +1~+7: 주스탯만, +8 이후: 전체 스탯
+  if (targetLevel <= 2) {
+    // +1~+2: 주스탯 +1
+    mainStats.forEach(stat => {
+      bonus[stat] = 1;
+    });
+  } else if (targetLevel <= 4) {
+    // +3~+4: 주스탯 +2
+    mainStats.forEach(stat => {
+      bonus[stat] = 2;
+    });
+  } else if (targetLevel <= 6) {
+    // +5~+6: 주스탯 +3
+    mainStats.forEach(stat => {
+      bonus[stat] = 3;
+    });
+  } else if (targetLevel === 7) {
+    // +7: 주스탯 +4
+    mainStats.forEach(stat => {
+      bonus[stat] = 4;
+    });
+  } else if (targetLevel <= 9) {
+    // +8~+9: 전체 +4
+    allStats.forEach(stat => {
+      bonus[stat] = 4;
+    });
+  } else if (targetLevel <= 12) {
+    // +10~+12: 전체 +5
+    allStats.forEach(stat => {
+      bonus[stat] = 5;
+    });
+  } else if (targetLevel <= 14) {
+    // +13~+14: 전체 +6
+    allStats.forEach(stat => {
+      bonus[stat] = 6;
+    });
+  } else {
+    // +15: 전체 +7
+    allStats.forEach(stat => {
+      bonus[stat] = 7;
+    });
   }
 
   return bonus;
