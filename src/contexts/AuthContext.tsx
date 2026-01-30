@@ -255,49 +255,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    console.log("🚪 로그아웃 시작...");
-    try {
-      // 타임아웃 처리 (3초)
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("로그아웃 타임아웃")), 3000);
-      });
-      
-      const signOutPromise = supabase.auth.signOut();
-      
-      console.log("🔄 Supabase signOut 호출 중...");
-      
-      try {
-        await Promise.race([signOutPromise, timeoutPromise]);
-        console.log("✅ Supabase 로그아웃 성공");
-      } catch (error) {
-        console.warn("⚠️ Supabase 로그아웃 타임아웃 또는 에러:", error);
-        // 타임아웃이어도 계속 진행
-      }
-      
-      // 상태 초기화 (Supabase 응답 여부와 관계없이)
-      console.log("🧹 상태 초기화 중...");
-      setUser(null);
-      setAccessToken(null);
-      setIsAdmin(false);
-      
-      // localStorage 완전히 삭제
-      console.log("🗑️ localStorage 클리어 중...");
-      localStorage.clear();
-      
-      console.log("✅ 로그아웃 완료 - 페이지 리다이렉트");
-      
-      // 홈으로 리다이렉트
-      window.location.href = "/";
-    } catch (error) {
-      console.error("❌ 로그아웃 실패:", error);
-      
-      // 에러가 나도 강제 로그아웃
-      setUser(null);
-      setAccessToken(null);
-      setIsAdmin(false);
-      localStorage.clear();
-      window.location.href = "/";
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setAccessToken(null);
+    
+    // 로그아웃 시 localStorage 완전히 삭제
+    localStorage.clear();
   };
 
   return (
