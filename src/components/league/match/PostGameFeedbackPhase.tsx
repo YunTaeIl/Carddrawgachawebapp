@@ -55,7 +55,21 @@ export function PostGameFeedbackPhase({
   setSeries
 }: PostGameFeedbackPhaseProps) {
   const { currentLeague } = useLeague();
-  const [homeFeedback, setHomeFeedback] = useState<PostGameFeedback>("MENTAL_CARE");
+  
+  // 🔥 이전 피드백 불러오기
+  const getLastFeedback = (): PostGameFeedback => {
+    try {
+      const saved = localStorage.getItem('lastPostGameFeedback');
+      if (saved && (Object.keys(FEEDBACK_INFO) as PostGameFeedback[]).includes(saved as PostGameFeedback)) {
+        return saved as PostGameFeedback;
+      }
+    } catch (e) {
+      console.error('피드백 불러오기 실패:', e);
+    }
+    return "MENTAL_CARE";
+  };
+
+  const [homeFeedback, setHomeFeedback] = useState<PostGameFeedback>(getLastFeedback());
   const [awayFeedback, setAwayFeedback] = useState<PostGameFeedback>("MENTAL_CARE");
 
   const lastSet = series.sets[series.sets.length - 1];
@@ -66,6 +80,13 @@ export function PostGameFeedbackPhase({
   const playerWon = isPlayerTeamHome ? homeWon : !homeWon;
 
   const handleContinue = () => {
+    // 🔥 선택한 피드백 저장
+    try {
+      localStorage.setItem('lastPostGameFeedback', homeFeedback);
+    } catch (e) {
+      console.error('피드백 저장 실패:', e);
+    }
+
     // AI 팀 피드백 랜덤 선택
     const feedbacks: PostGameFeedback[] = ["REVIEW_MACRO", "MENTAL_CARE", "LANE_FOCUS", "TEAMFIGHT_REVIEW"];
     const randomAwayFeedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];

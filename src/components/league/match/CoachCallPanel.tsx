@@ -81,6 +81,41 @@ export function CoachCallPanel({
   
   const cpPercentage = (cp.current / cp.max) * 100;
 
+  // 🔥 감독 콜 사용 통계 불러오기
+  const getCallStats = (): Record<CoachCallType, number> => {
+    try {
+      const saved = localStorage.getItem('coachCallStats');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('감독 콜 통계 불러오기 실패:', e);
+    }
+    return {} as Record<CoachCallType, number>;
+  };
+
+  const callStats = getCallStats();
+
+  // 🔥 가장 많이 사용한 콜 3개 찾기
+  const topCalls = Object.entries(callStats)
+    .sort(([, a], [, b]) => (b as number) - (a as number))
+    .slice(0, 3)
+    .map(([call]) => call as CoachCallType);
+
+  // 🔥 감독 콜 사용 시 통계 저장
+  const handleCallWithStats = (callType: CoachCallType) => {
+    onUseCall(callType);
+    
+    // 통계 업데이트
+    try {
+      const stats = getCallStats();
+      stats[callType] = (stats[callType] || 0) + 1;
+      localStorage.setItem('coachCallStats', JSON.stringify(stats));
+    } catch (e) {
+      console.error('감독 콜 통계 저장 실패:', e);
+    }
+  };
+
   const isCallActive = (callType: CoachCallType): boolean => {
     return activeCalls.some(call => call.type === callType);
   };
@@ -158,24 +193,37 @@ export function CoachCallPanel({
           const canAfford = canAffordCall(callType);
           const isDisabled = disabled || active || !canAfford;
 
+          const isTopCall = topCalls.includes(callType);
+
           return (
             <button
               key={callType}
-              onClick={() => !isDisabled && onUseCall(callType)}
+              onClick={() => !isDisabled && handleCallWithStats(callType)}
               disabled={isDisabled}
               className={`
-                p-2 rounded-lg border transition-all text-left
+                relative p-2 rounded-lg border transition-all text-left
                 ${active
                   ? "bg-cyan-500/30 border-cyan-500 cursor-not-allowed"
                   : canAfford
-                    ? "bg-slate-800/80 border-slate-600 hover:border-cyan-500 hover:bg-slate-700"
+                    ? isTopCall
+                      ? "bg-slate-800/80 border-yellow-500/50 hover:border-yellow-400 hover:bg-slate-700 shadow-lg shadow-yellow-500/20"
+                      : "bg-slate-800/80 border-slate-600 hover:border-cyan-500 hover:bg-slate-700"
                     : "bg-slate-900/50 border-slate-800 opacity-50 cursor-not-allowed"
                 }
               `}
             >
+              {/* 🔥 자주 사용하는 콜 표시 */}
+              {isTopCall && !active && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center border-2 border-slate-900">
+                  <span className="text-[10px] font-bold text-slate-900">⭐</span>
+                </div>
+              )}
+              
               <div className="flex items-center gap-2 mb-1">
-                <Icon className={`w-4 h-4 ${active ? "text-cyan-400" : canAfford ? "text-slate-400" : "text-slate-600"}`} />
-                <span className="text-xs font-bold">{CALL_LABELS[callType]}</span>
+                <Icon className={`w-4 h-4 ${active ? "text-cyan-400" : canAfford ? isTopCall ? "text-yellow-400" : "text-slate-400" : "text-slate-600"}`} />
+                <span className={`text-xs font-bold ${isTopCall && !active ? "text-yellow-400" : ""}`}>
+                  {CALL_LABELS[callType]}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className={`text-xs ${canAfford ? "text-cyan-400" : "text-red-400"}`}>
@@ -191,8 +239,16 @@ export function CoachCallPanel({
       </div>
 
       {/* 설명 */}
-      <div className="mt-3 text-xs text-slate-500 text-center">
-        감독 콜은 일정 시간 동안 이벤트 확률을 변경합니다
+      <div className="mt-3 space-y-1">
+        <div className="text-xs text-slate-500 text-center">
+          감독 콜은 일정 시간 동안 이벤트 확률을 변경합니다
+        </div>
+        {topCalls.length > 0 && (
+          <div className="text-xs text-yellow-400/80 text-center flex items-center justify-center gap-1">
+            <span>⭐</span>
+            <span>자주 사용하는 콜</span>
+          </div>
+        )}
       </div>
     </div>
   );
