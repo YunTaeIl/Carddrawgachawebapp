@@ -5,7 +5,7 @@ import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull } from "lucide-react";
-import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, getTotalUpgradeBonus, isLiveCard } from "@/types/lck";
+import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, getTotalUpgradeBonus, calculateEnhancedOVR, isLiveCard } from "@/types/lck";
 import {
   Dialog,
   DialogContent,
@@ -116,7 +116,11 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     }
     
     if (sortBy === "ovr") {
-      cards.sort((a, b) => (b.stats.ovr + b.upgradeLevel) - (a.stats.ovr + a.upgradeLevel));
+      cards.sort((a, b) => {
+        const aOVR = calculateEnhancedOVR(a.stats, a.upgradeLevel, a.grade, a.position);
+        const bOVR = calculateEnhancedOVR(b.stats, b.upgradeLevel, b.grade, b.position);
+        return bOVR - aOVR;
+      });
     } else {
       cards.sort((a, b) => b.obtainedAt - a.obtainedAt);
     }
@@ -664,9 +668,11 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                               <div className="flex justify-between">
                                 <span className="text-[#9AA6C3]">OVR</span>
                                 <span className="font-bold text-lg">
-                                  {selectedCard.stats.ovr + selectedCard.upgradeLevel}
+                                  {calculateEnhancedOVR(selectedCard.stats, selectedCard.upgradeLevel, selectedCard.grade, selectedCard.position)}
                                   {selectedCard.upgradeLevel > 0 && (
-                                    <span className="text-green-400 text-sm ml-1">+{selectedCard.upgradeLevel}</span>
+                                    <span className="text-green-400 text-sm ml-1">
+                                      +{calculateEnhancedOVR(selectedCard.stats, selectedCard.upgradeLevel, selectedCard.grade, selectedCard.position) - selectedCard.stats.ovr}
+                                    </span>
                                   )}
                                 </span>
                               </div>

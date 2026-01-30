@@ -1,7 +1,7 @@
 // 캡처 전용 카드 (transform 없음, 단순 렌더링만)
 
 import React from "react";
-import { LCKCard, GRADE_COLORS } from "@/types/lck";
+import { LCKCard, GRADE_COLORS, calculateEnhancedOVR } from "@/types/lck";
 
 interface CaptureCardProps {
   card: LCKCard;
@@ -10,7 +10,7 @@ interface CaptureCardProps {
 
 export function CaptureCard({ card, upgradeLevel = 0 }: CaptureCardProps) {
   const gradeColor = GRADE_COLORS[card.grade];
-  const displayOVR = card.stats.ovr + (upgradeLevel || 0);
+  const displayOVR = calculateEnhancedOVR(card.stats, upgradeLevel, card.grade, card.position);
 
   return (
     <div 

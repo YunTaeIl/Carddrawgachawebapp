@@ -5,7 +5,7 @@ import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { GACHA_CONFIG, getTotalUpgradeBonus } from "@/types/lck";
+import { GACHA_CONFIG, getTotalUpgradeBonus, calculateEnhancedOVR } from "@/types/lck";
 import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calendar, Copy, Check } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
@@ -69,7 +69,10 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
         ? getTotalUpgradeBonus(card.grade, card.upgradeLevel, card.position)
         : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
       
-      totalOVR += card.stats.ovr + card.upgradeLevel + bonus.ovr;
+      // 🔥 강화된 실제 OVR 계산 (5개 스탯 평균)
+      const enhancedOVR = calculateEnhancedOVR(card.stats, card.upgradeLevel, card.grade, card.position);
+      
+      totalOVR += enhancedOVR + bonus.ovr;
       totalMechanics += card.stats.mechanics + upgradeBonus.mechanics + bonus.mec;
       totalLaning += card.stats.laning + upgradeBonus.laning + bonus.lan;
       totalTeamfight += card.stats.teamfight + upgradeBonus.teamfight + bonus.tf;
@@ -77,7 +80,9 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
       totalClutch += card.stats.clutch + upgradeBonus.clutch + bonus.clu;
     }
     
-    const baseOVR = deployedCards.reduce((sum, card) => sum + card!.stats.ovr + card!.upgradeLevel, 0);
+    const baseOVR = deployedCards.reduce((sum, card) => {
+      return sum + calculateEnhancedOVR(card!.stats, card!.upgradeLevel, card!.grade, card!.position);
+    }, 0);
     const baseMechanics = deployedCards.reduce((sum, card) => {
       const upgradeBonus = card!.upgradeLevel > 0
         ? getTotalUpgradeBonus(card!.grade, card!.upgradeLevel, card!.position)

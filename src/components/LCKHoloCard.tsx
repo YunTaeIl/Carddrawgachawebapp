@@ -1,7 +1,7 @@
 // LCK 홀로그램 카드 (앞/뒷면 플립 + 5각형 레이더 차트)
 
 import React, { useRef, useState, useEffect } from "react";
-import { LCKCard, GRADE_COLORS, POSITION_NAMES, isLiveCard, LIVE_CARD_COLOR, getTotalUpgradeBonus } from "@/types/lck";
+import { LCKCard, GRADE_COLORS, POSITION_NAMES, isLiveCard, LIVE_CARD_COLOR, getTotalUpgradeBonus, calculateEnhancedOVR } from "@/types/lck";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { PlayerImage } from "@/components/PlayerImage";
 import { getTeamLogoUrls } from "@/utils/teamLogos";
@@ -171,7 +171,14 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
   const gradeColor = GRADE_COLORS[card.grade];
   const isLive = isLiveCard(card); // 🔥 LIVE 카드 체크
   
-  const displayOVR = card.stats.ovr + (upgradeLevel || 0) + (synergyBonus?.ovr || 0);
+  // 🔥 강화된 실제 OVR 계산 (5개 스탯 평균)
+  const baseOVR = calculateEnhancedOVR(
+    card.stats,
+    upgradeLevel || 0,
+    card.grade,
+    card.position
+  );
+  const displayOVR = baseOVR + (synergyBonus?.ovr || 0);
 
   // ⬆️ 강화 등급별 오라 색상
   const getUpgradeAura = () => {

@@ -25,7 +25,7 @@ import {
   COACH_CALL_CONFIGS
 } from "./config";
 import { getKoreanTeamName } from "@/utils/teamNames";
-import { LCKCard, getTotalUpgradeBonus } from "@/types/lck";
+import { LCKCard, getTotalUpgradeBonus, calculateEnhancedOVR } from "@/types/lck";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 // ========== 초기화 ==========
@@ -41,24 +41,41 @@ function normalizeCardStats(card: LCKCard): LCKCard {
     : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
   
   if (!card.stats) {
+    const baseOVR = (card as any).ovr ?? 0;
+    const baseMechanics = (card as any).mechanics ?? 0;
+    const baseLaning = (card as any).laning ?? 0;
+    const baseTeamfight = (card as any).teamfight ?? 0;
+    const baseMacro = (card as any).macro ?? 0;
+    const baseClutch = (card as any).clutch ?? 0;
+    
+    // 🔥 강화된 실제 OVR 계산 (5개 스탯 평균)
+    const enhancedOVR = calculateEnhancedOVR(
+      { mechanics: baseMechanics, laning: baseLaning, teamfight: baseTeamfight, macro: baseMacro, clutch: baseClutch },
+      upgradeLevel,
+      card.grade,
+      card.position
+    );
+    
     return {
       ...card,
       stats: {
-        ovr: ((card as any).ovr ?? 0) + upgradeLevel,
-        mechanics: ((card as any).mechanics ?? 0) + upgradeBonus.mechanics,
-        laning: ((card as any).laning ?? 0) + upgradeBonus.laning,
-        teamfight: ((card as any).teamfight ?? 0) + upgradeBonus.teamfight,
-        macro: ((card as any).macro ?? 0) + upgradeBonus.macro,
-        clutch: ((card as any).clutch ?? 0) + upgradeBonus.clutch,
+        ovr: enhancedOVR,
+        mechanics: baseMechanics + upgradeBonus.mechanics,
+        laning: baseLaning + upgradeBonus.laning,
+        teamfight: baseTeamfight + upgradeBonus.teamfight,
+        macro: baseMacro + upgradeBonus.macro,
+        clutch: baseClutch + upgradeBonus.clutch,
       }
     };
   }
   
   // stats가 있는 경우에도 강화 보너스 적용
+  const enhancedOVR = calculateEnhancedOVR(card.stats, upgradeLevel, card.grade, card.position);
+  
   return {
     ...card,
     stats: {
-      ovr: card.stats.ovr + upgradeLevel,
+      ovr: enhancedOVR,
       mechanics: card.stats.mechanics + upgradeBonus.mechanics,
       laning: card.stats.laning + upgradeBonus.laning,
       teamfight: card.stats.teamfight + upgradeBonus.teamfight,

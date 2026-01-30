@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/componen
 import { Input } from "@/app/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { ArrowLeft, Users, TrendingUp, ChevronLeft, ChevronRight, Share2, Download } from "lucide-react";
-import { Position, POSITION_NAMES, UserCard, getTotalUpgradeBonus } from "@/types/lck";
+import { Position, POSITION_NAMES, UserCard, getTotalUpgradeBonus, calculateEnhancedOVR } from "@/types/lck";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import * as htmlToImage from "html-to-image";
 import { toast } from "sonner";
@@ -61,7 +61,10 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
         ? getTotalUpgradeBonus(card.grade, card.upgradeLevel, card.position)
         : { mechanics: 0, laning: 0, teamfight: 0, macro: 0, clutch: 0 };
       
-      totalOVR += card.stats.ovr + card.upgradeLevel + bonus.ovr;
+      // 🔥 강화된 실제 OVR 계산 (5개 스탯 평균)
+      const enhancedOVR = calculateEnhancedOVR(card.stats, card.upgradeLevel, card.grade, card.position);
+      
+      totalOVR += enhancedOVR + bonus.ovr;
       totalMechanics += card.stats.mechanics + upgradeBonus.mechanics + bonus.mec;
       totalLaning += card.stats.laning + upgradeBonus.laning + bonus.lan;
       totalTeamfight += card.stats.teamfight + upgradeBonus.teamfight + bonus.tf;
@@ -135,7 +138,11 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
     }
     
     // OVR 내림차순 정렬
-    return cards.sort((a, b) => (b.stats.ovr + b.upgradeLevel) - (a.stats.ovr + a.upgradeLevel));
+    return cards.sort((a, b) => {
+      const aOVR = calculateEnhancedOVR(a.stats, a.upgradeLevel, a.grade, a.position);
+      const bOVR = calculateEnhancedOVR(b.stats, b.upgradeLevel, b.grade, b.position);
+      return bOVR - aOVR;
+    });
   };
 
   // 페이징 처리된 카드 목록
@@ -294,7 +301,7 @@ export function LCKSquad({ onBack }: LCKSquadProps) {
                               <div className="text-xs text-[#9AA6C3] truncate">{card.team}</div>
                               <div className="text-sm font-bold truncate">{card.name}</div>
                               <div className="text-xs text-[#9AA6C3]">
-                                OVR {card.stats.ovr + card.upgradeLevel}
+                                OVR {calculateEnhancedOVR(card.stats, card.upgradeLevel, card.grade, card.position)}
                               </div>
                             </div>
                             <div className="flex flex-col gap-1 w-full">

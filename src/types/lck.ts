@@ -398,3 +398,25 @@ export function getTotalUpgradeBonus(
 
   return total;
 }
+
+// 🔥 강화된 카드의 실제 OVR 계산 (5개 스탯 평균)
+export function calculateEnhancedOVR(
+  baseStats: { mechanics: number; laning: number; teamfight: number; macro: number; clutch: number },
+  upgradeLevel: number,
+  grade: Grade,
+  position: Position
+): number {
+  if (upgradeLevel === 0) {
+    return Math.round((baseStats.mechanics + baseStats.laning + baseStats.teamfight + baseStats.macro + baseStats.clutch) / 5);
+  }
+  
+  const upgradeBonus = getTotalUpgradeBonus(grade, upgradeLevel, position);
+  
+  const enhancedMechanics = baseStats.mechanics + upgradeBonus.mechanics;
+  const enhancedLaning = baseStats.laning + upgradeBonus.laning;
+  const enhancedTeamfight = baseStats.teamfight + upgradeBonus.teamfight;
+  const enhancedMacro = baseStats.macro + upgradeBonus.macro;
+  const enhancedClutch = baseStats.clutch + upgradeBonus.clutch;
+  
+  return Math.round((enhancedMechanics + enhancedLaning + enhancedTeamfight + enhancedMacro + enhancedClutch) / 5);
+}
