@@ -57,12 +57,21 @@ app.get("/make-server-ffd115c0/cards/:id", async (c) => {
 // 🆕 유저 초기화 (OAuth 로그인 후 호출)
 app.post("/make-server-ffd115c0/user/init", async (c) => {
   try {
-    const user = await userApi.getUserFromToken(c.req.header("Authorization"));
+    const authHeader = c.req.header("Authorization");
+    console.log("🔥 /user/init called with auth header:", authHeader ? "Present" : "Missing");
+    
+    const user = await userApi.getUserFromToken(authHeader);
     if (!user) {
-      return c.json({ success: false, error: "Unauthorized" }, 401);
+      console.error("❌ getUserFromToken returned null");
+      return c.json({ 
+        success: false, 
+        code: 401,
+        message: "Invalid JWT",
+        error: "User authentication failed - token may be expired or invalid" 
+      }, 401);
     }
     
-    console.log("🔥 Initializing user:", user.id, user.email);
+    console.log("✅ User authenticated, initializing:", user.id, user.email);
     
     const result = await userApi.initializeUser(
       user.id, 
@@ -72,7 +81,7 @@ app.post("/make-server-ffd115c0/user/init", async (c) => {
     
     return c.json({ success: true, ...result });
   } catch (error) {
-    console.log(`Error initializing user: ${error}`);
+    console.error("❌ Error initializing user:", error);
     return c.json({ success: false, error: String(error) }, 500);
   }
 });

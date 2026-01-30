@@ -28,12 +28,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const initializeUserIfNeeded = async (userId: string, accessToken: string, retryCount = 0) => {
     try {
       console.log("🔥 initializeUserIfNeeded called for:", userId, "retry:", retryCount);
-      console.log("🔑 Token (first 20 chars):", accessToken?.substring(0, 20) + "...");
+      console.log("🔑 Token (first 30 chars):", accessToken?.substring(0, 30) + "...");
+      console.log("🔑 Token length:", accessToken?.length);
       
       // 토큰이 없으면 스킵
       if (!accessToken) {
         console.warn("⚠️ No access token available, skipping initialization");
         return;
+      }
+      
+      // 🔥 401 재시도 시, 새로운 세션 토큰 가져오기
+      let tokenToUse = accessToken;
+      if (retryCount > 0) {
+        console.log("🔄 Fetching fresh session token...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session?.access_token) {
+          console.error("❌ Failed to get fresh session:", error);
+          return;
+        }
+        tokenToUse = session.access_token;
+        console.log("✅ Got fresh token (first 30 chars):", tokenToUse.substring(0, 30) + "...");
       }
       
       // 서버의 /init-user 호출
@@ -42,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${accessToken}`,
+            "Authorization": `Bearer ${tokenToUse}`,
             "Content-Type": "application/json"
           }
         }
@@ -50,20 +64,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        console.error("❌ Server responded with error:", response.status, response.statusText, errorText);
+        console.error("❌ Server responded with error:", response.status, errorText);
         
-        // 401은 토큰 문제 - 최대 2번까지 재시도 (1초 후)
+        // 401은 토큰 문제 - 최대 2번까지 재시도 (1.5초 후)
         if (response.status === 401 && retryCount < 2) {
-          console.warn(`⚠️ 401 Unauthorized - Retrying in 1 second... (attempt ${retryCount + 1}/2)`);
+          console.warn(`⚠️ 401 Unauthorized - Retrying with fresh token in 1.5s... (attempt ${retryCount + 1}/2)`);
           setTimeout(() => {
             initializeUserIfNeeded(userId, accessToken, retryCount + 1);
-          }, 1000);
+          }, 1500);
         }
         return;
       }
       
       const result = await response.json();
-      console.log("🔥 initializeUser result:", result);
+      console.log("✅ initializeUser result:", result);
       
       if (!result.success) {
         console.error("❌ Failed to initialize user:", result.error);
@@ -127,7 +141,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 🆕 SIGNED_IN 이벤트 시 유저 초기화
       if (event === 'SIGNED_IN' && session?.user?.id && session?.access_token) {
         console.log("🔥 SIGNED_IN event - initializing user...");
-        await initializeUserIfNeeded(session.user.id, session.access_token);
+        // 🔥 OAuth 로그인 직후에는 토큰이 즉시 준비되지 않을 수 있으므로 약간의 딜레이
+        setTimeout(async () => {
+          // 최신 세션 다시 가져오기
+          const { data: { session: freshSession } } = await supabase.auth.getSession();
+          if (freshSession?.access_token) {
+            console.log("🔄 Using fresh session token for initialization");
+            await initializeUserIfNeeded(session.user.id, freshSession.access_token);
+          } else {
+            console.warn("⚠️ No fresh session available, using original token");
+            await initializeUserIfNeeded(session.user.id, session.access_token);
+          }
+        }, 500);
       }
       
       // 유저가 있으면 admin 상태 체크

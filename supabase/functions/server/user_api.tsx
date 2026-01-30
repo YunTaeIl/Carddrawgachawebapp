@@ -17,23 +17,37 @@ export async function getUserFromToken(authHeader: string | null) {
   console.log("🔐 getUserFromToken called, authHeader:", authHeader ? `Bearer ${authHeader.substring(7, 20)}...` : "NULL");
   
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.error("❌ Invalid auth header format");
+    console.error("❌ Invalid auth header format - authHeader:", authHeader);
     return null;
   }
   
   const token = authHeader.substring(7);
-  console.log("🔑 Extracted token:", token.substring(0, 20) + "...");
+  console.log("🔑 Extracted token (first 30 chars):", token.substring(0, 30) + "...");
+  console.log("🔑 Token length:", token.length);
   
-  // ANON KEY 클라이언트로 사용자 확인
-  const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
-  
-  if (error || !user) {
-    console.error("❌ Auth error:", error);
+  try {
+    // ANON KEY 클라이언트로 사용자 확인
+    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
+    
+    if (error) {
+      console.error("❌ Auth error:", JSON.stringify(error, null, 2));
+      console.error("❌ Error name:", error.name);
+      console.error("❌ Error message:", error.message);
+      console.error("❌ Error status:", error.status);
+      return null;
+    }
+    
+    if (!user) {
+      console.error("❌ No user returned from auth.getUser()");
+      return null;
+    }
+    
+    console.log("✅ User authenticated:", user.id, user.email);
+    return user;
+  } catch (err) {
+    console.error("❌ Exception in getUserFromToken:", err);
     return null;
   }
-  
-  console.log("✅ User authenticated:", user.id);
-  return user;
 }
 
 // 🆕 유저 초기화 (OAuth 로그인 후 자동 생성)
