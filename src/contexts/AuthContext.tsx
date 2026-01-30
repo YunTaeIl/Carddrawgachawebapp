@@ -255,12 +255,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setAccessToken(null);
-    
-    // 로그아웃 시 localStorage 완전히 삭제
-    localStorage.clear();
+    console.log("🚪 로그아웃 시작...");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("❌ 로그아웃 에러:", error);
+        throw error;
+      }
+      
+      console.log("✅ Supabase 로그아웃 성공");
+      
+      setUser(null);
+      setAccessToken(null);
+      setIsAdmin(false);
+      
+      // 로그아웃 시 localStorage 완전히 삭제
+      localStorage.clear();
+      console.log("✅ localStorage 클리어 완료");
+      
+      // 홈으로 리다이렉트
+      window.location.href = "/";
+    } catch (error) {
+      console.error("❌ 로그아웃 실패:", error);
+      throw error;
+    }
   };
 
   return (
