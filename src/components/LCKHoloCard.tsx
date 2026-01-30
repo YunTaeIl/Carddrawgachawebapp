@@ -180,44 +180,88 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
   );
   const displayOVR = baseOVR + (synergyBonus?.ovr || 0);
 
-  // ⬆️ 강화 등급별 오라 색상
+  // 🔥 강화 등급별 불꽃 오라 (3, 5, 7, 9, 11, 13, 15)
   const getUpgradeAura = () => {
     if (!upgradeLevel || upgradeLevel === 0) return null;
     
-    if (upgradeLevel >= 13) {
+    if (upgradeLevel >= 15) {
+      // +15: 백열 화염 (흰색 + 금색)
       return {
-        color: "#FF0000",
-        intensity: "extreme",
-        glow: "0 0 60px #FF000099, 0 0 120px #FFD70066, 0 0 180px #FF000044",
-        pulseColor: "#FFD700"
+        color: "#FFFFFF",
+        intensity: "white-hot",
+        glow: "0 0 80px #FFFFFF99, 0 0 160px #FFD70088, 0 0 240px #FF000066",
+        pulseColor: "#FFD700",
+        flame: true,
+        flameColors: ["#FFFFFF", "#FFD700", "#FFA500", "#FF6B35"]
       };
-    } else if (upgradeLevel >= 10) {
+    } else if (upgradeLevel >= 13) {
+      // +13~14: 청백색 화염 (청백 + 금색)
       return {
-        color: "#FF8C00",
-        intensity: "very-high",
-        glow: "0 0 50px #FF8C0099, 0 0 100px #FF8C0066, 0 0 150px #FF8C0044",
-        pulseColor: "#FFA500"
+        color: "#00D4FF",
+        intensity: "blue-white",
+        glow: "0 0 70px #00D4FF99, 0 0 140px #FFD70077, 0 0 210px #FF450055",
+        pulseColor: "#FFFFFF",
+        flame: true,
+        flameColors: ["#00D4FF", "#FFFFFF", "#FFD700", "#FFA500"]
+      };
+    } else if (upgradeLevel >= 11) {
+      // +11~12: 청색 화염
+      return {
+        color: "#1E90FF",
+        intensity: "blue-flame",
+        glow: "0 0 60px #1E90FF99, 0 0 120px #00BFFF88, 0 0 180px #4169E166",
+        pulseColor: "#00D4FF",
+        flame: true,
+        flameColors: ["#1E90FF", "#00BFFF", "#4169E1", "#6495ED"]
+      };
+    } else if (upgradeLevel >= 9) {
+      // +9~10: 주황색 화염
+      return {
+        color: "#FF6B35",
+        intensity: "orange-flame",
+        glow: "0 0 50px #FF6B3599, 0 0 100px #FF8C0088, 0 0 150px #FFA50066",
+        pulseColor: "#FFD700",
+        flame: true,
+        flameColors: ["#FF6B35", "#FF8C00", "#FFA500", "#FFD700"]
       };
     } else if (upgradeLevel >= 7) {
+      // +7~8: 노란색 화염
       return {
         color: "#FFD700",
-        intensity: "high",
-        glow: "0 0 40px #FFD70099, 0 0 80px #FFD70066, 0 0 120px #FFD70044",
-        pulseColor: "#FFED4E"
+        intensity: "yellow-flame",
+        glow: "0 0 40px #FFD70099, 0 0 80px #FFA50088, 0 0 120px #FF8C0066",
+        pulseColor: "#FFED4E",
+        flame: true,
+        flameColors: ["#FFD700", "#FFA500", "#FF8C00", "#FF6B35"]
       };
-    } else if (upgradeLevel >= 4) {
+    } else if (upgradeLevel >= 5) {
+      // +5~6: 보라색 화염
       return {
         color: "#9D4EDD",
-        intensity: "medium",
-        glow: "0 0 30px #9D4EDD99, 0 0 60px #9D4EDD66, 0 0 90px #9D4EDD44",
-        pulseColor: "#C77DFF"
+        intensity: "purple-flame",
+        glow: "0 0 35px #9D4EDD99, 0 0 70px #C77DFF88, 0 0 105px #E0AFF066",
+        pulseColor: "#C77DFF",
+        flame: true,
+        flameColors: ["#9D4EDD", "#C77DFF", "#E0AFF0", "#F0D9FF"]
       };
-    } else {
+    } else if (upgradeLevel >= 3) {
+      // +3~4: 청록색 화염
       return {
         color: "#00D9FF",
-        intensity: "low",
-        glow: "0 0 20px #00D9FF99, 0 0 40px #00D9FF66, 0 0 60px #00D9FF44",
-        pulseColor: "#7DF9FF"
+        intensity: "cyan-flame",
+        glow: "0 0 30px #00D9FF99, 0 0 60px #7DF9FF88, 0 0 90px #00CED166",
+        pulseColor: "#7DF9FF",
+        flame: true,
+        flameColors: ["#00D9FF", "#7DF9FF", "#00CED1", "#48D1CC"]
+      };
+    } else {
+      // +1~2: 약한 빛
+      return {
+        color: "#00D9FF",
+        intensity: "weak",
+        glow: "0 0 20px #00D9FF88, 0 0 40px #00D9FF55",
+        pulseColor: "#7DF9FF",
+        flame: false
       };
     }
   };
@@ -304,7 +348,7 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
             }}
           />
           
-          {/* ⬆️ 강화 오라 효과 */}
+          {/* 🔥 강화 오라 효과 */}
           {upgradeAura && (
             <>
               {/* 펄싱 오라 링 1 (가장 안쪽) */}
@@ -336,6 +380,100 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                   animation: "upgradePulse3 2s ease-in-out infinite 1s"
                 }}
               />
+              
+              {/* 🔥 불꽃 파티클 이펙트 (+3 이상) */}
+              {upgradeAura.flame && (
+                <>
+                  {/* 상승하는 불꽃 파티클 (하단만) */}
+                  <div className="absolute -inset-2 pointer-events-none overflow-hidden -z-10">
+                    {[...Array(12)].map((_, i) => {
+                      const delay = i * 0.4;
+                      const x = 15 + (i * 6) % 70;
+                      return (
+                        <div
+                          key={`flame-${i}`}
+                          className="absolute"
+                          style={{
+                            left: `${x}%`,
+                            bottom: "-5%",
+                            width: `${3 + Math.random() * 5}px`,
+                            height: `${6 + Math.random() * 10}px`,
+                            background: `linear-gradient(to top, ${upgradeAura.flameColors?.[0]}, ${upgradeAura.flameColors?.[1]}, transparent)`,
+                            borderRadius: "50% 50% 0 0",
+                            filter: "blur(2px)",
+                            opacity: 0.7,
+                            animation: `flameRise ${2 + Math.random()}s ease-in infinite ${delay}s`,
+                            boxShadow: `0 0 8px ${upgradeAura.color}88`
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  
+                  {/* 좌우 타오르는 불꽃 (가장자리만) */}
+                  <div className="absolute -inset-1 pointer-events-none -z-10">
+                    {/* 왼쪽 불꽃 */}
+                    {[...Array(4)].map((_, i) => (
+                      <div
+                        key={`flame-left-${i}`}
+                        className="absolute"
+                        style={{
+                          left: "-2%",
+                          top: `${25 + i * 15}%`,
+                          width: `${4 + Math.random() * 6}px`,
+                          height: `${8 + Math.random() * 12}px`,
+                          background: `radial-gradient(ellipse at bottom, ${upgradeAura.flameColors?.[0]}, ${upgradeAura.flameColors?.[1]}, transparent)`,
+                          borderRadius: "50%",
+                          filter: "blur(2px)",
+                          opacity: 0.6,
+                          animation: `flameDance ${1.5 + Math.random()}s ease-in-out infinite ${i * 0.2}s`,
+                          transformOrigin: "bottom center"
+                        }}
+                      />
+                    ))}
+                    
+                    {/* 오른쪽 불꽃 */}
+                    {[...Array(4)].map((_, i) => (
+                      <div
+                        key={`flame-right-${i}`}
+                        className="absolute"
+                        style={{
+                          right: "-2%",
+                          top: `${25 + i * 15}%`,
+                          width: `${4 + Math.random() * 6}px`,
+                          height: `${8 + Math.random() * 12}px`,
+                          background: `radial-gradient(ellipse at bottom, ${upgradeAura.flameColors?.[0]}, ${upgradeAura.flameColors?.[1]}, transparent)`,
+                          borderRadius: "50%",
+                          filter: "blur(2px)",
+                          opacity: 0.6,
+                          animation: `flameDance ${1.5 + Math.random()}s ease-in-out infinite ${i * 0.2}s`,
+                          transformOrigin: "bottom center"
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* 불꽃 불씨 (카드 주변만) */}
+                  <div className="absolute -inset-3 pointer-events-none overflow-hidden -z-10">
+                    {[...Array(10)].map((_, i) => (
+                      <div
+                        key={`spark-${i}`}
+                        className="absolute rounded-full"
+                        style={{
+                          left: `${10 + Math.random() * 80}%`,
+                          top: `${10 + Math.random() * 80}%`,
+                          width: `${2 + Math.random() * 3}px`,
+                          height: `${2 + Math.random() * 3}px`,
+                          background: upgradeAura.pulseColor,
+                          boxShadow: `0 0 6px ${upgradeAura.color}`,
+                          opacity: 0.7,
+                          animation: `sparkFloat ${2 + Math.random() * 2}s ease-in-out infinite ${Math.random() * 2}s`
+                        }}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
 
