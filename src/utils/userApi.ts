@@ -1,5 +1,5 @@
 // 유저 API 클라이언트
-import { projectId, publicAnonKey } from "@/utils/supabase/info";
+import { projectId, publicAnonKey } from "@/utils/supabaseAuth";
 
 const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0`;
 

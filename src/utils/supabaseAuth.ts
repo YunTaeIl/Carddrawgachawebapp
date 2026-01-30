@@ -5,6 +5,9 @@ import { projectId, publicAnonKey } from '@/utils/supabase/info';
 
 const supabaseUrl = `https://${projectId}.supabase.co`;
 
+// 🔥 프로젝트 정보 re-export (다른 파일에서 사용 가능)
+export { projectId, publicAnonKey };
+
 // 🔥 싱글톤 Supabase 클라이언트 (중복 생성 방지)
 export const supabase = createClient(supabaseUrl, publicAnonKey, {
   auth: {
