@@ -381,61 +381,88 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
                 }}
               />
               
-              {/* 🔥 불꽃 파티클 이펙트 (+3 이상) - 카드 테두리를 따라 일렁임 */}
+              {/* 🔥 카드 전체를 감싸는 큰 불꽃 이펙트 (+3 이상) */}
               {upgradeAura.flame && (
-                <div className="absolute inset-0 pointer-events-none -z-10 rounded-2xl overflow-visible">
-                  {/* 테두리를 따라 불꽃 배치 */}
-                  {[...Array(24)].map((_, i) => {
-                    const angle = (i / 24) * 360; // 24개를 360도로 분산
-                    const isCorner = i % 6 === 0; // 모서리 위치
-                    const size = isCorner ? 8 : 5;
-                    
-                    return (
+                <>
+                  {/* 메인 불꽃 레이어 1 - 가장 뒤 */}
+                  <div 
+                    className="absolute -inset-4 rounded-2xl -z-10"
+                    style={{
+                      background: `radial-gradient(ellipse 110% 115% at 50% 55%, 
+                        ${upgradeAura.flameColors?.[0]}dd 0%,
+                        ${upgradeAura.flameColors?.[1]}bb 25%,
+                        ${upgradeAura.flameColors?.[2]}88 50%,
+                        ${upgradeAura.flameColors?.[3]}44 75%,
+                        transparent 100%
+                      )`,
+                      filter: 'blur(8px)',
+                      opacity: 0.9,
+                      animation: 'bigFlameWave1 2s ease-in-out infinite'
+                    }}
+                  />
+                  
+                  {/* 메인 불꽃 레이어 2 - 중간 */}
+                  <div 
+                    className="absolute -inset-3 rounded-2xl -z-10"
+                    style={{
+                      background: `radial-gradient(ellipse 108% 112% at 50% 52%, 
+                        ${upgradeAura.flameColors?.[1]}ee 0%,
+                        ${upgradeAura.flameColors?.[2]}cc 30%,
+                        ${upgradeAura.flameColors?.[3]}66 60%,
+                        transparent 90%
+                      )`,
+                      filter: 'blur(6px)',
+                      opacity: 0.95,
+                      animation: 'bigFlameWave2 2s ease-in-out infinite 0.5s'
+                    }}
+                  />
+                  
+                  {/* 메인 불꽃 레이어 3 - 가장 가까이 */}
+                  <div 
+                    className="absolute -inset-2 rounded-2xl -z-10"
+                    style={{
+                      background: `radial-gradient(ellipse 105% 110% at 50% 50%, 
+                        ${upgradeAura.flameColors?.[0]}ff 0%,
+                        ${upgradeAura.flameColors?.[1]}dd 20%,
+                        ${upgradeAura.flameColors?.[2]}99 45%,
+                        transparent 80%
+                      )`,
+                      filter: 'blur(4px)',
+                      opacity: 1,
+                      animation: 'bigFlameWave3 2s ease-in-out infinite 1s'
+                    }}
+                  />
+                  
+                  {/* 불꽃 디테일 - 가장자리 흔들림 */}
+                  <div 
+                    className="absolute -inset-2 rounded-2xl -z-10 overflow-hidden"
+                    style={{
+                      maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
+                      WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)'
+                    }}
+                  >
+                    {[...Array(8)].map((_, i) => (
                       <div
-                        key={`flame-${i}`}
+                        key={`flame-edge-${i}`}
                         className="absolute"
                         style={{
-                          left: '50%',
-                          top: '50%',
-                          width: `${size}px`,
-                          height: `${size * 2}px`,
-                          marginLeft: `${Math.cos(angle * Math.PI / 180) * (size === 8 ? 155 : 150)}px`,
-                          marginTop: `${Math.sin(angle * Math.PI / 180) * (size === 8 ? 280 : 275)}px`,
-                          background: `linear-gradient(to top, ${upgradeAura.flameColors?.[0]}, ${upgradeAura.flameColors?.[1]}, transparent)`,
-                          borderRadius: '50% 50% 0 0',
-                          filter: 'blur(1.5px)',
-                          opacity: 0.8,
-                          animation: `flameFlicker ${1 + Math.random() * 0.5}s ease-in-out infinite ${i * 0.05}s`,
-                          transformOrigin: 'bottom center',
-                          boxShadow: `0 0 8px ${upgradeAura.color}99`
+                          left: i % 2 === 0 ? '-5%' : 'auto',
+                          right: i % 2 === 1 ? '-5%' : 'auto',
+                          top: `${10 + i * 10}%`,
+                          width: '20%',
+                          height: '15%',
+                          background: `radial-gradient(ellipse at ${i % 2 === 0 ? 'right' : 'left'}, 
+                            ${upgradeAura.flameColors?.[0]}cc,
+                            ${upgradeAura.flameColors?.[1]}88,
+                            transparent
+                          )`,
+                          filter: 'blur(3px)',
+                          animation: `flameEdgeFlicker ${1.5 + (i % 3) * 0.3}s ease-in-out infinite ${i * 0.2}s`
                         }}
                       />
-                    );
-                  })}
-                  
-                  {/* 추가 광채 효과 */}
-                  {[...Array(12)].map((_, i) => {
-                    const angle = (i / 12) * 360;
-                    return (
-                      <div
-                        key={`glow-${i}`}
-                        className="absolute rounded-full"
-                        style={{
-                          left: '50%',
-                          top: '50%',
-                          width: '4px',
-                          height: '4px',
-                          marginLeft: `${Math.cos(angle * Math.PI / 180) * 150}px`,
-                          marginTop: `${Math.sin(angle * Math.PI / 180) * 275}px`,
-                          background: `radial-gradient(circle, ${upgradeAura.pulseColor}, transparent)`,
-                          opacity: 0.9,
-                          animation: `glowPulse ${1.5 + Math.random()}s ease-in-out infinite ${i * 0.1}s`,
-                          boxShadow: `0 0 12px ${upgradeAura.color}cc`
-                        }}
-                      />
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                </>
               )}
             </>
           )}
