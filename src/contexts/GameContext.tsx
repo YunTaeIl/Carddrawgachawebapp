@@ -13,6 +13,7 @@ import {
   UPGRADE_RATES,
   UPGRADE_COSTS,
   calculateUpgradeStatBonus,
+  getTotalUpgradeBonus,
   UpgradeResultData,
   isLiveCard
 } from "@/types/lck";
@@ -540,12 +541,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // 스탯 증가 계산
       statChanges = calculateUpgradeStatBonus(card.grade, targetLevel, card.position);
       
-      // 새로운 세부 스탯 계산
-      const newMechanics = card.stats.mechanics + statChanges.mechanics;
-      const newLaning = card.stats.laning + statChanges.laning;
-      const newTeamfight = card.stats.teamfight + statChanges.teamfight;
-      const newMacro = card.stats.macro + statChanges.macro;
-      const newClutch = card.stats.clutch + statChanges.clutch;
+      // 🔥 원본 카드에서 기본 스탯 가져오기 (중복 적용 방지)
+      const originalCard = allCards.find(c => c.id === card.id);
+      if (!originalCard) {
+        toast.error("원본 카드 데이터를 찾을 수 없습니다!");
+        return null;
+      }
+      
+      // 기본 스탯 + 누적 강화 보너스 계산
+      const totalBonus = getTotalUpgradeBonus(card.grade, targetLevel, card.position);
+      const newMechanics = originalCard.stats.mechanics + totalBonus.mechanics;
+      const newLaning = originalCard.stats.laning + totalBonus.laning;
+      const newTeamfight = originalCard.stats.teamfight + totalBonus.teamfight;
+      const newMacro = originalCard.stats.macro + totalBonus.macro;
+      const newClutch = originalCard.stats.clutch + totalBonus.clutch;
       
       // OVR 재계산 (세부 스탯의 평균)
       const newOvr = Math.round((newMechanics + newLaning + newTeamfight + newMacro + newClutch) / 5);
