@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
+import { LightningEffect } from "@/app/components/LightningEffect";
 import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull } from "lucide-react";
 import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, getTotalUpgradeBonus, calculateEnhancedOVR, isLiveCard } from "@/types/lck";
 import {
@@ -952,16 +953,11 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         disableFlip={true}
                       />
                       
-                      {/* ⬆️ 강화 중 빛나는 효과 */}
-                      {isUpgrading && (
-                        <div 
-                          className="absolute inset-0 rounded-2xl pointer-events-none"
-                          style={{
-                            background: "radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent 70%)",
-                            animation: "pulse 0.5s ease-in-out infinite"
-                          }}
-                        />
-                      )}
+                      {/* ⚡ 번개 효과 (강화 중) - 드래곤볼 슈퍼사이어인 스타일 */}
+                      <LightningEffect 
+                        upgradeLevel={upgradeModalCard.upgradeLevel} 
+                        isActive={isUpgrading}
+                      />
                     </div>
 
                     {/* 카드 정보 */}
