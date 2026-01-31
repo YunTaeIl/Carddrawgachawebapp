@@ -5,7 +5,6 @@ import { LCKCard, GRADE_COLORS, POSITION_NAMES, isLiveCard, LIVE_CARD_COLOR, get
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { PlayerImage } from "@/components/PlayerImage";
 import { getTeamLogoUrls } from "@/utils/teamLogos";
-import { LightningEffect } from "@/app/components/LightningEffect";
 
 interface LCKHoloCardProps {
   card: LCKCard;
@@ -484,12 +483,6 @@ export function LCKHoloCard({ card, size = "medium", onClick, onBackClick, upgra
               ...getBorderStyle()
             }}
           >
-            {/* ⚡ 강화 번개 효과 (항상 표시) */}
-            <LightningEffect 
-              upgradeLevel={upgradeLevel} 
-              isActive={upgradeLevel > 0}
-            />
-
             {/* 다이아몬드 패턴 배경 */}
             <div 
               className="absolute inset-0 opacity-10"

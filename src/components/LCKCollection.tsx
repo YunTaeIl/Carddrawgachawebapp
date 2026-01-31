@@ -4,7 +4,6 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { LightningEffect } from "@/app/components/LightningEffect";
 import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull } from "lucide-react";
 import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, getTotalUpgradeBonus, calculateEnhancedOVR, isLiveCard } from "@/types/lck";
 import {
@@ -940,7 +939,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                   <div className="flex flex-col items-center gap-2 py-1">
                     {/* 카드 - 크기 키움 + ⬆️ 강화 애니메이션 */}
                     <div 
-                      className="relative scale-90 -my-2 transition-all duration-300"
+                      className="scale-90 -my-2 transition-all duration-300"
                       style={{
                         animation: isUpgrading ? "upgradeShake 0.5s ease-in-out infinite" : "none",
                         filter: isUpgrading ? "brightness(1.5) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))" : "none"
@@ -953,11 +952,16 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         disableFlip={true}
                       />
                       
-                      {/* ⚡ 번개 효과 (강화 중) - 드래곤볼 슈퍼사이어인 스타일 */}
-                      <LightningEffect 
-                        upgradeLevel={upgradeModalCard.upgradeLevel} 
-                        isActive={isUpgrading}
-                      />
+                      {/* ⬆️ 강화 중 빛나는 효과 */}
+                      {isUpgrading && (
+                        <div 
+                          className="absolute inset-0 rounded-2xl pointer-events-none"
+                          style={{
+                            background: "radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent 70%)",
+                            animation: "pulse 0.5s ease-in-out infinite"
+                          }}
+                        />
+                      )}
                     </div>
 
                     {/* 카드 정보 */}
