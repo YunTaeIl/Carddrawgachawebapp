@@ -1,4 +1,4 @@
-// ⚡ 번개 효과 컴포넌트 (드래곤볼 슈퍼사이어인 스타일)
+// ⚡ 카드 주변 전기 효과 컴포넌트 (드래곤볼 슈퍼사이어인 스타일)
 
 import React, { useMemo } from "react";
 
@@ -10,105 +10,167 @@ interface LightningEffectProps {
 export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps) {
   if (!isActive) return null;
 
-  // 레벨에 따른 번개 설정 (5단계 세분화)
+  // 레벨에 따른 전기 설정 (5단계 세분화)
   const config = useMemo(() => {
     if (upgradeLevel < 3) {
-      // +0~2: 매우 약한 연한 파란색 번개
+      // +0~2: 매우 약한 연한 파란색 전기
       return {
-        count: 2,
-        color: "#60A5FA", // 연한 파란색
+        sparkCount: 8,
+        arcCount: 3,
+        color: "#60A5FA",
         glowColor: "#93C5FD",
         opacity: 0.5,
         speed: 1.8,
-        thickness: 1.5,
-        intensity: "약함",
+        intensity: 0.3,
       };
     } else if (upgradeLevel < 6) {
-      // +3~5: 약한 진한 파란색 번개
+      // +3~5: 약한 진한 파란색 전기
       return {
-        count: 4,
-        color: "#3B82F6", // 진한 파란색
+        sparkCount: 12,
+        arcCount: 5,
+        color: "#3B82F6",
         glowColor: "#60A5FA",
         opacity: 0.65,
         speed: 1.4,
-        thickness: 2,
-        intensity: "보통",
+        intensity: 0.5,
       };
     } else if (upgradeLevel < 9) {
-      // +6~8: 중간 청록/시안 번개
+      // +6~8: 중간 청록/시안 전기
       return {
-        count: 6,
-        color: "#06B6D4", // 청록색
+        sparkCount: 16,
+        arcCount: 7,
+        color: "#06B6D4",
         glowColor: "#22D3EE",
         opacity: 0.75,
         speed: 1.1,
-        thickness: 2.5,
-        intensity: "중간",
+        intensity: 0.7,
       };
     } else if (upgradeLevel < 12) {
-      // +9~11: 강한 보라색 번개
+      // +9~11: 강한 보라색 전기
       return {
-        count: 9,
-        color: "#A855F7", // 보라색
+        sparkCount: 20,
+        arcCount: 10,
+        color: "#A855F7",
         glowColor: "#C084FC",
         opacity: 0.85,
         speed: 0.9,
-        thickness: 3,
-        intensity: "강함",
+        intensity: 0.85,
       };
     } else if (upgradeLevel < 15) {
-      // +12~14: 매우 강한 분홍/마젠타 번개
+      // +12~14: 매우 강한 분홍/마젠타 전기
       return {
-        count: 12,
-        color: "#EC4899", // 분홍색
+        sparkCount: 25,
+        arcCount: 13,
+        color: "#EC4899",
         glowColor: "#F472B6",
         opacity: 0.9,
         speed: 0.7,
-        thickness: 3.5,
-        intensity: "매우강함",
+        intensity: 0.95,
       };
     } else {
       // +15: 최대 강화 금색 + 무지개 효과
       return {
-        count: 15,
-        color: "#FFD700", // 금색
+        sparkCount: 30,
+        arcCount: 18,
+        color: "#FFD700",
         glowColor: "#FFA500",
         opacity: 1.0,
         speed: 0.5,
-        thickness: 4,
-        intensity: "MAX",
+        intensity: 1.0,
       };
     }
   }, [upgradeLevel]);
 
-  // 랜덤 번개 경로 생성
-  const lightningBolts = useMemo(() => {
-    const bolts = [];
-    for (let i = 0; i < config.count; i++) {
-      const startX = Math.random() * 100;
-      const segments = 8 + Math.floor(Math.random() * 4);
-      const delay = Math.random() * config.speed;
+  // 카드 테두리를 따라 흐르는 전기 아크 생성
+  const electricArcs = useMemo(() => {
+    const arcs = [];
+    for (let i = 0; i < config.arcCount; i++) {
+      // 카드 테두리 위치 (상하좌우)
+      const side = i % 4;
+      let startX, startY, endX, endY;
       
-      bolts.push({
+      switch(side) {
+        case 0: // 상단
+          startX = Math.random() * 100;
+          startY = 0;
+          endX = startX + (Math.random() - 0.5) * 30;
+          endY = 15 + Math.random() * 10;
+          break;
+        case 1: // 우측
+          startX = 100;
+          startY = Math.random() * 100;
+          endX = 85 + Math.random() * 10;
+          endY = startY + (Math.random() - 0.5) * 30;
+          break;
+        case 2: // 하단
+          startX = Math.random() * 100;
+          startY = 100;
+          endX = startX + (Math.random() - 0.5) * 30;
+          endY = 85 + Math.random() * 10;
+          break;
+        default: // 좌측
+          startX = 0;
+          startY = Math.random() * 100;
+          endX = 15 + Math.random() * 10;
+          endY = startY + (Math.random() - 0.5) * 30;
+      }
+      
+      arcs.push({
         id: i,
         startX,
-        segments,
-        delay,
+        startY,
+        endX,
+        endY,
+        delay: Math.random() * config.speed,
       });
     }
-    return bolts;
-  }, [config.count, config.speed, upgradeLevel]); // upgradeLevel 추가로 강화 시마다 새로운 번개
+    return arcs;
+  }, [config.arcCount, config.speed, upgradeLevel]);
+
+  // 스파크 위치 생성 (카드 테두리 근처)
+  const sparks = useMemo(() => {
+    const sparkPositions = [];
+    for (let i = 0; i < config.sparkCount; i++) {
+      const edge = Math.random();
+      let x, y;
+      
+      if (edge < 0.25) {
+        x = Math.random() * 100;
+        y = Math.random() * 10; // 상단
+      } else if (edge < 0.5) {
+        x = 90 + Math.random() * 10;
+        y = Math.random() * 100; // 우측
+      } else if (edge < 0.75) {
+        x = Math.random() * 100;
+        y = 90 + Math.random() * 10; // 하단
+      } else {
+        x = Math.random() * 10;
+        y = Math.random() * 100; // 좌측
+      }
+      
+      sparkPositions.push({
+        id: i,
+        x,
+        y,
+        delay: Math.random() * config.speed,
+        size: 1 + Math.random() * 2,
+      });
+    }
+    return sparkPositions;
+  }, [config.sparkCount, config.speed, upgradeLevel]);
+
+  const rainbowColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-      {/* 전체 발광 효과 */}
+      {/* 전체 전기 오라 */}
       <div
         className="absolute inset-0"
         style={{
           background: upgradeLevel >= 15 
-            ? `radial-gradient(circle at 50% 50%, #FFD70040, #FF69B440, #00BFFF40, transparent 70%)`
-            : `radial-gradient(circle at 50% 50%, ${config.color}20, transparent 70%)`,
-          animation: `lightning-pulse ${config.speed}s ease-in-out infinite`,
+            ? `radial-gradient(ellipse at center, #FFD70030, #FF69B430, #00BFFF30, transparent 60%)`
+            : `radial-gradient(ellipse at center, ${config.color}30, transparent 60%)`,
+          animation: `electric-pulse ${config.speed}s ease-in-out infinite`,
         }}
       />
 
@@ -128,71 +190,64 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
               #9400D3,
               #FF0000
             )`,
-            opacity: 0.2,
-            animation: `rainbow-spin ${config.speed * 2}s linear infinite`,
-            filter: 'blur(30px)',
+            opacity: 0.15,
+            animation: `rainbow-spin ${config.speed * 3}s linear infinite`,
+            filter: 'blur(40px)',
           }}
         />
       )}
 
-      {/* 번개 SVG들 */}
+      {/* 전기 아크 SVG */}
       <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 10 }}>
         <defs>
-          {/* 번개 Glow 필터 */}
-          <filter id={`lightning-glow-${upgradeLevel}`}>
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+          <filter id={`electric-glow-${upgradeLevel}`}>
+            <feGaussianBlur stdDeviation="4" result="coloredBlur" />
             <feMerge>
+              <feMergeNode in="coloredBlur" />
               <feMergeNode in="coloredBlur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
         </defs>
 
-        {lightningBolts.map((bolt) => {
-          // 번개 경로 생성
-          let path = `M ${bolt.startX} 0`;
-          let currentX = bolt.startX;
-          let currentY = 0;
+        {electricArcs.map((arc) => {
+          // 지그재그 전기 경로 생성
+          const midX = (arc.startX + arc.endX) / 2 + (Math.random() - 0.5) * 15;
+          const midY = (arc.startY + arc.endY) / 2 + (Math.random() - 0.5) * 15;
+          const mid2X = (arc.startX + midX) / 2 + (Math.random() - 0.5) * 10;
+          const mid2Y = (arc.startY + midY) / 2 + (Math.random() - 0.5) * 10;
+          const mid3X = (midX + arc.endX) / 2 + (Math.random() - 0.5) * 10;
+          const mid3Y = (midY + arc.endY) / 2 + (Math.random() - 0.5) * 10;
 
-          for (let j = 0; j < bolt.segments; j++) {
-            const nextY = currentY + (100 / bolt.segments);
-            const nextX = currentX + (Math.random() - 0.5) * 20;
-            path += ` L ${nextX} ${nextY}`;
-            currentX = nextX;
-            currentY = nextY;
-          }
-
-          // +15 최대 강화일 때 무지개 색상 랜덤 적용
-          const rainbowColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
-          const boltColor = upgradeLevel >= 15 ? rainbowColors[bolt.id % rainbowColors.length] : config.color;
-          const boltGlow = upgradeLevel >= 15 ? '#FFD700' : config.glowColor;
+          const path = `M ${arc.startX} ${arc.startY} L ${mid2X} ${mid2Y} L ${midX} ${midY} L ${mid3X} ${mid3Y} L ${arc.endX} ${arc.endY}`;
+          
+          const arcColor = upgradeLevel >= 15 ? rainbowColors[arc.id % rainbowColors.length] : config.color;
 
           return (
-            <g key={bolt.id}>
-              {/* 메인 번개 */}
+            <g key={arc.id}>
+              {/* 외부 글로우 */}
               <path
                 d={path}
-                stroke={boltColor}
-                strokeWidth={config.thickness}
+                stroke={config.glowColor}
+                strokeWidth={3 + config.intensity * 2}
                 fill="none"
-                opacity={config.opacity}
-                filter={`url(#lightning-glow-${upgradeLevel})`}
+                opacity={config.opacity * 0.3}
+                filter={`url(#electric-glow-${upgradeLevel})`}
                 style={{
-                  animation: `lightning-strike ${config.speed}s ease-in-out infinite`,
-                  animationDelay: `${bolt.delay}s`,
+                  animation: `electric-arc ${config.speed}s ease-in-out infinite`,
+                  animationDelay: `${arc.delay}s`,
                 }}
               />
-              
-              {/* 외곽 Glow */}
+              {/* 메인 전기 */}
               <path
                 d={path}
-                stroke={boltGlow}
-                strokeWidth={config.thickness + 2}
+                stroke={arcColor}
+                strokeWidth={1.5 + config.intensity}
                 fill="none"
-                opacity={config.opacity * 0.4}
+                opacity={config.opacity}
                 style={{
-                  animation: `lightning-strike ${config.speed}s ease-in-out infinite`,
-                  animationDelay: `${bolt.delay}s`,
+                  animation: `electric-arc ${config.speed}s ease-in-out infinite`,
+                  animationDelay: `${arc.delay}s`,
                 }}
               />
             </g>
@@ -200,19 +255,25 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
         })}
       </svg>
 
-      {/* 전기 파티클 효과 */}
+      {/* 전기 스파크 파티클 */}
       <div className="absolute inset-0">
-        {[...Array(config.count * 2)].map((_, i) => (
+        {sparks.map((spark) => (
           <div
-            key={`particle-${i}`}
-            className="absolute w-1 h-1 rounded-full"
+            key={spark.id}
+            className="absolute rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              background: config.color,
-              boxShadow: `0 0 ${4 + upgradeLevel / 2}px ${config.glowColor}`,
-              animation: `spark ${0.3 + Math.random() * 0.5}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * config.speed}s`,
+              left: `${spark.x}%`,
+              top: `${spark.y}%`,
+              width: `${spark.size}px`,
+              height: `${spark.size}px`,
+              background: upgradeLevel >= 15 
+                ? rainbowColors[spark.id % rainbowColors.length]
+                : config.color,
+              boxShadow: `0 0 ${6 + config.intensity * 8}px ${
+                upgradeLevel >= 15 ? '#FFD700' : config.glowColor
+              }`,
+              animation: `electric-spark ${0.4 + Math.random() * 0.4}s ease-in-out infinite`,
+              animationDelay: `${spark.delay}s`,
             }}
           />
         ))}
@@ -222,51 +283,73 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
       <div
         className="absolute inset-0 rounded-2xl"
         style={{
-          boxShadow: `inset 0 0 ${10 + upgradeLevel}px ${config.color}, 0 0 ${
-            20 + upgradeLevel * 2
-          }px ${config.glowColor}`,
-          animation: `electric-border ${config.speed * 0.5}s ease-in-out infinite`,
+          boxShadow: `
+            inset 0 0 ${15 + config.intensity * 20}px ${config.color}80,
+            0 0 ${20 + config.intensity * 30}px ${config.glowColor}60,
+            inset 0 0 ${8 + config.intensity * 10}px ${config.color}40
+          `,
+          animation: `electric-border ${config.speed * 0.6}s ease-in-out infinite`,
         }}
       />
 
       {/* CSS 애니메이션 */}
       <style>
         {`
-          @keyframes lightning-strike {
-            0%, 100% { opacity: 0; }
-            10% { opacity: ${config.opacity}; }
-            20% { opacity: 0; }
-            30% { opacity: ${config.opacity * 0.8}; }
-            40%, 90% { opacity: 0; }
-            95% { opacity: ${config.opacity}; }
-          }
-
-          @keyframes lightning-pulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.7; }
-          }
-
-          @keyframes spark {
+          @keyframes electric-arc {
             0%, 100% { 
               opacity: 0; 
-              transform: scale(0.5);
+              stroke-dasharray: 0 100;
             }
-            50% { 
+            10% { 
+              opacity: ${config.opacity}; 
+              stroke-dasharray: 100 0;
+            }
+            20% { opacity: 0; }
+            35% { 
+              opacity: ${config.opacity * 0.7}; 
+              stroke-dasharray: 80 20;
+            }
+            45%, 90% { opacity: 0; }
+            96% { 
+              opacity: ${config.opacity * 0.9}; 
+              stroke-dasharray: 100 0;
+            }
+          }
+
+          @keyframes electric-pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+          }
+
+          @keyframes electric-spark {
+            0%, 100% { 
+              opacity: 0; 
+              transform: scale(0.3);
+            }
+            15% { 
               opacity: 1; 
               transform: scale(1.5);
             }
+            30% { opacity: 0; }
+            50% { 
+              opacity: ${config.opacity * 0.8}; 
+              transform: scale(1.2);
+            }
+            65% { opacity: 0; }
           }
 
           @keyframes electric-border {
-            0%, 100% { opacity: 0.5; }
-            25% { opacity: 1; }
-            50% { opacity: 0.3; }
-            75% { opacity: 0.8; }
+            0%, 100% { opacity: 0.6; }
+            15% { opacity: 1; }
+            30% { opacity: 0.4; }
+            50% { opacity: 0.9; }
+            70% { opacity: 0.5; }
+            85% { opacity: 1; }
           }
 
           @keyframes rainbow-spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% { transform: rotate(0deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1.1); }
           }
         `}
       </style>
