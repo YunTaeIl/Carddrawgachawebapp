@@ -47,13 +47,55 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   const [upgradeModalCard, setUpgradeModalCard] = useState<UserCard | null>(null); // 🔧 강화 모달용
   const [craftResult, setCraftResult] = useState<CraftResult | null>(null); // 🔥 제작 결과 모달용
   const [isUpgrading, setIsUpgrading] = useState(false); // ⬆️ 강화 중 애니메이션 상태
-  const [filterGrade, setFilterGrade] = useState<Grade | "all">("all");
-  const [filterPosition, setFilterPosition] = useState<Position | "all">("all");
-  const [filterTeam, setFilterTeam] = useState<string>("all");
-  const [filterYear, setFilterYear] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"ovr" | "recent">("ovr");
-  const [searchText, setSearchText] = useState<string>(""); // 🔍 검색어
+  
+  // 💾 localStorage에서 필터 불러오기
+  const [filterGrade, setFilterGrade] = useState<Grade | "all">(() => {
+    const saved = localStorage.getItem("lck_filter_grade");
+    return (saved as Grade | "all") || "all";
+  });
+  const [filterPosition, setFilterPosition] = useState<Position | "all">(() => {
+    const saved = localStorage.getItem("lck_filter_position");
+    return (saved as Position | "all") || "all";
+  });
+  const [filterTeam, setFilterTeam] = useState<string>(() => {
+    return localStorage.getItem("lck_filter_team") || "all";
+  });
+  const [filterYear, setFilterYear] = useState<string>(() => {
+    return localStorage.getItem("lck_filter_year") || "all";
+  });
+  const [sortBy, setSortBy] = useState<"ovr" | "recent">(() => {
+    const saved = localStorage.getItem("lck_filter_sortBy");
+    return (saved as "ovr" | "recent") || "ovr";
+  });
+  const [searchText, setSearchText] = useState<string>(() => {
+    return localStorage.getItem("lck_filter_search") || "";
+  }); // 🔍 검색어
   const [currentPage, setCurrentPage] = useState(1);
+
+  // 💾 필터 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem("lck_filter_grade", filterGrade);
+  }, [filterGrade]);
+
+  useEffect(() => {
+    localStorage.setItem("lck_filter_position", filterPosition);
+  }, [filterPosition]);
+
+  useEffect(() => {
+    localStorage.setItem("lck_filter_team", filterTeam);
+  }, [filterTeam]);
+
+  useEffect(() => {
+    localStorage.setItem("lck_filter_year", filterYear);
+  }, [filterYear]);
+
+  useEffect(() => {
+    localStorage.setItem("lck_filter_sortBy", sortBy);
+  }, [sortBy]);
+
+  useEffect(() => {
+    localStorage.setItem("lck_filter_search", searchText);
+  }, [searchText]);
 
   // 🔥 upgradeModalCard 실시간 업데이트 (강화 후 자동 갱신)
   useEffect(() => {
@@ -433,9 +475,34 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
 
         {/* 필터 & 정렬 - 모바일 최적화 */}
         <div className="bg-[#12182A] rounded-xl p-4 mb-6 border border-[#2B6CFF]/30">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="w-4 h-4 text-[#9AA6C3]" />
-            <span className="text-sm text-[#9AA6C3]">필터 & 정렬</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-[#9AA6C3]" />
+              <span className="text-sm text-[#9AA6C3]">필터 & 정렬</span>
+            </div>
+            <Button
+              onClick={() => {
+                setFilterGrade("all");
+                setFilterPosition("all");
+                setFilterTeam("all");
+                setFilterYear("all");
+                setSortBy("ovr");
+                setSearchText("");
+                setCurrentPage(1);
+                localStorage.removeItem("lck_filter_grade");
+                localStorage.removeItem("lck_filter_position");
+                localStorage.removeItem("lck_filter_team");
+                localStorage.removeItem("lck_filter_year");
+                localStorage.removeItem("lck_filter_sortBy");
+                localStorage.removeItem("lck_filter_search");
+              }}
+              variant="ghost"
+              size="sm"
+              className="text-xs text-[#9AA6C3] hover:text-[#EAF0FF] hover:bg-[#2B6CFF]/20"
+            >
+              <X className="w-3 h-3 mr-1" />
+              초기화
+            </Button>
           </div>
           
           {/* 🔍 검색창 */}
