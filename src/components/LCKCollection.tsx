@@ -940,7 +940,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                   <div className="flex flex-col items-center gap-2 py-1">
                     {/* 카드 - 크기 키움 + ⬆️ 강화 애니메이션 */}
                     <div 
-                      className="scale-90 -my-2 transition-all duration-300"
+                      className="relative scale-90 -my-2 transition-all duration-300"
                       style={{
                         animation: isUpgrading ? "upgradeShake 0.5s ease-in-out infinite" : "none",
                         filter: isUpgrading ? "brightness(1.5) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))" : "none"
