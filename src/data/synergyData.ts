@@ -92,7 +92,7 @@ export const SYNERGIES: SynergyDefinition[] = [
   parseCsvRow({
     synergy_id: "LIVE_PACK_2026",
     synergy_name: "🔥 LIVE SEASON 2026",
-    type: "ROSTER",
+    type: "THEME",
     priority: "150",
     year_rule: "EXACT",
     year_value: "2026",
