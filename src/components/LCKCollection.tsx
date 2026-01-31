@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
-import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull } from "lucide-react";
+import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull, HelpCircle } from "lucide-react";
 import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, getTotalUpgradeBonus, calculateEnhancedOVR, isLiveCard } from "@/types/lck";
 import {
   Dialog,
@@ -47,6 +47,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   const [upgradeModalCard, setUpgradeModalCard] = useState<UserCard | null>(null); // 🔧 강화 모달용
   const [craftResult, setCraftResult] = useState<CraftResult | null>(null); // 🔥 제작 결과 모달용
   const [isUpgrading, setIsUpgrading] = useState(false); // ⬆️ 강화 중 애니메이션 상태
+  const [showHelpModal, setShowHelpModal] = useState(false); // 💡 도움말 모달
   
   // 💾 localStorage에서 필터 불러오기
   const [filterGrade, setFilterGrade] = useState<Grade | "all">(() => {
@@ -480,29 +481,40 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               <Filter className="w-4 h-4 text-[#9AA6C3]" />
               <span className="text-sm text-[#9AA6C3]">필터 & 정렬</span>
             </div>
-            <Button
-              onClick={() => {
-                setFilterGrade("all");
-                setFilterPosition("all");
-                setFilterTeam("all");
-                setFilterYear("all");
-                setSortBy("ovr");
-                setSearchText("");
-                setCurrentPage(1);
-                localStorage.removeItem("lck_filter_grade");
-                localStorage.removeItem("lck_filter_position");
-                localStorage.removeItem("lck_filter_team");
-                localStorage.removeItem("lck_filter_year");
-                localStorage.removeItem("lck_filter_sortBy");
-                localStorage.removeItem("lck_filter_search");
-              }}
-              variant="ghost"
-              size="sm"
-              className="text-xs text-[#9AA6C3] hover:text-[#EAF0FF] hover:bg-[#2B6CFF]/20"
-            >
-              <X className="w-3 h-3 mr-1" />
-              초기화
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setShowHelpModal(true)}
+                variant="ghost"
+                size="sm"
+                className="text-xs text-[#FFD700] hover:text-[#FFF] hover:bg-[#FFD700]/20"
+              >
+                <HelpCircle className="w-3 h-3 mr-1" />
+                강화 방법
+              </Button>
+              <Button
+                onClick={() => {
+                  setFilterGrade("all");
+                  setFilterPosition("all");
+                  setFilterTeam("all");
+                  setFilterYear("all");
+                  setSortBy("ovr");
+                  setSearchText("");
+                  setCurrentPage(1);
+                  localStorage.removeItem("lck_filter_grade");
+                  localStorage.removeItem("lck_filter_position");
+                  localStorage.removeItem("lck_filter_team");
+                  localStorage.removeItem("lck_filter_year");
+                  localStorage.removeItem("lck_filter_sortBy");
+                  localStorage.removeItem("lck_filter_search");
+                }}
+                variant="ghost"
+                size="sm"
+                className="text-xs text-[#9AA6C3] hover:text-[#EAF0FF] hover:bg-[#2B6CFF]/20"
+              >
+                <X className="w-3 h-3 mr-1" />
+                초기화
+              </Button>
+            </div>
           </div>
           
           {/* 🔍 검색창 */}
@@ -1146,6 +1158,87 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                 </>
               );
             })()}
+          </DialogContent>
+        </Dialog>
+
+        {/* 💡 강화 도움말 모달 */}
+        <Dialog open={showHelpModal} onOpenChange={setShowHelpModal}>
+          <DialogContent className="max-w-md bg-gradient-to-br from-[#0B0F1A] via-[#12182A] to-[#1A2332] text-[#EAF0FF] border-2 border-[#FFD700]/30 max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-center font-bold text-[#FFD700] flex items-center justify-center gap-2">
+                <Hammer className="w-6 h-6" />
+                카드 강화 시스템 안내
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              {/* 기본 설명 */}
+              <div className="bg-[#12182A] p-4 rounded-lg border border-[#FFD700]/30">
+                <h3 className="text-lg font-bold text-[#FFD700] mb-2 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  강화 방법
+                </h3>
+                <div className="space-y-2 text-sm text-[#9AA6C3]">
+                  <p className="text-[#EAF0FF] font-semibold">
+                    1️⃣ 선수 카드를 클릭하여 <span className="text-[#FFD700]">뒤집으세요!</span>
+                  </p>
+                  <p>2️⃣ 카드 뒷면에 <span className="text-[#10B981]">강화 버튼</span>이 나타납니다</p>
+                  <p>3️⃣ 샤드를 소모하여 확률형 강화를 진행합니다</p>
+                  <p>4️⃣ 최대 <span className="text-[#FFD700]">+15</span>까지 강화 가능합니다</p>
+                </div>
+              </div>
+
+              {/* 강화 효과 */}
+              <div className="bg-[#12182A] p-4 rounded-lg border border-[#10B981]/30">
+                <h3 className="text-lg font-bold text-[#10B981] mb-2 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  강화 효과
+                </h3>
+                <div className="space-y-2 text-sm text-[#9AA6C3]">
+                  <p>✅ 강화 성공 시 <span className="text-[#10B981]">모든 능력치 증가</span></p>
+                  <p>✅ 강화 레벨이 높을수록 더 강력해집니다</p>
+                </div>
+              </div>
+
+              {/* 강화 결과 */}
+              <div className="bg-[#12182A] p-4 rounded-lg border border-[#9AA6C3]/30">
+                <h3 className="text-lg font-bold text-[#EAF0FF] mb-2">📊 강화 결과</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-[#10B981]" />
+                    <span className="text-[#10B981] font-bold">성공:</span>
+                    <span className="text-[#9AA6C3]">강화 레벨 +1</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-[#FFB81C]" />
+                    <span className="text-[#FFB81C] font-bold">유지:</span>
+                    <span className="text-[#9AA6C3]">강화 레벨 유지</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skull className="w-4 h-4 text-red-400" />
+                    <span className="text-red-400 font-bold">파괴:</span>
+                    <span className="text-[#9AA6C3]">카드 영구 삭제 ⚠️</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 팁 */}
+              <div className="bg-gradient-to-r from-[#FFD700]/10 to-[#FFA500]/10 p-4 rounded-lg border border-[#FFD700]/30">
+                <h3 className="text-base font-bold text-[#FFD700] mb-2">💡 팁</h3>
+                <ul className="space-y-1 text-sm text-[#9AA6C3] list-disc list-inside">
+                  <li>높은 등급일수록 강화 비용이 높습니다</li>
+                  <li>강화 레벨이 높을수록 성공 확률이 낮아집니다</li>
+                  <li>중요한 카드는 신중하게 강화하세요!</li>
+                </ul>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setShowHelpModal(false)}
+              className="w-full bg-[#FFD700] hover:bg-[#FFD700]/80 text-[#0B0F1A] font-bold"
+            >
+              확인했습니다
+            </Button>
           </DialogContent>
         </Dialog>
       </div>
