@@ -1,4 +1,4 @@
-// ⚡ 카드 전체에 번개 내리치는 효과 (드래곤볼 슈퍼사이어인 스타일)
+// ⚡ 카드 테두리에 번개 내리치는 효과 (선수 이미지는 가리지 않음)
 
 import React, { useMemo } from "react";
 
@@ -18,7 +18,7 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
         boltCount: 2,
         color: "#60A5FA",
         glowColor: "#93C5FD",
-        opacity: 0.7,
+        opacity: 0.6,
         interval: 4,
         flashIntensity: 0.3,
       };
@@ -28,7 +28,7 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
         boltCount: 3,
         color: "#3B82F6",
         glowColor: "#60A5FA",
-        opacity: 0.8,
+        opacity: 0.7,
         interval: 3.5,
         flashIntensity: 0.5,
       };
@@ -38,7 +38,7 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
         boltCount: 4,
         color: "#06B6D4",
         glowColor: "#22D3EE",
-        opacity: 0.85,
+        opacity: 0.75,
         interval: 3,
         flashIntensity: 0.7,
       };
@@ -48,7 +48,7 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
         boltCount: 5,
         color: "#A855F7",
         glowColor: "#C084FC",
-        opacity: 0.9,
+        opacity: 0.8,
         interval: 2.5,
         flashIntensity: 0.85,
       };
@@ -58,7 +58,7 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
         boltCount: 6,
         color: "#EC4899",
         glowColor: "#F472B6",
-        opacity: 0.95,
+        opacity: 0.85,
         interval: 2,
         flashIntensity: 0.95,
       };
@@ -68,34 +68,60 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
         boltCount: 8,
         color: "#FFD700",
         glowColor: "#FFA500",
-        opacity: 1.0,
+        opacity: 0.9,
         interval: 1.5,
         flashIntensity: 1.0,
       };
     }
   }, [upgradeLevel]);
 
-  // 번개 경로 생성 (카드 전체를 가로지르는 큰 번개)
+  // 번개 경로 생성 (카드 테두리/가장자리만)
   const lightningBolts = useMemo(() => {
     const bolts = [];
     for (let i = 0; i < config.boltCount; i++) {
-      // 시작점 (상단)
-      const startX = 20 + Math.random() * 60;
-      const startY = -10;
+      const side = i % 4; // 0: 좌측, 1: 우측, 2: 상단, 3: 하단
+      let startX, startY, endX, endY, points;
       
-      // 중간점들 (지그재그 경로)
-      const segments = 8 + Math.floor(Math.random() * 4);
-      const points = [{ x: startX, y: startY }];
+      if (side === 0) {
+        // 좌측 번개
+        startX = -5;
+        startY = 10 + Math.random() * 30;
+        endX = 5;
+        endY = 60 + Math.random() * 30;
+      } else if (side === 1) {
+        // 우측 번개
+        startX = 105;
+        startY = 10 + Math.random() * 30;
+        endX = 95;
+        endY = 60 + Math.random() * 30;
+      } else if (side === 2) {
+        // 상단 번개 (좌)
+        startX = 5 + Math.random() * 20;
+        startY = -5;
+        endX = 10 + Math.random() * 15;
+        endY = 40;
+      } else {
+        // 상단 번개 (우)
+        startX = 75 + Math.random() * 20;
+        startY = -5;
+        endX = 75 + Math.random() * 15;
+        endY = 40;
+      }
       
+      // 중간점 생성 (지그재그)
+      points = [{ x: startX, y: startY }];
+      const segments = 5 + Math.floor(Math.random() * 3);
       let currentX = startX;
       let currentY = startY;
+      const deltaX = (endX - startX) / segments;
+      const deltaY = (endY - startY) / segments;
       
-      for (let j = 0; j < segments; j++) {
-        currentY += (110 / segments);
-        currentX += (Math.random() - 0.5) * 30;
-        currentX = Math.max(10, Math.min(90, currentX)); // 카드 범위 내 유지
+      for (let j = 1; j < segments; j++) {
+        currentX += deltaX + (Math.random() - 0.5) * 8;
+        currentY += deltaY + (Math.random() - 0.5) * 8;
         points.push({ x: currentX, y: currentY });
       }
+      points.push({ x: endX, y: endY });
       
       bolts.push({
         id: i,
@@ -119,14 +145,14 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
   const rainbowColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-      {/* 번개 내리칠 때 화면 플래시 */}
+    <div className="absolute inset-0 pointer-events-none overflow-visible rounded-2xl">
+      {/* 번개 내리칠 때 화면 플래시 (가장자리만) */}
       <div
         className="absolute inset-0 rounded-2xl"
         style={{
           background: upgradeLevel >= 15 
-            ? 'radial-gradient(ellipse at center, #FFD70050, #FF69B430, transparent)'
-            : `radial-gradient(ellipse at center, ${config.color}40, transparent)`,
+            ? 'radial-gradient(ellipse at center, transparent 40%, #FFD70030, #FF69B420, transparent)'
+            : `radial-gradient(ellipse at center, transparent 40%, ${config.color}30, transparent)`,
           animation: `lightning-flash ${config.interval}s ease-out infinite`,
         }}
       />
@@ -149,7 +175,9 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
             )`,
             opacity: 0,
             animation: `rainbow-flash ${config.interval}s ease-out infinite`,
-            filter: 'blur(30px)',
+            filter: 'blur(40px)',
+            maskImage: 'radial-gradient(ellipse at center, transparent 50%, black 80%)',
+            WebkitMaskImage: 'radial-gradient(ellipse at center, transparent 50%, black 80%)',
           }}
         />
       )}
@@ -159,13 +187,12 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
         className="absolute inset-0 w-full h-full" 
         viewBox="0 0 100 100" 
         preserveAspectRatio="none"
-        style={{ zIndex: 20 }}
+        style={{ zIndex: 20, overflow: 'visible' }}
       >
         <defs>
           <filter id={`lightning-glow-${upgradeLevel}`}>
-            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+            <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
             <feMerge>
-              <feMergeNode in="coloredBlur" />
               <feMergeNode in="coloredBlur" />
               <feMergeNode in="coloredBlur" />
               <feMergeNode in="SourceGraphic" />
@@ -174,10 +201,9 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
 
           {/* 번개 브랜치 (가지) */}
           <g id={`lightning-branch-${upgradeLevel}`}>
-            <line x1="0" y1="0" x2="-8" y2="5" strokeWidth="1" opacity="0.7" />
-            <line x1="0" y1="0" x2="8" y2="5" strokeWidth="1" opacity="0.7" />
-            <line x1="0" y1="0" x2="-5" y2="8" strokeWidth="0.8" opacity="0.5" />
-            <line x1="0" y1="0" x2="5" y2="8" strokeWidth="0.8" opacity="0.5" />
+            <line x1="0" y1="0" x2="-5" y2="3" strokeWidth="0.8" opacity="0.6" />
+            <line x1="0" y1="0" x2="5" y2="3" strokeWidth="0.8" opacity="0.6" />
+            <line x1="0" y1="0" x2="-3" y2="5" strokeWidth="0.6" opacity="0.4" />
           </g>
         </defs>
 
@@ -187,11 +213,11 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
 
           return (
             <g key={bolt.id}>
-              {/* 번개 외부 글로우 (가장 밝은) */}
+              {/* 번개 외부 글로우 */}
               <path
                 d={path}
                 stroke={config.glowColor}
-                strokeWidth={12 + config.flashIntensity * 8}
+                strokeWidth={4 + config.flashIntensity * 3}
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -207,7 +233,7 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
               <path
                 d={path}
                 stroke={boltColor}
-                strokeWidth={6 + config.flashIntensity * 4}
+                strokeWidth={2 + config.flashIntensity * 1.5}
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -223,7 +249,7 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
               <path
                 d={path}
                 stroke="#FFFFFF"
-                strokeWidth={2 + config.flashIntensity}
+                strokeWidth={1 + config.flashIntensity * 0.5}
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -269,41 +295,60 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
             style={{
               left: `${lastPoint.x}%`,
               top: `${lastPoint.y}%`,
-              width: '60px',
-              height: '60px',
+              width: '40px',
+              height: '40px',
               transform: 'translate(-50%, -50%)',
               background: upgradeLevel >= 15
-                ? `radial-gradient(circle, ${rainbowColors[bolt.id % rainbowColors.length]}ff, ${config.color}dd, transparent)`
-                : `radial-gradient(circle, #FFFFFFff, ${config.color}dd, transparent)`,
+                ? `radial-gradient(circle, ${rainbowColors[bolt.id % rainbowColors.length]}dd, ${config.color}99, transparent)`
+                : `radial-gradient(circle, #FFFFFFdd, ${config.color}99, transparent)`,
               opacity: 0,
               animation: `lightning-impact ${config.interval}s ease-out infinite`,
-              animationDelay: `${bolt.delay + 0.15}s`,
+              animationDelay: `${bolt.delay + 0.12}s`,
             }}
           />
         );
       })}
 
-      {/* 전기 스파크 (번개 내리칠 때) */}
+      {/* 전기 스파크 (가장자리만) */}
       <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={`spark-${i}`}
-            className="absolute rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: `${2 + Math.random() * 3}px`,
-              height: `${2 + Math.random() * 3}px`,
-              background: upgradeLevel >= 15 
-                ? rainbowColors[i % rainbowColors.length]
-                : config.color,
-              boxShadow: `0 0 ${8 + config.flashIntensity * 12}px ${config.glowColor}`,
-              opacity: 0,
-              animation: `spark-burst ${config.interval}s ease-out infinite`,
-              animationDelay: `${(i * config.interval) / 20}s`,
-            }}
-          />
-        ))}
+        {[...Array(16)].map((_, i) => {
+          // 가장자리 위치만
+          const edge = i % 4;
+          let x, y;
+          if (edge === 0) {
+            x = Math.random() * 15;
+            y = Math.random() * 100;
+          } else if (edge === 1) {
+            x = 85 + Math.random() * 15;
+            y = Math.random() * 100;
+          } else if (edge === 2) {
+            x = Math.random() * 100;
+            y = Math.random() * 20;
+          } else {
+            x = Math.random() * 100;
+            y = 80 + Math.random() * 20;
+          }
+          
+          return (
+            <div
+              key={`spark-${i}`}
+              className="absolute rounded-full"
+              style={{
+                left: `${x}%`,
+                top: `${y}%`,
+                width: `${2 + Math.random() * 2}px`,
+                height: `${2 + Math.random() * 2}px`,
+                background: upgradeLevel >= 15 
+                  ? rainbowColors[i % rainbowColors.length]
+                  : config.color,
+                boxShadow: `0 0 ${6 + config.flashIntensity * 8}px ${config.glowColor}`,
+                opacity: 0,
+                animation: `spark-burst ${config.interval}s ease-out infinite`,
+                animationDelay: `${(i * config.interval) / 16}s`,
+              }}
+            />
+          );
+        })}
       </div>
 
       {/* CSS 애니메이션 */}
@@ -318,26 +363,25 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
               opacity: ${config.opacity}; 
               stroke-dasharray: 1000 0;
             }
-            4% { opacity: ${config.opacity * 0.6}; }
-            5% { opacity: ${config.opacity}; }
-            7% { opacity: ${config.opacity * 0.7}; }
-            8% { opacity: 0; }
+            4% { opacity: ${config.opacity * 0.5}; }
+            5% { opacity: ${config.opacity * 0.8}; }
+            6% { opacity: 0; }
             100% { opacity: 0; }
           }
 
           @keyframes lightning-flash {
             0%, 100% { opacity: 0; }
-            2% { opacity: ${config.flashIntensity * 0.8}; }
-            4% { opacity: ${config.flashIntensity * 0.4}; }
-            5% { opacity: ${config.flashIntensity}; }
-            8% { opacity: 0; }
+            2% { opacity: ${config.flashIntensity * 0.5}; }
+            4% { opacity: ${config.flashIntensity * 0.3}; }
+            5% { opacity: ${config.flashIntensity * 0.6}; }
+            6% { opacity: 0; }
           }
 
           @keyframes rainbow-flash {
             0%, 100% { opacity: 0; }
-            2% { opacity: 0.3; }
-            5% { opacity: 0.5; }
-            8% { opacity: 0; }
+            2% { opacity: 0.2; }
+            5% { opacity: 0.3; }
+            6% { opacity: 0; }
           }
 
           @keyframes lightning-impact {
@@ -346,16 +390,16 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
               transform: translate(-50%, -50%) scale(0.3);
             }
             5% { 
-              opacity: ${config.flashIntensity}; 
-              transform: translate(-50%, -50%) scale(1.5);
+              opacity: ${config.flashIntensity * 0.8}; 
+              transform: translate(-50%, -50%) scale(1.2);
             }
-            10% { 
-              opacity: ${config.flashIntensity * 0.5}; 
-              transform: translate(-50%, -50%) scale(2.5);
+            8% { 
+              opacity: ${config.flashIntensity * 0.4}; 
+              transform: translate(-50%, -50%) scale(1.8);
             }
-            15% { 
+            12% { 
               opacity: 0; 
-              transform: translate(-50%, -50%) scale(3);
+              transform: translate(-50%, -50%) scale(2.2);
             }
             100% { opacity: 0; }
           }
@@ -365,17 +409,17 @@ export function LightningEffect({ upgradeLevel, isActive }: LightningEffectProps
               opacity: 0; 
               transform: scale(0) translate(0, 0);
             }
-            5% { 
+            4% { 
               opacity: ${config.opacity}; 
-              transform: scale(1.5) translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px);
+              transform: scale(1.5) translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px);
             }
-            10% { 
+            8% { 
               opacity: ${config.opacity * 0.5}; 
-              transform: scale(1) translate(${Math.random() * 40 - 20}px, ${Math.random() * 40 - 20}px);
+              transform: scale(1) translate(${Math.random() * 15 - 7.5}px, ${Math.random() * 15 - 7.5}px);
             }
-            15% { 
+            12% { 
               opacity: 0; 
-              transform: scale(0.5) translate(${Math.random() * 60 - 30}px, ${Math.random() * 60 - 30}px);
+              transform: scale(0.5) translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px);
             }
           }
         `}
