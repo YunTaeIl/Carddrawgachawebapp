@@ -72,7 +72,7 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
         
         // 아직 완료되지 않았고 두 팀이 모두 정해진 시리즈
         if (isPlayerInSeries && !series.isCompleted && series.team1Id && series.team2Id) {
-          handleSeriesStart(seriesType);
+          startSeries(seriesType);
           return;
         }
       }
