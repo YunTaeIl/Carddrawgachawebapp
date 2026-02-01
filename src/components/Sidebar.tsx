@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { X, Menu, LayoutDashboard, Users, Shield, Zap, Target, Settings, ScrollText, LogIn, LogOut, FileText, Trophy, Code2, Lock, Eye, EyeOff, MessageCircle, Book } from "lucide-react";
+import { X, Menu, LayoutDashboard, Users, Shield, Zap, Target, Settings, ScrollText, LogIn, LogOut, FileText, Trophy, Code2, Lock, Eye, EyeOff, MessageCircle, Book, ClipboardList } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { PatchNotes } from "@/components/PatchNotes";
 
 export type Page = 
   | "home" 
@@ -19,7 +20,8 @@ export type Page =
   | "league-progress"
   | "shared-squad"
   | "card-collection"
-  | "synergy-list";
+  | "synergy-list"
+  | "patch-notes";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -45,12 +47,21 @@ const menuItems: MenuItem[] = [
   { id: "gacha", label: "선수뽑기", icon: <Zap size={20} /> },
   { id: "league-progress", label: "리그진행", icon: <Trophy size={20} />, requiresAuth: true },
   { id: "card-collection", label: "도감 및 시너지", icon: <Book size={20} /> },
+  { id: "patch-notes", label: "패치노트", icon: <ClipboardList size={20} /> },
 ];
 
 export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onShowAuth }: SidebarProps) {
   const { isAuthenticated, signOut } = useAuth();
+  const [showPatchNotes, setShowPatchNotes] = React.useState(false);
 
   const handleMenuClick = (pageId: Page) => {
+    // 패치노트는 다이얼로그로 열기
+    if (pageId === "patch-notes") {
+      setShowPatchNotes(true);
+      onClose();
+      return;
+    }
+    
     const menuItem = menuItems.find(item => item.id === pageId);
     
     // 로그인이 필요한 페이지인지 확인
@@ -222,6 +233,9 @@ export function Sidebar({ isOpen, onClose, onNavigate, currentPage, isAdmin, onS
           <Menu size={18} />
         </button>
       )}
+      
+      {/* 패치노트 다이얼로그 */}
+      <PatchNotes isOpen={showPatchNotes} onClose={() => setShowPatchNotes(false)} />
     </>
   );
 }
