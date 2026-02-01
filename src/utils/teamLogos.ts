@@ -48,7 +48,7 @@ function getTeamFileName(teamName: string): string {
     
     // 삼성 갤럭시
     "Samsung Galaxy": "Samsung_Galaxy",
-    "Samsung White": "Samsung_galaxy_White",
+    "Samsung White": "Samsung_Galaxy_White",  // 🔥 대문자 G로 수정
     "Samsung Blue": "Samsung_galaxy_Blue",
     
     // SK Telecom T1 (구단명)
