@@ -231,7 +231,7 @@ function getTeamShortName(teamName: string): string {
 export function getTeamLogoUrls(year: number, teamName: string): string[] {
   // 🔥 Samsung White 특별 처리
   if (teamName === "Samsung White") {
-    return [`${STORAGE_BASE}/2014_Samsung_galaxy_White_logo.webp`];
+    return [`${STORAGE_BASE}/2014_Samsung_galaxy_White.webp`];
   }
   
   const fileName = getTeamFileName(teamName);
