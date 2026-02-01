@@ -249,17 +249,17 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
             changes={[
               { player: "Doran", change: "A→S", ovr: "93", delta: "+4" },
               { player: "Oner", change: "S→A", ovr: "88", delta: "-6" },
-              { player: "Gumayusi", change: "A→B", ovr: "79", delta: "-10" },
             ]}
           />
 
-          {/* Dplus KIA */}
+          {/* BNK FEARX */}
           <TeamChangeCard
-            teamName="Dplus KIA"
+            teamName="BNK FEARX"
             changes={[
+              { player: "VicLa", change: "B→A", ovr: "91", delta: "+7" },
               { player: "Kellin", change: "B→A", ovr: "89", delta: "+8" },
-              { player: "Ghost", change: "C→B", ovr: "80", delta: "+8" },
-              { player: "Willer", change: "C→B", ovr: "83", delta: "+8" },
+              { player: "Clear", change: "B→A", ovr: "86", delta: "+6" },
+              { player: "Diable", change: "B→A", ovr: "90", delta: "+5" },
             ]}
           />
 
@@ -267,29 +267,26 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
           <TeamChangeCard
             teamName="KT Rolster"
             changes={[
-              { player: "VicLa", change: "B→A", ovr: "91", delta: "+7" },
-              { player: "Lehends", change: "A→B", ovr: "83", delta: "-4" },
-              { player: "Aiming", change: "A→B", ovr: "81", delta: "-7" },
-            ]}
-          />
-
-          {/* BNK FearX */}
-          <TeamChangeCard
-            teamName="BNK FearX"
-            changes={[
-              { player: "Clear", change: "B→A", ovr: "86", delta: "+6" },
-              { player: "Peter", change: "C→B", ovr: "80", delta: "+6" },
-              { player: "Diable", change: "B→A", ovr: "90", delta: "+5" },
-            ]}
-          />
-
-          {/* OK BRION */}
-          <TeamChangeCard
-            teamName="OK BRION"
-            changes={[
               { player: "Cuzz", change: "B→A", ovr: "90", delta: "+6" },
+              { player: "Aiming", change: "A→B", ovr: "81", delta: "-7" },
+              { player: "Ghost", change: "C→B", ovr: "80", delta: "+8" },
+            ]}
+          />
+
+          {/* Dplus KIA */}
+          <TeamChangeCard
+            teamName="Dplus KIA"
+            changes={[
               { player: "Siwoo", change: "B→A", ovr: "89", delta: "+6" },
-              { player: "Namgung", change: "C→B", ovr: "76", delta: "+4" },
+            ]}
+          />
+
+          {/* Nongshim RedForce */}
+          <TeamChangeCard
+            teamName="Nongshim RedForce"
+            changes={[
+              { player: "Lehends", change: "A→B", ovr: "83", delta: "-4" },
+              { player: "Kingen", change: "A→B", ovr: "74", delta: "-12" },
             ]}
           />
 
@@ -297,10 +294,7 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
           <TeamChangeCard
             teamName="DRX"
             changes={[
-              { player: "Casting", change: "C→B", ovr: "74", delta: "±0" },
-              { player: "GIDEON", change: "B→C", ovr: "72", delta: "-7" },
-              { player: "Life", change: "B→C", ovr: "70", delta: "-12" },
-              { player: "Teddy", change: "B→C", ovr: "69", delta: "-13" },
+              { player: "Willer", change: "C→B", ovr: "83", delta: "+8" },
             ]}
           />
 
@@ -308,8 +302,21 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
           <TeamChangeCard
             teamName="DN SOOPers"
             changes={[
+              { player: "Peter", change: "C→B", ovr: "80", delta: "+6" },
               { player: "Pyosik", change: "A→B", ovr: "75", delta: "-12" },
               { player: "deokdam", change: "B→C", ovr: "67", delta: "-16" },
+              { player: "Life", change: "B→C", ovr: "70", delta: "-12" },
+            ]}
+          />
+
+          {/* OK BRION */}
+          <TeamChangeCard
+            teamName="OK BRION"
+            changes={[
+              { player: "Namgung", change: "C→B", ovr: "76", delta: "+4" },
+              { player: "Casting", change: "C→B", ovr: "74", delta: "±0" },
+              { player: "GIDEON", change: "B→C", ovr: "72", delta: "-7" },
+              { player: "Teddy", change: "B→C", ovr: "69", delta: "-13" },
             ]}
           />
 
@@ -317,11 +324,11 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
           <TeamChangeCard
             teamName="⚠️ Hanwha Life Esports (LCK Cup 탈락)"
             changes={[
-              { player: "Delight", change: "A→B", ovr: "78", delta: "-10" },
-              { player: "Kingen", change: "A→B", ovr: "74", delta: "-12" },
               { player: "Zeus", change: "A→B", ovr: "75", delta: "-16" },
-              { player: "Zeka", change: "A→B", ovr: "73", delta: "-17" },
               { player: "Kanavi", change: "A→B", ovr: "73", delta: "-19" },
+              { player: "Zeka", change: "A→B", ovr: "73", delta: "-17" },
+              { player: "Gumayusi", change: "A→B", ovr: "79", delta: "-10" },
+              { player: "Delight", change: "A→B", ovr: "78", delta: "-10" },
             ]}
           />
         </div>
