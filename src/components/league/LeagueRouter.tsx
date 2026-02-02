@@ -47,6 +47,13 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     }
   }, [currentLeague?.seasonState, currentRoute]);
 
+  // 🔥 리그가 삭제되면 자동으로 선택 페이지로 이동
+  React.useEffect(() => {
+    if (!currentLeague && currentRoute !== "select") {
+      setCurrentRoute("select");
+    }
+  }, [currentLeague, currentRoute]);
+
   // 리그 선택 → 진행 페이지
   const handleLeagueStart = () => {
     setCurrentRoute("progress");
@@ -268,10 +275,9 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     await deleteLeague();
     
     // 🔥 DB 삭제가 완전히 끝날 때까지 딜레이
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 600));
     
-    // 선택 화면으로 이동
-    setCurrentRoute("select");
+    // useEffect가 자동으로 "select"로 이동시켜줌
   };
 
   // 진행 페이지로 복귀
@@ -296,10 +302,9 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
     await deleteLeague();
     
     // 🔥 DB 삭제가 완전히 끝날 때까지 딜레이
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 600));
     
-    // 선택 화면으로 이동
-    setCurrentRoute("select");
+    // useEffect가 자동으로 "select"로 이동시켜줌
   };
 
   // 플레이오프 모두 완료 시
