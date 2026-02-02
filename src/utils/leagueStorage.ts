@@ -49,15 +49,21 @@ export async function loadLeagueFromDb(userId: string): Promise<LeagueInstance |
 
     if (!response.ok) {
       if (response.status === 404) {
+        // 리그가 없는 경우 - 정상적인 상황이므로 에러 로그 없이 null 반환
         return null;
       }
       const error = await response.text();
+      console.error("❌ 리그 로드 실패:", error);
       throw new Error(`리그 로드 실패: ${error}`);
     }
 
     const data = await response.json();
     return data.league;
-  } catch (error) {
+  } catch (error: any) {
+    // 404는 정상 케이스이므로 에러 로그 표시 안 함
+    if (error?.message?.includes("404")) {
+      return null;
+    }
     console.error("❌ 리그 DB 로드 오류:", error);
     return null;
   }

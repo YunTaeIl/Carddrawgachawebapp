@@ -54,7 +54,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     const saved = localStorage.getItem("lck_filter_grade");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
       } catch {
         return [];
       }
@@ -65,7 +66,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     const saved = localStorage.getItem("lck_filter_position");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
       } catch {
         return [];
       }
@@ -76,7 +78,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     const saved = localStorage.getItem("lck_filter_team");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
       } catch {
         return [];
       }
@@ -87,7 +90,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     const saved = localStorage.getItem("lck_filter_year");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
       } catch {
         return [];
       }
