@@ -263,9 +263,14 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
   };
 
   // 결과 페이지에서 새 시즌
-  const handleNewSeason = () => {
-    // 현재 리그를 먼저 삭제하고 선택 화면으로 이동
-    deleteLeague();
+  const handleNewSeason = async () => {
+    // 현재 리그를 먼저 삭제
+    await deleteLeague();
+    
+    // 🔥 DB 삭제가 완전히 끝날 때까지 딜레이
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // 선택 화면으로 이동
     setCurrentRoute("select");
   };
 
@@ -286,8 +291,14 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
   };
 
   // 리그 포기
-  const handleAbandonLeague = () => {
-    deleteLeague();
+  const handleAbandonLeague = async () => {
+    // 리그 삭제
+    await deleteLeague();
+    
+    // 🔥 DB 삭제가 완전히 끝날 때까지 딜레이
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // 선택 화면으로 이동
     setCurrentRoute("select");
   };
 
