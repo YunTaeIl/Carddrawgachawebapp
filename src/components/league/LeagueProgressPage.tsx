@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useLeague } from "@/contexts/LeagueContext";
 import { useGame } from "@/contexts/GameContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { LEAGUE_CONFIGS } from "@/types/league";
-import { ArrowLeft, ChevronRight, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, ChevronRight, Sparkles, ChevronDown, ChevronUp, Zap } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { getKoreanTeamName } from "@/utils/teamNames";
@@ -25,8 +26,9 @@ export function LeagueProgressPage({
   onViewResult,
   onAbandonLeague
 }: LeagueProgressPageProps) {
-  const { currentLeague, getCurrentMatch, getTeamById } = useLeague();
+  const { currentLeague, getCurrentMatch, getTeamById, simulateAllMatches } = useLeague();
   const { userData } = useGame();
+  const { isAdmin } = useAuth();
   const currentMatch = getCurrentMatch();
   const currentRoundRef = useRef<HTMLDivElement>(null);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
@@ -327,12 +329,29 @@ export function LeagueProgressPage({
                 </div>
               </div>
 
-              <Button
-                onClick={onMatchStart}
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-6 rounded-xl text-lg font-semibold"
-              >
-                경기 시작 <ChevronRight className="w-5 h-5 ml-2" />
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  onClick={onMatchStart}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-6 rounded-xl text-lg font-semibold"
+                >
+                  경기 시작 <ChevronRight className="w-5 h-5 ml-2" />
+                </Button>
+
+                {/* 🔥 관리자 전용: 자동 진행 */}
+                {isAdmin && (
+                  <Button
+                    onClick={() => {
+                      if (window.confirm("모든 남은 경기를 자동으로 시뮬레이션하시겠습니까?\n\n⚠️ 이 기능은 관리자 테스트용입니다.")) {
+                        simulateAllMatches();
+                      }
+                    }}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl text-base font-semibold flex items-center justify-center gap-2"
+                  >
+                    <Zap className="w-5 h-5" />
+                    [관리자] 자동 진행
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* 일정 & 순위 */}

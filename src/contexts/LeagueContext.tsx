@@ -19,6 +19,7 @@ interface LeagueContextType {
   completeSeries: (seriesType: Series["type"], winnerId: string, team1Wins?: number, team2Wins?: number) => void;
   finishSeason: (isChampion: boolean, playoffResult?: "champion" | "runner-up" | "playoffs" | "semifinals" | "wildcard" | "eliminated") => void;
   deleteLeague: () => void;
+  simulateAllMatches: () => void; // 🔥 관리자 전용: 모든 남은 경기 자동 시뮬레이션
 }
 
 const LeagueContext = createContext<LeagueContextType | undefined>(undefined);
@@ -417,6 +418,36 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * 🔥 관리자 전용: 모든 남은 경기 자동 시뮬레이션
+   */
+  const simulateAllMatches = () => {
+    if (!currentLeague) return;
+    
+    // 모든 미완료 경기를 시뮬레이션
+    const updatedMatches = [...currentLeague.matches];
+    const simulatedMatches = simulateRemainingMatches(
+      1, // 1라운드부터
+      currentLeague.teams,
+      updatedMatches,
+      currentLeague.playerTeamId,
+      true // allRounds 플래그
+    );
+    
+    // 순위표 계산
+    const standings = calculateStandings(simulatedMatches, currentLeague.teams);
+    
+    setCurrentLeague({
+      ...currentLeague,
+      matches: simulatedMatches,
+      standings,
+      phase: "playoffs", // 정규시즌 완료로 변경
+      updatedAt: new Date().toISOString()
+    });
+    
+    console.log("🔥 모든 경기 자동 시뮬레이션 완료!");
+  };
+
   return (
     <LeagueContext.Provider
       value={{
@@ -428,7 +459,8 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
         advanceToPlayoffs,
         completeSeries,
         finishSeason,
-        deleteLeague
+        deleteLeague,
+        simulateAllMatches
       }}
     >
       {children}

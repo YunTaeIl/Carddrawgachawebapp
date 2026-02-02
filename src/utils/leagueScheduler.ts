@@ -257,9 +257,28 @@ export function simulateRemainingMatches(
   currentRound: number,
   teams: Team[],
   matches: Match[],
-  playerTeamId: string
+  playerTeamId: string,
+  allRounds: boolean = false // 🔥 모든 라운드 시뮬레이션 플래그
 ): Match[] {
   const updatedMatches = [...matches];
+  
+  // 🔥 모든 라운드 시뮬레이션 모드
+  if (allRounds) {
+    const allIncompleteMatches = updatedMatches.filter(m => !m.isCompleted);
+    
+    for (const match of allIncompleteMatches) {
+      const homeTeam = teams.find(t => t.id === match.homeTeamId);
+      const awayTeam = teams.find(t => t.id === match.awayTeamId);
+      
+      if (!homeTeam || !awayTeam) continue;
+      
+      const result = simulateAIMatch(homeTeam, awayTeam);
+      match.result = result;
+      match.isCompleted = true;
+    }
+    
+    return updatedMatches;
+  }
   
   // 현재 라운드의 다른 경기들만 시뮬레이션 (플레이어 경기 제외)
   const currentRoundMatches = updatedMatches.filter(

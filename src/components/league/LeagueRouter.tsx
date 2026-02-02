@@ -87,6 +87,12 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
 
   // 경기 완료
   const handleMatchComplete = () => {
+    // 플레이오프 시리즈 중이면 무조건 playoffs로
+    if (currentRoute === "series") {
+      setCurrentRoute("playoffs");
+      return;
+    }
+    
     // 플레이오프 진행 중이면 playoffs로, 아니면 progress로
     if (currentLeague?.playoffBracket && currentLeague.phase === "playoffs") {
       setCurrentRoute("playoffs");
