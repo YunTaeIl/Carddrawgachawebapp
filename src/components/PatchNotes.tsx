@@ -1,5 +1,5 @@
-import React from "react";
-import { ArrowUp, ArrowDown, TrendingUp, TrendingDown, Minus, X } from "lucide-react";
+import React, { useState } from "react";
+import { ArrowUp, ArrowDown, TrendingUp, TrendingDown, Minus, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/app/components/ui/dialog";
 
 interface PatchNotesProps {
@@ -7,22 +7,48 @@ interface PatchNotesProps {
   onClose: () => void;
 }
 
+// 패치 데이터 타입
+interface PatchNote {
+  version: string;
+  date: string;
+  title: string;
+  content: React.ReactNode;
+}
+
 export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
+  const [expandedVersion, setExpandedVersion] = useState<string>("v1.1.0");
+
+  // 패치노트 데이터 (최신순)
+  const patchNotes: PatchNote[] = [
+    {
+      version: "v1.1.0",
+      date: "2026-02-03",
+      title: "편의성 패치 및 버그 수정",
+      content: <PatchV110 />
+    },
+    {
+      version: "v1.0.0",
+      date: "2026-02-02",
+      title: "LIVE 카드 밸런스 패치",
+      content: <PatchV100 />
+    }
+  ];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto bg-[#0F1629] border border-[#2A3A67] p-0">
-      <DialogTitle className="sr-only">LIVE 카드 밸런스 패치노트</DialogTitle>
-      <DialogDescription className="sr-only">2026-02-02 LCK Cup 2026 기준, Hanwha Life Esports 탈락 반영 및 전 카드 재정규화</DialogDescription>
+      <DialogTitle className="sr-only">Legends Manager 패치노트</DialogTitle>
+      <DialogDescription className="sr-only">게임 업데이트 및 밸런스 패치 내역</DialogDescription>
       
       {/* 헤더 */}
       <div className="sticky top-0 bg-[#1A2347] border-b border-[#2A3A67] px-5 py-3 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-white flex items-center gap-2">
-              📋 LIVE 카드 밸런스 패치노트
+              📋 Legends Manager 패치노트
             </h1>
             <p className="text-xs text-[#8B95B5] mt-0.5">
-              2026-02-02 • LCK Cup 2026 기준
+              최신 업데이트 • {patchNotes[0].date}
             </p>
           </div>
           <button
@@ -34,7 +60,79 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
         </div>
       </div>
       
-      <div className="p-5 space-y-4">
+      <div className="p-5 space-y-3">
+        {/* 패치노트 목록 */}
+        {patchNotes.map((patch) => (
+          <div key={patch.version} className="bg-[#1A2347]/50 rounded-lg border border-[#2A3A67]/50 overflow-hidden">
+            {/* 패치 헤더 */}
+            <button
+              onClick={() => setExpandedVersion(expandedVersion === patch.version ? "" : patch.version)}
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#1A2347] transition-colors"
+            >
+              <div className="text-left">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-sm font-bold text-white">{patch.version}</span>
+                  <span className="text-xs text-[#8B95B5]">{patch.date}</span>
+                  {patch.version === patchNotes[0].version && (
+                    <span className="text-[10px] bg-[#00FF00]/20 text-[#00FF00] px-1.5 py-0.5 rounded font-semibold border border-[#00FF00]/30">
+                      NEW
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-[#8B95B5]">{patch.title}</div>
+              </div>
+              <div className="text-[#8B95B5]">
+                {expandedVersion === patch.version ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </div>
+            </button>
+
+            {/* 패치 내용 */}
+            {expandedVersion === patch.version && (
+              <div className="px-4 pb-4 border-t border-[#2A3A67]/30">
+                {patch.content}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ==================== v1.1.0 패치 ====================
+function PatchV110() {
+  return (
+    <div className="space-y-3 mt-3">
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">🎯 업데이트 내용</div>
+        <ul className="text-[11px] text-[#8B95B5] space-y-2 list-disc list-inside">
+          <li>
+            <span className="text-white font-medium">선수 관리 필터 개선</span>
+            <div className="ml-5 mt-1 text-[10px] space-y-0.5">
+              <div>• 모든 필터(연도/등급/포지션/팀)를 체크박스로 변경</div>
+              <div>• 여러 항목 동시 선택 가능</div>
+              <div className="text-[#00FF00]">• 필터 설정이 자동으로 저장되어 다음 방문시에도 유지</div>
+            </div>
+          </li>
+          <li>
+            <span className="text-white font-medium">리그 시스템 버그 수정</span>
+            <div className="ml-5 mt-1 text-[10px] space-y-0.5">
+              <div>• 플레이오프 종료 후 "새 시즌 시작" 버튼 클릭 시 빈 화면이 나오는 버그 수정</div>
+              <div>• 리그 포기 시 화면 전환 오류 수정</div>
+              <div className="text-[#8B95B5]">• DB 삭제 후 안전한 화면 전환을 위한 딜레이 추가</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ==================== v1.0.0 패치 ====================
+function PatchV100() {
+  return (
+    <div className="space-y-3 mt-3">
         {/* 조정 사유 */}
         <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
           <div className="text-xs font-semibold text-white mb-2">🎯 조정 사유</div>
@@ -332,12 +430,11 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
             ]}
           />
         </div>
-      </div>
-      </DialogContent>
-    </Dialog>
+    </div>
   );
 }
 
+// ==================== 공통 컴포넌트 ====================
 interface Change {
   player: string;
   change: string;
