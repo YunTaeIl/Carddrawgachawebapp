@@ -87,7 +87,12 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
 
   // 경기 완료
   const handleMatchComplete = () => {
-    setCurrentRoute("progress");
+    // 플레이오프 진행 중이면 playoffs로, 아니면 progress로
+    if (currentLeague?.playoffBracket && currentLeague.phase === "playoffs") {
+      setCurrentRoute("playoffs");
+    } else {
+      setCurrentRoute("progress");
+    }
   };
 
   // 순위표 보기
@@ -253,6 +258,8 @@ export function LeagueRouter({ onBackToMain }: LeagueRouterProps) {
 
   // 결과 페이지에서 새 시즌
   const handleNewSeason = () => {
+    // 현재 리그를 먼저 삭제하고 선택 화면으로 이동
+    deleteLeague();
     setCurrentRoute("select");
   };
 
