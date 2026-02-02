@@ -50,19 +50,49 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   const [showHelpModal, setShowHelpModal] = useState(false); // 💡 도움말 모달
   
   // 💾 localStorage에서 필터 불러오기
-  const [filterGrade, setFilterGrade] = useState<Grade | "all">(() => {
+  const [filterGrade, setFilterGrade] = useState<Grade[]>(() => {
     const saved = localStorage.getItem("lck_filter_grade");
-    return (saved as Grade | "all") || "all";
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
   });
-  const [filterPosition, setFilterPosition] = useState<Position | "all">(() => {
+  const [filterPosition, setFilterPosition] = useState<Position[]>(() => {
     const saved = localStorage.getItem("lck_filter_position");
-    return (saved as Position | "all") || "all";
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
   });
-  const [filterTeam, setFilterTeam] = useState<string>(() => {
-    return localStorage.getItem("lck_filter_team") || "all";
+  const [filterTeam, setFilterTeam] = useState<string[]>(() => {
+    const saved = localStorage.getItem("lck_filter_team");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
   });
-  const [filterYear, setFilterYear] = useState<string>(() => {
-    return localStorage.getItem("lck_filter_year") || "all";
+  const [filterYear, setFilterYear] = useState<number[]>(() => {
+    const saved = localStorage.getItem("lck_filter_year");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
   });
   const [sortBy, setSortBy] = useState<"ovr" | "recent">(() => {
     const saved = localStorage.getItem("lck_filter_sortBy");
@@ -75,19 +105,19 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
 
   // 💾 필터 변경 시 localStorage에 저장
   useEffect(() => {
-    localStorage.setItem("lck_filter_grade", filterGrade);
+    localStorage.setItem("lck_filter_grade", JSON.stringify(filterGrade));
   }, [filterGrade]);
 
   useEffect(() => {
-    localStorage.setItem("lck_filter_position", filterPosition);
+    localStorage.setItem("lck_filter_position", JSON.stringify(filterPosition));
   }, [filterPosition]);
 
   useEffect(() => {
-    localStorage.setItem("lck_filter_team", filterTeam);
+    localStorage.setItem("lck_filter_team", JSON.stringify(filterTeam));
   }, [filterTeam]);
 
   useEffect(() => {
-    localStorage.setItem("lck_filter_year", filterYear);
+    localStorage.setItem("lck_filter_year", JSON.stringify(filterYear));
   }, [filterYear]);
 
   useEffect(() => {
@@ -142,20 +172,20 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
       );
     }
     
-    if (filterGrade !== "all") {
-      cards = cards.filter(c => c.grade === filterGrade);
+    if (filterGrade.length > 0) {
+      cards = cards.filter(c => filterGrade.includes(c.grade));
     }
     
-    if (filterPosition !== "all") {
-      cards = cards.filter(c => c.position === filterPosition);
+    if (filterPosition.length > 0) {
+      cards = cards.filter(c => filterPosition.includes(c.position));
     }
 
-    if (filterTeam !== "all") {
-      cards = cards.filter(c => c.team === filterTeam);
+    if (filterTeam.length > 0) {
+      cards = cards.filter(c => filterTeam.includes(c.team));
     }
 
-    if (filterYear !== "all") {
-      cards = cards.filter(c => c.year === parseInt(filterYear));
+    if (filterYear.length > 0) {
+      cards = cards.filter(c => filterYear.includes(c.year));
     }
     
     if (sortBy === "ovr") {
@@ -184,20 +214,20 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
       );
     }
     
-    if (filterGrade !== "all") {
-      cards = cards.filter(c => c.grade === filterGrade);
+    if (filterGrade.length > 0) {
+      cards = cards.filter(c => filterGrade.includes(c.grade));
     }
     
-    if (filterPosition !== "all") {
-      cards = cards.filter(c => c.position === filterPosition);
+    if (filterPosition.length > 0) {
+      cards = cards.filter(c => filterPosition.includes(c.position));
     }
 
-    if (filterTeam !== "all") {
-      cards = cards.filter(c => c.team === filterTeam);
+    if (filterTeam.length > 0) {
+      cards = cards.filter(c => filterTeam.includes(c.team));
     }
 
-    if (filterYear !== "all") {
-      cards = cards.filter(c => c.year === parseInt(filterYear));
+    if (filterYear.length > 0) {
+      cards = cards.filter(c => filterYear.includes(c.year));
     }
     
     // 미보유는 OVR 순서만
@@ -493,10 +523,10 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
               </Button>
               <Button
                 onClick={() => {
-                  setFilterGrade("all");
-                  setFilterPosition("all");
-                  setFilterTeam("all");
-                  setFilterYear("all");
+                  setFilterGrade([]);
+                  setFilterPosition([]);
+                  setFilterTeam([]);
+                  setFilterYear([]);
                   setSortBy("ovr");
                   setSearchText("");
                   setCurrentPage(1);
@@ -546,57 +576,185 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            <Select value={filterGrade} onValueChange={handleFilterChange(setFilterGrade)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="등급" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="LIVE">LIVE</SelectItem>
-                <SelectItem value="S">S</SelectItem>
-                <SelectItem value="A">A</SelectItem>
-                <SelectItem value="B">B</SelectItem>
-                <SelectItem value="C">C</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* 등급 체크박스 */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  const dropdown = document.getElementById('grade-dropdown');
+                  if (dropdown) dropdown.classList.toggle('hidden');
+                }}
+                className="w-full flex items-center justify-between rounded-md border border-[#2B6CFF]/30 bg-[#0B0F1A] px-3 py-2 text-sm text-[#EAF0FF] hover:border-[#2B6CFF] transition-colors"
+              >
+                <span className={filterGrade.length === 0 ? "text-[#9AA6C3]" : ""}>
+                  {filterGrade.length === 0 ? "등급" : `등급 (${filterGrade.length})`}
+                </span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div
+                id="grade-dropdown"
+                className="hidden absolute z-50 mt-1 w-full rounded-md border border-[#2B6CFF]/30 bg-[#0B0F1A] shadow-lg max-h-60 overflow-y-auto"
+              >
+                <div className="p-2 space-y-1">
+                  {(["S", "A", "B", "C"] as Grade[]).map(grade => (
+                    <label
+                      key={grade}
+                      className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2B6CFF]/20 rounded cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filterGrade.includes(grade)}
+                        onChange={(e) => {
+                          const newGrades = e.target.checked
+                            ? [...filterGrade, grade]
+                            : filterGrade.filter(g => g !== grade);
+                          setFilterGrade(newGrades);
+                          setCurrentPage(1);
+                        }}
+                        className="w-4 h-4 rounded border-[#2B6CFF]/30 bg-[#0B0F1A] text-[#2B6CFF] focus:ring-[#2B6CFF] focus:ring-offset-0"
+                      />
+                      <span className="text-sm text-[#EAF0FF]">{grade}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-            <Select value={filterPosition} onValueChange={handleFilterChange(setFilterPosition)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="포지션" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="TOP">TOP</SelectItem>
-                <SelectItem value="JGL">JGL</SelectItem>
-                <SelectItem value="MID">MID</SelectItem>
-                <SelectItem value="ADC">ADC</SelectItem>
-                <SelectItem value="SUP">SUP</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* 포지션 체크박스 */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  const dropdown = document.getElementById('position-dropdown');
+                  if (dropdown) dropdown.classList.toggle('hidden');
+                }}
+                className="w-full flex items-center justify-between rounded-md border border-[#2B6CFF]/30 bg-[#0B0F1A] px-3 py-2 text-sm text-[#EAF0FF] hover:border-[#2B6CFF] transition-colors"
+              >
+                <span className={filterPosition.length === 0 ? "text-[#9AA6C3]" : ""}>
+                  {filterPosition.length === 0 ? "포지션" : `포지션 (${filterPosition.length})`}
+                </span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div
+                id="position-dropdown"
+                className="hidden absolute z-50 mt-1 w-full rounded-md border border-[#2B6CFF]/30 bg-[#0B0F1A] shadow-lg max-h-60 overflow-y-auto"
+              >
+                <div className="p-2 space-y-1">
+                  {(["TOP", "JGL", "MID", "ADC", "SUP"] as Position[]).map(position => (
+                    <label
+                      key={position}
+                      className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2B6CFF]/20 rounded cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filterPosition.includes(position)}
+                        onChange={(e) => {
+                          const newPositions = e.target.checked
+                            ? [...filterPosition, position]
+                            : filterPosition.filter(p => p !== position);
+                          setFilterPosition(newPositions);
+                          setCurrentPage(1);
+                        }}
+                        className="w-4 h-4 rounded border-[#2B6CFF]/30 bg-[#0B0F1A] text-[#2B6CFF] focus:ring-[#2B6CFF] focus:ring-offset-0"
+                      />
+                      <span className="text-sm text-[#EAF0FF]">{position}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-            <Select value={filterTeam} onValueChange={handleFilterChange(setFilterTeam)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="팀" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                {(activeTab === "owned" ? uniqueTeams : allTeams).map(team => (
-                  <SelectItem key={team} value={team}>{team}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* 팀 체크박스 */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  const dropdown = document.getElementById('team-dropdown');
+                  if (dropdown) dropdown.classList.toggle('hidden');
+                }}
+                className="w-full flex items-center justify-between rounded-md border border-[#2B6CFF]/30 bg-[#0B0F1A] px-3 py-2 text-sm text-[#EAF0FF] hover:border-[#2B6CFF] transition-colors"
+              >
+                <span className={filterTeam.length === 0 ? "text-[#9AA6C3]" : ""}>
+                  {filterTeam.length === 0 ? "팀" : `팀 (${filterTeam.length})`}
+                </span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div
+                id="team-dropdown"
+                className="hidden absolute z-50 mt-1 w-full rounded-md border border-[#2B6CFF]/30 bg-[#0B0F1A] shadow-lg max-h-60 overflow-y-auto"
+              >
+                <div className="p-2 space-y-1">
+                  {(activeTab === "owned" ? uniqueTeams : allTeams).map(team => (
+                    <label
+                      key={team}
+                      className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2B6CFF]/20 rounded cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filterTeam.includes(team)}
+                        onChange={(e) => {
+                          const newTeams = e.target.checked
+                            ? [...filterTeam, team]
+                            : filterTeam.filter(t => t !== team);
+                          setFilterTeam(newTeams);
+                          setCurrentPage(1);
+                        }}
+                        className="w-4 h-4 rounded border-[#2B6CFF]/30 bg-[#0B0F1A] text-[#2B6CFF] focus:ring-[#2B6CFF] focus:ring-offset-0"
+                      />
+                      <span className="text-sm text-[#EAF0FF]">{team}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-            <Select value={filterYear} onValueChange={handleFilterChange(setFilterYear)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="연도" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                {allYears.map(year => (
-                  <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* 연도 체크박스 */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  const dropdown = document.getElementById('year-dropdown');
+                  if (dropdown) dropdown.classList.toggle('hidden');
+                }}
+                className="w-full flex items-center justify-between rounded-md border border-[#2B6CFF]/30 bg-[#0B0F1A] px-3 py-2 text-sm text-[#EAF0FF] hover:border-[#2B6CFF] transition-colors"
+              >
+                <span className={filterYear.length === 0 ? "text-[#9AA6C3]" : ""}>
+                  {filterYear.length === 0 ? "연도" : `연도 (${filterYear.length})`}
+                </span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div
+                id="year-dropdown"
+                className="hidden absolute z-50 mt-1 w-full rounded-md border border-[#2B6CFF]/30 bg-[#0B0F1A] shadow-lg max-h-60 overflow-y-auto"
+              >
+                <div className="p-2 space-y-1">
+                  {allYears.map(year => (
+                    <label
+                      key={year}
+                      className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2B6CFF]/20 rounded cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filterYear.includes(year)}
+                        onChange={(e) => {
+                          const newYears = e.target.checked
+                            ? [...filterYear, year]
+                            : filterYear.filter(y => y !== year);
+                          setFilterYear(newYears);
+                          setCurrentPage(1);
+                        }}
+                        className="w-4 h-4 rounded border-[#2B6CFF]/30 bg-[#0B0F1A] text-[#2B6CFF] focus:ring-[#2B6CFF] focus:ring-offset-0"
+                      />
+                      <span className="text-sm text-[#EAF0FF]">{year}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             {(activeTab === "owned") && (
               <Select value={sortBy} onValueChange={handleFilterChange(setSortBy)}>
