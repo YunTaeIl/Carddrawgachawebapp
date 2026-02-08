@@ -16,10 +16,16 @@ interface PatchNote {
 }
 
 export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
-  const [expandedVersion, setExpandedVersion] = useState<string>("v1.1.0");
+  const [expandedVersion, setExpandedVersion] = useState<string>("v1.2.0");
 
   // 패치노트 데이터 (최신순)
   const patchNotes: PatchNote[] = [
+    {
+      version: "v1.2.0",
+      date: "2026-02-08",
+      title: "LIVE 카드 밸런스 패치 (LCK Cup 2026)",
+      content: <PatchV120 />
+    },
     {
       version: "v1.1.0",
       date: "2026-02-03",
@@ -97,6 +103,249 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
       </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ==================== v1.2.0 패치 ====================
+function PatchV120() {
+  return (
+    <div className="space-y-3 mt-3">
+      {/* 조정 사유 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">🎯 조정 사유</div>
+        <ul className="text-[11px] text-[#8B95B5] space-y-1 list-disc list-inside">
+          <li><span className="text-white font-medium">2/6~2/8 경기 진행 팀만 LIVE 밸런싱 반영</span></li>
+          <li><span className="text-[#8B95B5]">경기 미진행 팀은 스탯 변동 0으로 고정</span>
+            <div className="ml-4 mt-0.5 text-[#FFB81C]">Gen.G / T1 / BNK FEARX 고정</div>
+          </li>
+          <li><span className="text-[#FF6666]">이미 탈락한 Hanwha Life Esports도 고정</span></li>
+          <li><span className="text-white font-medium">경기 진행 팀 중 탈락 팀(BRO/KT/NS)은 결과 반영으로 전반 하향 발생</span></li>
+          <li><span className="text-white font-medium">등급/OVR 규칙 유지</span>
+            <div className="ml-4 mt-0.5 text-[#FFB81C]">S: 93~99 / A: 85~92 / B: 73~84 / C: 60~72</div>
+          </li>
+          <li><span className="text-white font-medium">전체 분포: S 6 / A 16 / B 24 / C 9 유지</span></li>
+        </ul>
+      </div>
+
+      {/* S 등급 목록 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#FFD700]/20">
+        <div className="text-xs font-semibold text-white mb-2">👑 S 등급 목록 (6장 고정)</div>
+        <div className="space-y-1.5">
+          <div>
+            <div className="text-[10px] text-[#FFD700] mb-1">Gen.G (5장)</div>
+            <div className="flex flex-wrap gap-1 text-[11px]">
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Duro (SUP) – 99</span>
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Ruler (ADC) – 98</span>
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Canyon (JGL) – 97</span>
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Chovy (MID) – 95</span>
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Kiin (TOP) – 94</span>
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] text-[#FFD700] mb-1">T1 (1장)</div>
+            <div className="flex flex-wrap gap-1 text-[11px]">
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Doran (TOP) – 93</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 등급 변동자 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">⚡ 등급 변동 선수 (총 15명)</div>
+        <div className="text-[10px] text-[#8B95B5] mb-2">B→A 3명 / A→B 3명 / C→B 4명 / B→C 5명</div>
+        
+        <div className="space-y-2">
+          {/* B→A */}
+          <div className="bg-[#00FF00]/5 rounded p-2 border border-[#00FF00]/20">
+            <div className="text-[10px] text-[#00FF00] font-semibold mb-1.5">🔺 B → A (3명)</div>
+            <div className="space-y-1 text-[11px] text-white ml-2">
+              <div className="flex items-center justify-between">
+                <span>Namgung (HANJIN BRION / SUP)</span>
+                <span className="text-[#00FF00] text-[10px]">76 → 87 (+11)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Jiwoo (DRX / ADC)</span>
+                <span className="text-[#00FF00] text-[10px]">79 → 88 (+9)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>DuDu (DN SOOPers / TOP)</span>
+                <span className="text-[#00FF00] text-[10px]">78 → 85 (+7)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* A→B */}
+          <div className="bg-[#FF4444]/5 rounded p-2 border border-[#FF4444]/20">
+            <div className="text-[10px] text-[#FF4444] font-semibold mb-1.5">🔻 A → B (3명)</div>
+            <div className="space-y-1 text-[11px] text-white ml-2">
+              <div className="flex items-center justify-between">
+                <span>Scout (Nongshim RedForce / MID)</span>
+                <span className="text-[#FF4444] text-[10px]">85 → 78 (-7)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Bdd (KT Rolster / MID)</span>
+                <span className="text-[#FF4444] text-[10px]">87 → 77 (-10)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Cuzz (KT Rolster / JGL)</span>
+                <span className="text-[#FF4444] text-[10px]">90 → 79 (-11)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* C→B */}
+          <div className="bg-[#88FF88]/5 rounded p-2 border border-[#88FF88]/20">
+            <div className="text-[10px] text-[#88FF88] font-semibold mb-1.5">⬆️ C → B (4명)</div>
+            <div className="space-y-1 text-[11px] text-white ml-2">
+              <div className="flex items-center justify-between">
+                <span>Fisher (HANJIN BRION / MID)</span>
+                <span className="text-[#88FF88] text-[10px]">60 → 82 (+22)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Vincenzo (DRX / JGL)</span>
+                <span className="text-[#88FF88] text-[10px]">62 → 83 (+21)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Calix (Nongshim RedForce / MID)</span>
+                <span className="text-[#88FF88] text-[10px]">63 → 81 (+18)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Life (DN SOOPers / SUP)</span>
+                <span className="text-[#88FF88] text-[10px]">70 → 73 (+3)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* B→C */}
+          <div className="bg-[#FF6666]/5 rounded p-2 border border-[#FF6666]/20">
+            <div className="text-[10px] text-[#FF6666] font-semibold mb-1.5">⬇️ B → C (5명)</div>
+            <div className="space-y-1 text-[11px] text-white ml-2">
+              <div className="flex items-center justify-between">
+                <span>Kingen (Nongshim RedForce / TOP)</span>
+                <span className="text-[#FF6666] text-[10px]">74 → 60 (-14)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Pollu (KT Rolster / SUP)</span>
+                <span className="text-[#FF6666] text-[10px]">77 → 64 (-13)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Ucal (DRX / MID)</span>
+                <span className="text-[#FF6666] text-[10px]">77 → 66 (-11)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Rich (DRX / TOP)</span>
+                <span className="text-[#FF6666] text-[10px]">81 → 72 (-9)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Taeyoon (Nongshim RedForce / ADC)</span>
+                <span className="text-[#FF6666] text-[10px]">78 → 70 (-8)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 팀별 스텟 상세 변동 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">📊 팀별 스텟 상세 변동</div>
+        
+        {/* 고정 팀 */}
+        <div className="mb-3">
+          <div className="text-[10px] text-[#8B95B5] font-semibold mb-1.5">✅ 고정 팀 (변동 없음)</div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[11px] bg-[#0F1629] px-2 py-1 rounded">
+              <div className="text-white">Gen.G</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">96.6 → 96.6 (0.0)</span>
+                <span className="text-[#8B95B5] text-[10px]">S 5장 유지</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-[11px] bg-[#0F1629] px-2 py-1 rounded">
+              <div className="text-white">T1</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">90.2 → 90.2 (0.0)</span>
+                <span className="text-[#8B95B5] text-[10px]">S 1 · A 4 유지</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-[11px] bg-[#0F1629] px-2 py-1 rounded">
+              <div className="text-white">BNK FEARX</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">88.0 → 88.0 (0.0)</span>
+                <span className="text-[#8B95B5] text-[10px]">A 4 · B 1 유지</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-[11px] bg-[#0F1629] px-2 py-1 rounded">
+              <div className="text-white">Hanwha Life Esports</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">75.6 → 75.6 (0.0)</span>
+                <span className="text-[#8B95B5] text-[10px]">B 5장 유지</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 경기 진행 팀 */}
+        <div>
+          <div className="text-[10px] text-[#FFB81C] font-semibold mb-1.5">🔧 경기 진행 팀 (조정 반영)</div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[11px] bg-[#FF4444]/10 px-2 py-1 rounded border border-[#FF4444]/30">
+              <div className="text-white font-medium">KT Rolster (탈락)</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">82.8 → 74.5</span>
+                <span className="text-[#FF4444] font-semibold">(▼8.3)</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-[#8B95B5] ml-2 mb-1.5">등급 A 2 · B 4 → B 5 · C 1 하향</div>
+
+            <div className="flex items-center justify-between text-[11px] bg-[#FF4444]/10 px-2 py-1 rounded border border-[#FF4444]/30">
+              <div className="text-white font-medium">Nongshim RedForce (탈락)</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">77.8 → 73.8</span>
+                <span className="text-[#FF4444] font-semibold">(▼4.0)</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-[#8B95B5] ml-2 mb-1.5">등급 A 1 · B 4 · C 1 → B 4 · C 2 하향</div>
+
+            <div className="flex items-center justify-between text-[11px] bg-[#00FF00]/10 px-2 py-1 rounded border border-[#00FF00]/30">
+              <div className="text-white font-medium">DRX</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">77.3 → 79.3</span>
+                <span className="text-[#00FF00] font-semibold">(▲2.0)</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-[#8B95B5] ml-2 mb-1.5">등급 B 5 · C 1 → A 1 · B 3 · C 2 재배치</div>
+
+            <div className="flex items-center justify-between text-[11px] bg-[#00FF00]/10 px-2 py-1 rounded border border-[#00FF00]/30">
+              <div className="text-white font-medium">DN SOOPers (DNS)</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">74.3 → 76.2</span>
+                <span className="text-[#00FF00] font-semibold">(▲1.8)</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-[#8B95B5] ml-2 mb-1.5">등급 B 4 · C 2 → A 1 · B 4 · C 1 개선</div>
+
+            <div className="flex items-center justify-between text-[11px] bg-[#00FF00]/10 px-2 py-1 rounded border border-[#00FF00]/30">
+              <div className="text-white font-medium">Dplus Kia (DK)</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">88.0 → 89.6</span>
+                <span className="text-[#00FF00] font-semibold">(▲1.6)</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-[#8B95B5] ml-2 mb-1.5">등급 A 5장 유지 (수치만 상향)</div>
+
+            <div className="flex items-center justify-between text-[11px] bg-[#00FF00]/10 px-2 py-1 rounded border border-[#00FF00]/30">
+              <div className="text-white font-medium">HANJIN BRION (BRO, 탈락)</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8B95B5]">69.3 → 74.0</span>
+                <span className="text-[#00FF00] font-semibold">(▲4.7)</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-[#8B95B5] ml-2">등급 B 2 · C 4 → A 1 · B 2 · C 3 개선</div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
