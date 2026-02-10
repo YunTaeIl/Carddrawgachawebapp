@@ -42,6 +42,7 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
           {
             headers: {
               "Content-Type": "application/json",
+              "Authorization": `Bearer ${publicAnonKey}`,
             },
           }
         );
