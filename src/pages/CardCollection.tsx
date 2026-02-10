@@ -22,6 +22,8 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   const [sortBy, setSortBy] = useState<SortBy>("default");
   const [discoveredCards, setDiscoveredCards] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<LCKCard | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const CARDS_PER_PAGE = 50;
 
   // 도감 데이터 로드 + 자동 동기화
   useEffect(() => {
@@ -202,6 +204,48 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
     return Object.entries(groups).map(([label, cards]) => ({ label, cards }));
   }, [filteredAndSortedCards, sortBy]);
 
+  // 페이징 처리
+  const totalPages = Math.ceil(filteredAndSortedCards.length / CARDS_PER_PAGE);
+  const paginatedCards = useMemo(() => {
+    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+    const endIndex = startIndex + CARDS_PER_PAGE;
+    const slicedCards = filteredAndSortedCards.slice(startIndex, endIndex);
+    
+    if (sortBy === "default") {
+      return [{ label: "전체", cards: slicedCards }];
+    }
+    
+    const groups: { [key: string]: LCKCard[] } = {};
+    slicedCards.forEach(card => {
+      let key = "";
+      if (sortBy === "team") {
+        key = card.team;
+      } else if (sortBy === "grade") {
+        key = card.grade;
+      } else if (sortBy === "position") {
+        key = card.position;
+      }
+      
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(card);
+    });
+    
+    return Object.entries(groups).map(([label, cards]) => ({ label, cards }));
+  }, [filteredAndSortedCards, sortBy, currentPage, CARDS_PER_PAGE]);
+
+  // 페이지 변경 시 스크롤 상단 이동
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 필터/정렬 변경 시 페이지 1로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedYear, sortBy]);
+
   // 카드 상태 확인
   const getCardStatus = (card: LCKCard) => {
     const cardKey = `${card.id}_${card.year}_${card.team}`;
@@ -365,7 +409,7 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
       {/* 카드 그리드 */}
       {selectedTab === "collection" && (
         <div className="max-w-7xl mx-auto space-y-8">
-          {groupedCards.map((group, groupIndex) => (
+          {paginatedCards.map((group, groupIndex) => (
             <div key={groupIndex}>
               {/* 그룹 헤더 (기본 정렬이 아닐 때만 표시) */}
               {sortBy !== "default" && (
@@ -444,6 +488,77 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
               </div>
             </div>
           ))}
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8 pb-8">
+              {/* 이전 페이지 */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  currentPage === 1
+                    ? "bg-[#1A2347]/50 text-[#8B95B5]/50 cursor-not-allowed"
+                    : "bg-[#1A2347] text-white hover:bg-[#2B6CFF]"
+                }`}
+              >
+                이전
+              </button>
+
+              {/* 페이지 번호 */}
+              <div className="flex gap-1">
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let pageNum: number;
+                  
+                  // 7페이지 이하면 전부 표시
+                  if (totalPages <= 7) {
+                    pageNum = i + 1;
+                  } else {
+                    // 현재 페이지 기준으로 앞뒤 3페이지씩 표시
+                    if (currentPage <= 4) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 3) {
+                      pageNum = totalPages - 6 + i;
+                    } else {
+                      pageNum = currentPage - 3 + i;
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                        currentPage === pageNum
+                          ? "bg-gradient-to-r from-[#2B6CFF] to-[#1E4FCC] text-white shadow-lg"
+                          : "bg-[#1A2347] text-[#8B95B5] hover:text-white hover:bg-[#2A3A67]"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 다음 페이지 */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  currentPage === totalPages
+                    ? "bg-[#1A2347]/50 text-[#8B95B5]/50 cursor-not-allowed"
+                    : "bg-[#1A2347] text-white hover:bg-[#2B6CFF]"
+                }`}
+              >
+                다음
+              </button>
+
+              {/* 페이지 정보 */}
+              <div className="ml-4 text-[#8B95B5] text-sm">
+                {currentPage} / {totalPages}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
