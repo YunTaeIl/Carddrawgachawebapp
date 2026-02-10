@@ -92,7 +92,7 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
+                "Authorization": `Bearer ${accessToken}`,
               },
               body: JSON.stringify({ cardKeys: cardsToDiscover }),
             }
@@ -109,10 +109,11 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
 
           // 4. 도감 데이터 다시 로드
           const updatedResponse = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex`,
+            `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/${user.id}`,
             {
               headers: {
-                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${publicAnonKey}`,
               },
             }
           );
