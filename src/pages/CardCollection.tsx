@@ -27,18 +27,21 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   useEffect(() => {
     const loadCodexAndSync = async () => {
       try {
+        console.log("🔐 accessToken check:", accessToken ? "EXISTS" : "NULL", typeof accessToken);
         if (!accessToken) {
           console.log("❌ No access token found");
           return;
         }
 
         const token = accessToken;
+        console.log("🔑 Token type:", typeof token, "Length:", token.length);
 
         console.log("📚 Loading codex and syncing...");
         console.log(`📦 Owned cards count: ${ownedCards.length}`);
         console.log(`🃏 All cards count: ${allCards.length}`);
 
         // 1. 도감 데이터 로드
+        console.log("🔑 Using token:", token.substring(0, 20) + "...");
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex`,
           {
@@ -50,6 +53,8 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
 
         if (!response.ok) {
           console.error("❌ Failed to load codex:", response.status);
+          const errorText = await response.text();
+          console.error("Error response:", errorText);
           return;
         }
 
