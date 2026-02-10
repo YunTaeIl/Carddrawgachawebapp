@@ -32,10 +32,15 @@ function CardCollectionWrapper() {
   React.useEffect(() => {
     const loadCards = async () => {
       const cards = await getCardPool();
+      console.log(`🎴 Loaded ${cards.length} cards for collection`);
       setAllCards(cards);
     };
     loadCards();
   }, []);
+
+  React.useEffect(() => {
+    console.log(`👤 User owned cards: ${userData?.ownedCards?.length || 0}`);
+  }, [userData]);
   
   return (
     <CardCollection 

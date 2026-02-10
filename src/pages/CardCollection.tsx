@@ -26,7 +26,14 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
     const loadCodexAndSync = async () => {
       try {
         const token = localStorage.getItem("sb-access-token");
-        if (!token) return;
+        if (!token) {
+          console.log("❌ No access token found");
+          return;
+        }
+
+        console.log("📚 Loading codex and syncing...");
+        console.log(`📦 Owned cards count: ${ownedCards.length}`);
+        console.log(`🃏 All cards count: ${allCards.length}`);
 
         // 1. 도감 데이터 로드
         const response = await fetch(
@@ -38,64 +45,91 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
           }
         );
 
-        if (response.ok) {
-          const data = await response.json();
-          const currentDiscovered = data.discoveredCards || [];
-          setDiscoveredCards(currentDiscovered);
+        if (!response.ok) {
+          console.error("❌ Failed to load codex:", response.status);
+          return;
+        }
 
-          // 2. 자동 동기화: 보유 중인 카드 중 도감에 없는 카드 찾기
-          const ownedCardKeys = new Set(
-            ownedCards.map(uc => {
-              const card = allCards.find(c => c.id === uc.cardId);
-              if (!card) return null;
-              return `${card.id}_${card.year}_${card.team}`;
-            }).filter(Boolean) as string[]
-          );
+        const data = await response.json();
+        const currentDiscovered = data.discoveredCards || [];
+        console.log(`📖 Currently discovered: ${currentDiscovered.length} cards`);
+        setDiscoveredCards(currentDiscovered);
 
-          const discoveredSet = new Set(currentDiscovered);
-          const cardsToDiscover = Array.from(ownedCardKeys).filter(
-            key => !discoveredSet.has(key)
-          );
-
-          // 3. 누락된 카드가 있으면 도감에 추가
-          if (cardsToDiscover.length > 0) {
-            console.log(`🔄 Auto-syncing ${cardsToDiscover.length} cards to codex...`);
-            
-            await fetch(
-              `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({ cardKeys: cardsToDiscover }),
-              }
-            );
-
-            // 4. 도감 데이터 다시 로드
-            const updatedResponse = await fetch(
-              `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex`,
-              {
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                },
-              }
-            );
-
-            if (updatedResponse.ok) {
-              const updatedData = await updatedResponse.json();
-              setDiscoveredCards(updatedData.discoveredCards || []);
-              console.log("✅ Codex auto-sync completed!");
-            }
+        // 2. 자동 동기화: 보유 중인 카드 중 도감에 없는 카드 찾기
+        const ownedCardKeysSet = new Set<string>();
+        ownedCards.forEach(uc => {
+          const card = allCards.find(c => c.id === uc.cardId);
+          if (card) {
+            const key = `${card.id}_${card.year}_${card.team}`;
+            ownedCardKeysSet.add(key);
           }
+        });
+
+        const ownedCardKeys = Array.from(ownedCardKeysSet);
+        console.log(`🔑 Unique owned card keys: ${ownedCardKeys.length}`);
+        console.log("Sample keys:", ownedCardKeys.slice(0, 5));
+
+        const discoveredSet = new Set(currentDiscovered);
+        const cardsToDiscover = ownedCardKeys.filter(
+          key => !discoveredSet.has(key)
+        );
+
+        console.log(`🆕 Cards to discover: ${cardsToDiscover.length}`);
+        if (cardsToDiscover.length > 0) {
+          console.log("Sample cards to discover:", cardsToDiscover.slice(0, 5));
+        }
+
+        // 3. 누락된 카드가 있으면 도감에 추가
+        if (cardsToDiscover.length > 0) {
+          console.log(`🔄 Auto-syncing ${cardsToDiscover.length} cards to codex...`);
+            
+          const discoverResponse = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+              },
+              body: JSON.stringify({ cardKeys: cardsToDiscover }),
+            }
+          );
+
+          if (!discoverResponse.ok) {
+            console.error("❌ Failed to discover cards:", discoverResponse.status);
+            const errorText = await discoverResponse.text();
+            console.error("Error:", errorText);
+            return;
+          }
+
+          console.log("✅ Cards discovered successfully!");
+
+          // 4. 도감 데이터 다시 로드
+          const updatedResponse = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex`,
+            {
+              headers: {
+                "Authorization": `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (updatedResponse.ok) {
+            const updatedData = await updatedResponse.json();
+            setDiscoveredCards(updatedData.discoveredCards || []);
+            console.log(`✅ Codex auto-sync completed! New total: ${updatedData.discoveredCards?.length || 0}`);
+          }
+        } else {
+          console.log("✅ All owned cards already in codex!");
         }
       } catch (error) {
-        console.error("Failed to load/sync codex:", error);
+        console.error("❌ Failed to load/sync codex:", error);
       }
     };
 
-    loadCodexAndSync();
+    if (ownedCards.length > 0 && allCards.length > 0) {
+      loadCodexAndSync();
+    }
   }, [ownedCards, allCards]);
 
   // 연도 목록 추출 (2013~2026)
