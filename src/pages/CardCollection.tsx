@@ -62,17 +62,10 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
         // 2. 자동 동기화: 보유 중인 카드 중 도감에 없는 카드 찾기
         const ownedCardKeysSet = new Set<string>();
         
-        console.log("🔍 First owned card:", ownedCards[0]);
-        console.log("🔍 First all card:", allCards[0]);
-        
         ownedCards.forEach(uc => {
-          const card = allCards.find(c => c.id === uc.cardId);
-          if (card) {
-            const key = `${card.id}_${card.year}_${card.team}`;
-            ownedCardKeysSet.add(key);
-          } else {
-            console.log("❌ Card not found for cardId:", uc.cardId);
-          }
+          // UserCard는 이미 full card 정보를 가지고 있음
+          const key = `${uc.id}_${uc.year}_${uc.team}`;
+          ownedCardKeysSet.add(key);
         });
 
         const ownedCardKeys = Array.from(ownedCardKeysSet);
