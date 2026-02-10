@@ -21,13 +21,14 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   const [discoveredCards, setDiscoveredCards] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<LCKCard | null>(null);
 
-  // 도감 데이터 로드
+  // 도감 데이터 로드 + 자동 동기화
   useEffect(() => {
-    const loadCodex = async () => {
+    const loadCodexAndSync = async () => {
       try {
         const token = localStorage.getItem("sb-access-token");
         if (!token) return;
 
+        // 1. 도감 데이터 로드
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex`,
           {
@@ -39,15 +40,63 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
 
         if (response.ok) {
           const data = await response.json();
-          setDiscoveredCards(data.discoveredCards || []);
+          const currentDiscovered = data.discoveredCards || [];
+          setDiscoveredCards(currentDiscovered);
+
+          // 2. 자동 동기화: 보유 중인 카드 중 도감에 없는 카드 찾기
+          const ownedCardKeys = new Set(
+            ownedCards.map(uc => {
+              const card = allCards.find(c => c.id === uc.cardId);
+              if (!card) return null;
+              return `${card.id}_${card.year}_${card.team}`;
+            }).filter(Boolean) as string[]
+          );
+
+          const discoveredSet = new Set(currentDiscovered);
+          const cardsToDiscover = Array.from(ownedCardKeys).filter(
+            key => !discoveredSet.has(key)
+          );
+
+          // 3. 누락된 카드가 있으면 도감에 추가
+          if (cardsToDiscover.length > 0) {
+            console.log(`🔄 Auto-syncing ${cardsToDiscover.length} cards to codex...`);
+            
+            await fetch(
+              `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ cardKeys: cardsToDiscover }),
+              }
+            );
+
+            // 4. 도감 데이터 다시 로드
+            const updatedResponse = await fetch(
+              `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex`,
+              {
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (updatedResponse.ok) {
+              const updatedData = await updatedResponse.json();
+              setDiscoveredCards(updatedData.discoveredCards || []);
+              console.log("✅ Codex auto-sync completed!");
+            }
+          }
         }
       } catch (error) {
-        console.error("Failed to load codex:", error);
+        console.error("Failed to load/sync codex:", error);
       }
     };
 
-    loadCodex();
-  }, []);
+    loadCodexAndSync();
+  }, [ownedCards, allCards]);
 
   // 연도 목록 추출 (2013~2026)
   const years = useMemo(() => {
