@@ -394,3 +394,65 @@ export async function checkDailyAttendance(userId: string) {
     nextCheckIn: new Date(todayKorea.getTime() + 24 * 60 * 60 * 1000 - koreaOffset * 60 * 1000).toISOString()
   };
 }
+
+// ==================== 도감 API ====================
+
+// 도감에 카드 추가 (획득 기록)
+export async function discoverCards(userId: string, cardKeys: string[]) {
+  console.log(`🔍 Discovering cards for user ${userId}:`, cardKeys);
+  
+  // 기존 도감 가져오기
+  const { data: existingData, error: fetchError } = await supabase
+    .from("kv_store_ffd115c0")
+    .select("value")
+    .eq("key", `codex:${userId}`)
+    .single();
+  
+  let discoveredSet = new Set<string>();
+  
+  if (existingData && existingData.value) {
+    discoveredSet = new Set(existingData.value as string[]);
+  }
+  
+  // 새로운 카드 추가
+  cardKeys.forEach(key => discoveredSet.add(key));
+  const discoveredArray = Array.from(discoveredSet);
+  
+  // 저장
+  const { error: upsertError } = await supabase
+    .from("kv_store_ffd115c0")
+    .upsert({
+      key: `codex:${userId}`,
+      value: discoveredArray
+    }, {
+      onConflict: "key"
+    });
+  
+  if (upsertError) {
+    console.error("Error saving codex:", upsertError);
+    throw new Error(`Failed to save codex: ${upsertError.message}`);
+  }
+  
+  console.log(`✅ Codex updated. Total discovered: ${discoveredArray.length}`);
+  return discoveredArray;
+}
+
+// 도감 조회
+export async function getDiscoveredCards(userId: string) {
+  const { data, error } = await supabase
+    .from("kv_store_ffd115c0")
+    .select("value")
+    .eq("key", `codex:${userId}`)
+    .single();
+  
+  if (error) {
+    if (error.code === "PGRST116") {
+      // 도감 데이터가 없으면 빈 배열 반환
+      return [];
+    }
+    console.error("Error fetching codex:", error);
+    throw new Error(`Failed to fetch codex: ${error.message}`);
+  }
+  
+  return (data?.value as string[]) || [];
+}

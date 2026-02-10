@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { UserCard, LCKCard } from "@/types/lck";
-import { Book, Lock } from "lucide-react";
-import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
+import { Book, Lock, CheckCircle2 } from "lucide-react";
+import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { SYNERGIES } from "@/data/synergyData";
-import { getPlayerImageUrl } from "@/utils/imageUrls";
+import { projectId, publicAnonKey } from "/utils/supabase/info";
 
 interface CardCollectionProps {
   ownedCards: UserCard[];
@@ -18,8 +18,38 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   const [selectedYear, setSelectedYear] = useState<YearTab>("all");
   const [selectedTab, setSelectedTab] = useState<"collection" | "synergy">("collection");
   const [sortBy, setSortBy] = useState<SortBy>("default");
+  const [discoveredCards, setDiscoveredCards] = useState<string[]>([]);
+  const [selectedCard, setSelectedCard] = useState<LCKCard | null>(null);
 
-  // 연도 목록 추출 (2013~2025)
+  // 도감 데이터 로드
+  useEffect(() => {
+    const loadCodex = async () => {
+      try {
+        const token = localStorage.getItem("sb-access-token");
+        if (!token) return;
+
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex`,
+          {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setDiscoveredCards(data.discoveredCards || []);
+        }
+      } catch (error) {
+        console.error("Failed to load codex:", error);
+      }
+    };
+
+    loadCodex();
+  }, []);
+
+  // 연도 목록 추출 (2013~2026)
   const years = useMemo(() => {
     const yearSet = new Set<number>();
     allCards.forEach(card => yearSet.add(card.year));
@@ -48,11 +78,11 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
     if (sortBy === "team") {
       cards = [...cards].sort((a, b) => a.team.localeCompare(b.team));
     } else if (sortBy === "grade") {
-      const gradeOrder = { S: 0, A: 1, B: 2, C: 3 };
-      cards = [...cards].sort((a, b) => gradeOrder[a.grade] - gradeOrder[b.grade]);
+      const gradeOrder = { S: 0, A: 1, B: 2, C: 3, LIVE: -1 };
+      cards = [...cards].sort((a, b) => (gradeOrder[a.grade] || 10) - (gradeOrder[b.grade] || 10));
     } else if (sortBy === "position") {
       const positionOrder = { TOP: 0, JGL: 1, MID: 2, ADC: 3, SUP: 4 };
-      cards = [...cards].sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+      cards = [...cards].sort((a, b) => (positionOrder[a.position] || 10) - (positionOrder[b.position] || 10));
     }
     
     return cards;
@@ -85,15 +115,32 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
     return Object.entries(groups).map(([label, cards]) => ({ label, cards }));
   }, [filteredAndSortedCards, sortBy]);
 
-  // 보유 여부 확인
-  const isOwned = (card: LCKCard) => {
-    return ownedCards.some(
+  // 카드 상태 확인
+  const getCardStatus = (card: LCKCard) => {
+    const cardKey = `${card.id}_${card.year}_${card.team}`;
+    const isOwned = ownedCards.some(
       owned => owned.id === card.id && owned.year === card.year && owned.team === card.team
     );
+    const isDiscovered = discoveredCards.includes(cardKey);
+    
+    return {
+      isOwned,
+      isDiscovered,
+      cardKey
+    };
   };
 
-  // 보유 카드 수
-  const ownedCount = filteredAndSortedCards.filter(card => isOwned(card)).length;
+  // 보유/발견 카드 수
+  const ownedCount = filteredAndSortedCards.filter(card => {
+    const { isOwned } = getCardStatus(card);
+    return isOwned;
+  }).length;
+  
+  const discoveredCount = filteredAndSortedCards.filter(card => {
+    const { isDiscovered } = getCardStatus(card);
+    return isDiscovered;
+  }).length;
+  
   const totalCount = filteredAndSortedCards.length;
 
   // 등급별 색상
@@ -102,6 +149,7 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
     A: "from-purple-400 to-pink-500",
     B: "from-blue-400 to-cyan-500",
     C: "from-gray-400 to-gray-500",
+    LIVE: "from-pink-400 to-fuchsia-500",
   };
 
   return (
@@ -115,9 +163,11 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
           <div>
             <h1 className="text-2xl font-display text-white">도감 및 시너지</h1>
             <p className="text-sm text-[#8B95B5]">
-              수집 진행도: <span className="text-[#FFB81C] font-bold">{ownedCount}</span> / {totalCount}
+              발견: <span className="text-[#2B6CFF] font-bold">{discoveredCount}</span> / {totalCount}
+              <span className="mx-2">•</span>
+              보유: <span className="text-[#FFB81C] font-bold">{ownedCount}</span> / {totalCount}
               <span className="ml-2 text-[#2B6CFF]">
-                ({totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0}%)
+                ({totalCount > 0 ? Math.round((discoveredCount / totalCount) * 100) : 0}%)
               </span>
             </p>
           </div>
@@ -252,64 +302,55 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
               {/* 카드 그리드 */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {group.cards.map((card) => {
-                  const owned = isOwned(card);
-                  const cardKey = `${card.id}_${card.year}_${card.team}`;
-                  const imageUrl = getPlayerImageUrl(card.image);
+                  const { isOwned, isDiscovered, cardKey } = getCardStatus(card);
 
                   return (
                     <div
                       key={cardKey}
-                      className={`relative rounded-xl overflow-hidden transition-all duration-200 ${
-                        owned
+                      className={`relative ${
+                        isDiscovered
                           ? "hover:scale-105 cursor-pointer"
-                          : "opacity-50"
-                      }`}
+                          : ""
+                      } transition-all duration-200`}
+                      onClick={() => isDiscovered ? setSelectedCard(card) : null}
                     >
-                      {/* 카드 배경 */}
-                      <div
-                        className={`aspect-[2/3] bg-gradient-to-br ${
-                          gradeColors[card.grade] || gradeColors.C
-                        } p-0.5`}
-                      >
-                        <div className="w-full h-full bg-[#141B3D] rounded-lg overflow-hidden">
-                          {owned ? (
-                            // 보유 카드: 실제 이미지
-                            <div className="relative w-full h-full">
-                              <ImageWithFallback
-                                src={imageUrl || ""}
-                                alt={card.name || "Unknown Player"}
-                                className="w-full h-full object-cover"
-                              />
-                              {/* 등급 배지 */}
-                              <div
-                                className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-gradient-to-br ${
-                                  gradeColors[card.grade]
-                                } flex items-center justify-center font-bold text-white text-sm shadow-lg`}
-                              >
-                                {card.grade}
-                              </div>
-                              {/* 하단 정보 */}
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
-                                <p className="text-white text-xs font-bold truncate">{card.name}</p>
-                                <p className="text-[#8B95B5] text-xs">
-                                  {card.year} · {card.team}
-                                </p>
-                              </div>
+                      {/* 상태 표시 */}
+                      {isDiscovered && (
+                        <div className="absolute -top-2 -right-2 z-10">
+                          {isOwned ? (
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#FFB81C] to-[#FF8C00] flex items-center justify-center shadow-lg">
+                              <CheckCircle2 size={16} className="text-white" />
                             </div>
                           ) : (
-                            // 미보유 카드: 빈 카드 + 이름만
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-[#0A0F2C]/50 backdrop-blur-sm">
-                              <Lock className="text-[#8B95B5]/30 mb-2" size={32} />
-                              <p className="text-white text-xs font-bold text-center px-2 truncate w-full">
-                                {card.name}
-                              </p>
-                              <p className="text-[#8B95B5]/70 text-xs mt-1">
-                                {card.year} · {card.grade}
-                              </p>
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#2B6CFF] to-[#1E4FCC] flex items-center justify-center shadow-lg">
+                              <Book size={12} className="text-white" />
                             </div>
                           )}
                         </div>
-                      </div>
+                      )}
+
+                      {/* 카드 */}
+                      {isDiscovered ? (
+                        <div className={isOwned ? "" : "opacity-60"}>
+                          <LCKHoloCard 
+                            card={card} 
+                            size="small"
+                            disableFlip={true}
+                            forceStatic={true}
+                          />
+                        </div>
+                      ) : (
+                        // 미발견 카드
+                        <div className="aspect-[2/3] bg-gradient-to-br from-[#1A2347] to-[#0A0F2C] rounded-xl border border-[#2A3A67]/50 flex flex-col items-center justify-center p-4 opacity-40">
+                          <Lock className="text-[#8B95B5]/30 mb-2" size={32} />
+                          <p className="text-[#8B95B5]/50 text-xs font-bold text-center">
+                            ???
+                          </p>
+                          <p className="text-[#8B95B5]/30 text-xs mt-1">
+                            미발견
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -323,6 +364,28 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
       {selectedTab === "synergy" && (
         <div className="max-w-7xl mx-auto">
           <SynergyListView />
+        </div>
+      )}
+
+      {/* 카드 상세 모달 */}
+      {selectedCard && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedCard(null)}
+        >
+          <div className="max-w-md" onClick={(e) => e.stopPropagation()}>
+            <LCKHoloCard 
+              card={selectedCard} 
+              size="large"
+              disableFlip={false}
+            />
+            <button
+              onClick={() => setSelectedCard(null)}
+              className="mt-4 w-full px-6 py-3 bg-[#1A2347] hover:bg-[#2A3A67] text-white rounded-lg font-medium transition-colors"
+            >
+              닫기
+            </button>
+          </div>
         </div>
       )}
     </div>

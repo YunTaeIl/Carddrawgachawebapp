@@ -30,6 +30,7 @@ import {
   getUserSquadDirect
 } from "@/utils/supabaseDirect";
 import { toast } from "sonner";
+import { projectId } from "/utils/supabase/info";
 
 export interface CraftResult {
   card: UserCard;
@@ -401,8 +402,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setUserData(newData);
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
-    if (isAuthenticated && accessToken && !result.isDupe) {
-      addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+    if (isAuthenticated && accessToken) {
+      if (!result.isDupe) {
+        addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+      }
+      
+      // 도감에 기록 (중복이든 아니든 항상 기록)
+      const cardKey = `${result.card.id}_${result.card.year}_${result.card.team}`;
+      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ cardKeys: [cardKey] })
+      }).catch(() => {});
     }
 
     // 🔥 LIVE 카드 중복 알림
@@ -488,12 +502,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
 
     // DB 저장 (로그인 시) - 백그라운드로 비동기 처리
-    if (isAuthenticated && accessToken && newUserCards.length > 0) {
-      Promise.all(
-        newUserCards.map(card => 
-          addUserCardDirect(accessToken, card.id, card.instanceId, card.upgradeLevel).catch(() => {})
-        )
-      ).catch(() => {});
+    if (isAuthenticated && accessToken) {
+      // 카드 DB 저장
+      if (newUserCards.length > 0) {
+        Promise.all(
+          newUserCards.map(card => 
+            addUserCardDirect(accessToken, card.id, card.instanceId, card.upgradeLevel).catch(() => {})
+          )
+        ).catch(() => {});
+      }
+      
+      // 도감에 기록 (모든 획득 카드)
+      const cardKeys = results.map(r => `${r.card.id}_${r.card.year}_${r.card.team}`);
+      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ cardKeys })
+      }).catch(() => {});
     }
 
     // 결과에 UserCard 반영
@@ -662,9 +690,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     setUserData(newData);
 
-    // DB 저장 (로그인 시) - 중복이 아닐 때만 카드 추가
-    if (isAuthenticated && accessToken && !isDupe) {
-      addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+    // DB 저장 (로그인 시)
+    if (isAuthenticated && accessToken) {
+      if (!isDupe) {
+        addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+      }
+      
+      // 도감에 기록
+      const cardKey = `${craftedCard.id}_${craftedCard.year}_${craftedCard.team}`;
+      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ cardKeys: [cardKey] })
+      }).catch(() => {});
     }
 
     if (isDupe) {
@@ -723,9 +764,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       setUserData(newData);
 
-      // DB 저장 (로그인 시) - 중복이 아닐 때만 카드 추가
-      if (isAuthenticated && accessToken && !isDupe) {
-        addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+      // DB 저장 (로그인 시)
+      if (isAuthenticated && accessToken) {
+        if (!isDupe) {
+          addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+        }
+        
+        // 도감에 기록
+        const cardKey = `${craftedCard.id}_${craftedCard.year}_${craftedCard.team}`;
+        fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ cardKeys: [cardKey] })
+        }).catch(() => {});
       }
 
       if (isDupe) {
@@ -836,6 +890,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // DB 저장 (로그인 시)
     if (isAuthenticated && accessToken) {
       addUserCardDirect(accessToken, newCard.id, newCard.instanceId, newCard.upgradeLevel).catch(() => {});
+      
+      // 도감에 기록
+      const cardKey = `${targetCard.id}_${targetCard.year}_${targetCard.team}`;
+      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ cardKeys: [cardKey] })
+      }).catch(() => {});
     }
     
     const gradeEmoji = targetCard.grade === "LIVE" ? "🔥" : targetCard.grade === "S" ? "✨" : targetCard.grade === "A" ? "⭐" : "📦";

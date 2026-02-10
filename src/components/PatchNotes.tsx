@@ -16,10 +16,16 @@ interface PatchNote {
 }
 
 export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
-  const [expandedVersion, setExpandedVersion] = useState<string>("v1.2.0");
+  const [expandedVersion, setExpandedVersion] = useState<string>("v1.3.0");
 
   // 패치노트 데이터 (최신순)
   const patchNotes: PatchNote[] = [
+    {
+      version: "v1.3.0",
+      date: "2026-02-10",
+      title: "도감 시스템 추가",
+      content: <PatchV130 />
+    },
     {
       version: "v1.2.0",
       date: "2026-02-08",
@@ -103,6 +109,59 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
       </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ==================== v1.3.0 패치 ====================
+function PatchV130() {
+  return (
+    <div className="space-y-3 mt-3">
+      {/* 도감 시스템 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">📚 도감 시스템 추가</div>
+        <ul className="text-[11px] text-[#8B95B5] space-y-1 list-disc list-inside">
+          <li><span className="text-[#FFB81C] font-medium">한 번 획득한 카드는 도감에 영구 기록</span></li>
+          <li><span className="text-white">가챠, 샤드 제작 등 모든 카드 획득 시 자동으로 도감에 등록</span></li>
+          <li><span className="text-white">획득 카드는 도감에서 카드 형태로 확인 가능</span></li>
+          <li><span className="text-[#8B95B5]">현재 소유: 밝게 표시 + ⭐ 체크 마크</span></li>
+          <li><span className="text-[#8B95B5]">발견했지만 미소유: 약간 어둡게 + 📖 아이콘</span></li>
+          <li><span className="text-[#8B95B5]">미발견: 잠금 상태 (???)</span></li>
+        </ul>
+      </div>
+
+      {/* 도감 UI 개선 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">🎨 도감 UI 완전 리뉴얼</div>
+        <ul className="text-[11px] text-[#8B95B5] space-y-1 list-disc list-inside">
+          <li><span className="text-white font-medium">기존 썸네일 방식 → 실제 카드 형태로 변경</span></li>
+          <li><span className="text-white">LCKHoloCard 컴포넌트 사용으로 일관된 카드 디자인</span></li>
+          <li><span className="text-white">카드 클릭 시 상세 모달로 카드 앞/뒷면 확인 가능</span></li>
+          <li><span className="text-[#2B6CFF]">발견률과 보유율을 별도로 표시</span></li>
+        </ul>
+      </div>
+
+      {/* 기술적 변경사항 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">⚙️ 기술적 변경사항</div>
+        <ul className="text-[11px] text-[#8B95B5] space-y-1 list-disc list-inside">
+          <li><span className="text-white">서버 API: <code className="text-[#FFB81C] bg-[#0F1629] px-1 rounded">/codex/discover</code> 추가 (카드 발견 기록)</span></li>
+          <li><span className="text-white">서버 API: <code className="text-[#FFB81C] bg-[#0F1629] px-1 rounded">/codex</code> 추가 (도감 조회)</span></li>
+          <li><span className="text-white">DB: kv_store 활용 (<code className="text-[#2B6CFF] bg-[#0F1629] px-1 rounded">codex:{"{userId}"}</code> 키)</span></li>
+          <li><span className="text-[#8B95B5]">가챠 1회, 10연, 샤드 제작 모두 자동으로 도감 기록</span></li>
+        </ul>
+      </div>
+
+      {/* 장점 */}
+      <div className="bg-gradient-to-r from-[#2B6CFF]/10 to-[#2B6CFF]/5 rounded-lg p-3 border border-[#2B6CFF]/20">
+        <div className="text-xs font-semibold text-[#2B6CFF] mb-2">✨ 이점</div>
+        <ul className="text-[11px] text-white space-y-1 list-disc list-inside">
+          <li>카드를 처분해도 도감에는 영구 보존</li>
+          <li>수집 진행도를 한눈에 확인 가능</li>
+          <li>도감에서 카드를 실제 카드 형태로 확인 가능</li>
+          <li>컬렉션의 재미 요소 추가</li>
+        </ul>
+      </div>
+    </div>
   );
 }
 
