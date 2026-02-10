@@ -261,18 +261,17 @@ app.post("/make-server-ffd115c0/codex/discover", async (c) => {
   }
 });
 
-// 도감 조회
-app.get("/make-server-ffd115c0/codex", async (c) => {
+// 도감 조회 (특정 유저)
+app.get("/make-server-ffd115c0/codex/:userId", async (c) => {
   try {
-    const user = await userApi.getUserFromToken(c.req.header("Authorization"));
-    if (!user) {
-      return c.json({ success: false, error: "Unauthorized" }, 401);
-    }
+    const userId = c.req.param("userId");
+    console.log("📖 [CODEX] GET /codex for userId:", userId);
     
-    const discoveredCards = await userApi.getDiscoveredCards(user.id);
+    const discoveredCards = await userApi.getDiscoveredCards(userId);
+    console.log("📖 [CODEX] ✅ Returning", discoveredCards.length, "discovered cards");
     return c.json({ success: true, discoveredCards });
   } catch (error) {
-    console.log(`Error fetching codex: ${error}`);
+    console.log(`📖 [CODEX] ❌ Error fetching codex: ${error}`);
     return c.json({ success: false, error: String(error) }, 500);
   }
 });

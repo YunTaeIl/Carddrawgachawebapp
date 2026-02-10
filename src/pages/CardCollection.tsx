@@ -16,7 +16,7 @@ type YearTab = "all" | number;
 type SortBy = "default" | "team" | "grade" | "position";
 
 export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const [selectedYear, setSelectedYear] = useState<YearTab>("all");
   const [selectedTab, setSelectedTab] = useState<"collection" | "synergy">("collection");
   const [sortBy, setSortBy] = useState<SortBy>("default");
@@ -27,26 +27,21 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   useEffect(() => {
     const loadCodexAndSync = async () => {
       try {
-        console.log("🔐 accessToken check:", accessToken ? "EXISTS" : "NULL", typeof accessToken);
-        if (!accessToken) {
-          console.log("❌ No access token found");
+        if (!user?.id || !accessToken) {
+          console.log("❌ No user or access token found");
           return;
         }
-
-        const token = accessToken;
-        console.log("🔑 Token type:", typeof token, "Length:", token.length);
 
         console.log("📚 Loading codex and syncing...");
         console.log(`📦 Owned cards count: ${ownedCards.length}`);
         console.log(`🃏 All cards count: ${allCards.length}`);
 
         // 1. 도감 데이터 로드
-        console.log("🔑 Using token:", token.substring(0, 20) + "...");
         const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex`,
+          `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/${user.id}`,
           {
             headers: {
-              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
           }
         );
@@ -135,10 +130,10 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
       }
     };
 
-    if (ownedCards.length > 0 && allCards.length > 0 && accessToken) {
+    if (ownedCards.length > 0 && allCards.length > 0 && user?.id && accessToken) {
       loadCodexAndSync();
     }
-  }, [ownedCards, allCards, accessToken]);
+  }, [ownedCards, allCards, user, accessToken]);
 
   // 연도 목록 추출 (2013~2026)
   const years = useMemo(() => {
