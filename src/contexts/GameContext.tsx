@@ -409,11 +409,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       
       // 도감에 기록 (중복이든 아니든 항상 기록)
       const cardKey = `${result.card.id}_${result.card.year}_${result.card.team}`;
-      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover/${userId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          "Authorization": `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ cardKeys: [cardKey] })
       }).catch(() => {});
@@ -514,11 +514,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       
       // 도감에 기록 (모든 획득 카드)
       const cardKeys = results.map(r => `${r.card.id}_${r.card.year}_${r.card.team}`);
-      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover/${userId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          "Authorization": `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ cardKeys })
       }).catch(() => {});
@@ -698,11 +698,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       
       // 도감에 기록
       const cardKey = `${craftedCard.id}_${craftedCard.year}_${craftedCard.team}`;
-      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover/${userId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          "Authorization": `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ cardKeys: [cardKey] })
       }).catch(() => {});
@@ -772,11 +772,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         
         // 도감에 기록
         const cardKey = `${craftedCard.id}_${craftedCard.year}_${craftedCard.team}`;
-        fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+        fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover/${userId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
+            "Authorization": `Bearer ${publicAnonKey}`,
           },
           body: JSON.stringify({ cardKeys: [cardKey] })
         }).catch(() => {});
@@ -893,11 +893,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       
       // 도감에 기록
       const cardKey = `${targetCard.id}_${targetCard.year}_${targetCard.team}`;
-      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`, {
+      fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover/${userId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          "Authorization": `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ cardKeys: [cardKey] })
       }).catch(() => {});

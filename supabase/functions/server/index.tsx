@@ -244,15 +244,15 @@ app.post("/make-server-ffd115c0/user/check-in", async (c) => {
 // ==================== 도감 API ====================
 
 // 도감에 카드 추가 (획득 기록)
-app.post("/make-server-ffd115c0/codex/discover", async (c) => {
+app.post("/make-server-ffd115c0/codex/discover/:userId", async (c) => {
   try {
-    const user = await userApi.getUserFromToken(c.req.header("Authorization"));
-    if (!user) {
-      return c.json({ success: false, error: "Unauthorized" }, 401);
+    const userId = c.req.param("userId");
+    if (!userId) {
+      return c.json({ success: false, error: "Missing userId" }, 400);
     }
     
     const { cardKeys } = await c.req.json(); // cardKeys: ["Faker_2024_T1", ...]
-    const result = await userApi.discoverCards(user.id, cardKeys);
+    const result = await userApi.discoverCards(userId, cardKeys);
     
     return c.json({ success: true, discoveredCards: result });
   } catch (error) {

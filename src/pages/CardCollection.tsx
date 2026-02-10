@@ -87,12 +87,12 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
           console.log(`🔄 Auto-syncing ${cardsToDiscover.length} cards to codex...`);
             
           const discoverResponse = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover`,
+            `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover/${user.id}`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`,
+                "Authorization": `Bearer ${publicAnonKey}`,
               },
               body: JSON.stringify({ cardKeys: cardsToDiscover }),
             }
