@@ -4,6 +4,7 @@ import { Book, Lock, CheckCircle2 } from "lucide-react";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { SYNERGIES } from "@/data/synergyData";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CardCollectionProps {
   ownedCards: UserCard[];
@@ -15,6 +16,7 @@ type YearTab = "all" | number;
 type SortBy = "default" | "team" | "grade" | "position";
 
 export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
+  const { accessToken } = useAuth();
   const [selectedYear, setSelectedYear] = useState<YearTab>("all");
   const [selectedTab, setSelectedTab] = useState<"collection" | "synergy">("collection");
   const [sortBy, setSortBy] = useState<SortBy>("default");
@@ -25,11 +27,12 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   useEffect(() => {
     const loadCodexAndSync = async () => {
       try {
-        const token = localStorage.getItem("sb-access-token");
-        if (!token) {
+        if (!accessToken) {
           console.log("❌ No access token found");
           return;
         }
+
+        const token = accessToken;
 
         console.log("📚 Loading codex and syncing...");
         console.log(`📦 Owned cards count: ${ownedCards.length}`);
@@ -127,10 +130,10 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
       }
     };
 
-    if (ownedCards.length > 0 && allCards.length > 0) {
+    if (ownedCards.length > 0 && allCards.length > 0 && accessToken) {
       loadCodexAndSync();
     }
-  }, [ownedCards, allCards]);
+  }, [ownedCards, allCards, accessToken]);
 
   // 연도 목록 추출 (2013~2026)
   const years = useMemo(() => {
