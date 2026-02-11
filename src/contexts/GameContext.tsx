@@ -30,7 +30,7 @@ import {
   getUserSquadDirect
 } from "@/utils/supabaseDirect";
 import { toast } from "sonner";
-import { projectId } from "/utils/supabase/info";
+import { projectId, publicAnonKey } from "/utils/supabase/info";
 
 export interface CraftResult {
   card: UserCard;
@@ -69,6 +69,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const accessToken = auth?.accessToken ?? null;
+  const user = auth?.user ?? null;
+  const userId = user?.id ?? null;
   
   // 안전한 초기화
   const [userData, setUserData] = useState<UserData>(() => {
