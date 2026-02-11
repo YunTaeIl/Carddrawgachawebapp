@@ -8,7 +8,7 @@ export interface LCKCard {
   team: string;
   name: string;
   position: "TOP" | "JGL" | "MID" | "ADC" | "SUP";
-  grade: "S" | "A" | "B" | "C";
+  grade: "S" | "A" | "B" | "C" | "LIVE";
   image: string;
   stats: {
     ovr: number;
