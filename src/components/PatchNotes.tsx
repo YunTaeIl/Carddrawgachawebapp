@@ -16,10 +16,16 @@ interface PatchNote {
 }
 
 export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
-  const [expandedVersion, setExpandedVersion] = useState<string>("v1.3.0");
+  const [expandedVersion, setExpandedVersion] = useState<string>("v1.4.0");
 
   // 패치노트 데이터 (최신순)
   const patchNotes: PatchNote[] = [
+    {
+      version: "v1.4.0",
+      date: "2026-02-23",
+      title: "🔥 LIVE 카드 밸런스 패치 - 플레이오프 반영",
+      content: <PatchV140 />
+    },
     {
       version: "v1.3.0",
       date: "2026-02-10",
@@ -109,6 +115,191 @@ export function PatchNotes({ isOpen, onClose }: PatchNotesProps) {
       </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ==================== v1.4.0 패치 ====================
+function PatchV140() {
+  return (
+    <div className="space-y-3 mt-3">
+      {/* 조정 사유 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">🎯 조정 사유</div>
+        <ul className="text-[11px] text-[#8B95B5] space-y-1 list-disc list-inside">
+          <li><span className="text-white font-medium">2/23 이전 플레이오프 경기 결과 반영 필요함</span></li>
+          <li><span className="text-[#FFB81C]">플옵/경기 진행 팀만 LIVE 밸런싱(OVR+스탯) 반영함</span>
+            <div className="ml-4 mt-0.5 text-white">대상: Gen.G / BNK FEARX / DN SOOPers / T1 / DRX 적용함</div>
+          </li>
+          <li><span className="text-[#8B95B5]">경기/상태 변동 없는 팀은 0변동 유지함</span>
+            <div className="ml-4 mt-0.5">Dplus Kia / Nongshim / KT / BRION / HLE 0변동 유지함</div>
+          </li>
+          <li><span className="text-white font-medium">컬럼 유지 정책 적용함</span>
+            <div className="ml-4 mt-0.5 text-[#FFB81C]">변경: ovr, mechanics, laning, teamfight, macro, clutch만 변경함</div>
+            <div className="ml-4 mt-0.5 text-[#8B95B5]">그 외 컬럼(id/year/team/position/name/image 등) 유지함</div>
+          </li>
+          <li><span className="text-white font-medium">등급/OVR 규칙 유지 및 자동 보정 적용함</span>
+            <div className="ml-4 mt-0.5 text-[#FFB81C]">S: 93~99 / A: 85~92 / B: 73~84 / C: 60~72 적용함</div>
+            <div className="ml-4 mt-0.5">OVR 변화로 구간 벗어난 카드 등급 자동 수정함</div>
+          </li>
+          <li><span className="text-white font-medium">전체 분포(자동수정 결과)</span>
+            <div className="ml-4 mt-0.5 text-white">S 6 / A 17 / B 23 / C 9임</div>
+            <div className="ml-4 mt-0.5 text-[#8B95B5] text-[10px]">(이번 버전은 A/B 분포가 예시(16/24)와 다름 — OVR구간 자동수정 결과임)</div>
+          </li>
+        </ul>
+      </div>
+
+      {/* S 등급 목록 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#FFD700]/20">
+        <div className="text-xs font-semibold text-white mb-2">👑 S 등급 목록 (총 6장)</div>
+        <div className="space-y-1.5">
+          <div>
+            <div className="text-[10px] text-[#FFD700] mb-1">Gen.G (5장)</div>
+            <div className="flex flex-wrap gap-1 text-[11px]">
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Duro (SUP) – 99</span>
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Ruler (ADC) – 99</span>
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Canyon (JGL) – 98</span>
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Chovy (MID) – 96</span>
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">Kiin (TOP) – 95</span>
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] text-[#FFD700] mb-1">BNK FEARX (1장)</div>
+            <div className="flex flex-wrap gap-1 text-[11px]">
+              <span className="bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded font-medium border border-[#FFD700]/30">VicLa (MID) – 93</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 등급 변동자 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">⚡ 등급 변동 선수 (총 3명)</div>
+        <div className="text-[10px] text-[#8B95B5] mb-2">B→A 1명 / A→S 1명 / S→A 1명임</div>
+        
+        <div className="space-y-2">
+          {/* 등급 상승 */}
+          <div className="bg-[#00FF00]/5 rounded p-2 border border-[#00FF00]/20">
+            <div className="text-[10px] text-[#00FF00] font-semibold mb-1.5">🔺 B → A (1명)</div>
+            <div className="space-y-1 text-[11px] text-white ml-2">
+              <div className="flex items-center justify-between">
+                <span>Raptor (BNK FEARX / JGL)</span>
+                <span className="text-[#00FF00] text-[10px]">84(B) → 86(A) (+2)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#FFD700]/10 rounded p-2 border border-[#FFD700]/30">
+            <div className="text-[10px] text-[#FFD700] font-semibold mb-1.5">🔺 A → S (1명)</div>
+            <div className="space-y-1 text-[11px] text-white ml-2">
+              <div className="flex items-center justify-between">
+                <span>VicLa (BNK FEARX / MID)</span>
+                <span className="text-[#FFD700] text-[10px]">91(A) → 93(S) (+2)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 등급 하락 */}
+          <div className="bg-[#FF4444]/5 rounded p-2 border border-[#FF4444]/20">
+            <div className="text-[10px] text-[#FF4444] font-semibold mb-1.5">🔻 S → A (1명)</div>
+            <div className="space-y-1 text-[11px] text-white ml-2">
+              <div className="flex items-center justify-between">
+                <span>Doran (T1 / TOP)</span>
+                <span className="text-[#FF4444] text-[10px]">93(S) → 92(A) (-1)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 팀별 스탯 상세 변동 */}
+      <div className="bg-[#1A2347]/50 rounded-lg p-3 border border-[#2A3A67]/50">
+        <div className="text-xs font-semibold text-white mb-2">📊 팀별 스텟 상세 변동 (평균 OVR 기준)</div>
+        
+        {/* 변동 적용 팀 */}
+        <div className="mb-3">
+          <div className="text-[10px] text-[#FFB81C] font-semibold mb-1.5">🔧 변동 적용 팀</div>
+          <div className="space-y-1">
+            <div className="bg-[#00FF00]/10 px-2 py-1.5 rounded border border-[#00FF00]/30">
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="text-white font-medium">BNK FEARX</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#8B95B5]">88.0 → 90.0</span>
+                  <span className="text-[#00FF00] font-semibold">(▲2.0)</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-[#8B95B5] mt-0.5">
+                등급: A4·B1 → S1·A4 (VicLa S 진입, Raptor A 승급)
+              </div>
+            </div>
+
+            <div className="bg-[#00FF00]/10 px-2 py-1.5 rounded border border-[#00FF00]/30">
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="text-white font-medium">DN SOOPers</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#8B95B5]">76.2 → 78.2</span>
+                  <span className="text-[#00FF00] font-semibold">(▲2.0)</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-[#8B95B5] mt-0.5">
+                등급 분포 유지(수치만 상향)
+              </div>
+            </div>
+
+            <div className="bg-[#00FF00]/10 px-2 py-1.5 rounded border border-[#00FF00]/30">
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="text-white font-medium">Gen.G</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#8B95B5]">96.6 → 97.4</span>
+                  <span className="text-[#00FF00] font-semibold">(▲0.8)</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-[#8B95B5] mt-0.5">
+                S 5장 유지 (상한 99 캡으로 평균 상승폭 일부 제한됨)
+              </div>
+            </div>
+
+            <div className="bg-[#FF4444]/10 px-2 py-1.5 rounded border border-[#FF4444]/30">
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="text-white font-medium">T1</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#8B95B5]">90.2 → 89.2</span>
+                  <span className="text-[#FF4444] font-semibold">(▼1.0)</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-[#8B95B5] mt-0.5">
+                등급: S1·A4 → A5 (Doran S→A로 변경됨)
+              </div>
+            </div>
+
+            <div className="bg-[#FF4444]/10 px-2 py-1.5 rounded border border-[#FF4444]/30">
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="text-white font-medium">DRX</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#8B95B5]">79.3 → 77.3</span>
+                  <span className="text-[#FF4444] font-semibold">(▼2.0)</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-[#8B95B5] mt-0.5">
+                등급 분포 유지(수치만 하향)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 0변동 유지 팀 */}
+        <div>
+          <div className="text-[10px] text-[#8B95B5] font-semibold mb-1.5">✅ 0변동 유지 팀</div>
+          <div className="space-y-1">
+            <div className="text-[11px] bg-[#0F1629] px-2 py-1 rounded text-[#8B95B5]">
+              Dplus Kia / Nongshim RedForce / KT Rolster / HANJIN BRION / Hanwha Life Esports
+            </div>
+            <div className="text-[10px] text-[#8B95B5] ml-2">
+              평균 OVR 변동 없음(0.0) 유지함
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
