@@ -27,6 +27,7 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
   const playerRank = currentLeague.standings.findIndex(s => s.isPlayer) + 1;
   const playerRecord = currentLeague.standings.find(s => s.isPlayer);
   const playoffResult = currentLeague.playoffResult;
+  const isShardsReward = leagueConfig.rewardType === "shards"; // 🔥 보상 타입 확인
 
   // 플레이오프 성적 텍스트
   const getPlayoffResultText = () => {
@@ -117,18 +118,18 @@ export function SeasonResultPage({ onBackToMain, onNewSeason }: SeasonResultPage
           <div className="h-px bg-white/10 my-4" />
 
           <div className="flex justify-between items-baseline">
-            <span className="text-slate-400">획득 RP</span>
-            <span className="text-3xl md:text-4xl font-bold text-amber-400">
-              {currentLeague.currentPoints.toLocaleString()}
+            <span className="text-slate-400">{isShardsReward ? "획득 샤드" : "획득 RP"}</span>
+            <span className={`text-3xl md:text-4xl font-bold ${isShardsReward ? "text-blue-400" : "text-amber-400"}`}>
+              {isShardsReward ? "직접 지급됨" : currentLeague.currentPoints.toLocaleString()}
             </span>
           </div>
 
           {isChampion && (
-            <div className="bg-amber-500/20 rounded-xl p-4 border border-amber-500/50 mt-4">
+            <div className={`${isShardsReward ? "bg-blue-500/20 border-blue-500/50" : "bg-amber-500/20 border-amber-500/50"} rounded-xl p-4 border mt-4`}>
               <div className="flex justify-between items-baseline">
-                <span className="font-bold text-amber-400">우승 보너스</span>
-                <span className="text-xl md:text-2xl font-bold text-amber-400">
-                  +{leagueConfig.championBonus.toLocaleString()}
+                <span className={`font-bold ${isShardsReward ? "text-blue-400" : "text-amber-400"}`}>우승 보너스</span>
+                <span className={`text-xl md:text-2xl font-bold ${isShardsReward ? "text-blue-400" : "text-amber-400"}`}>
+                  +{leagueConfig.championBonus.toLocaleString()} {isShardsReward ? "샤드" : "RP"}
                 </span>
               </div>
             </div>

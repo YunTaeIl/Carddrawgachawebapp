@@ -3,9 +3,8 @@
 // 리그 시스템용 - 중복 방지 + 등급 필터 + 가중 랜덤
 // ============================================================
 
-import { LCKCard, Position, isLiveCard } from "@/types/lck";
+import { LCKCard, Position, isLiveCard, calculateEnhancedOVR } from "@/types/lck";
 import { Team, LeagueType } from "@/types/league";
-import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 
 // ============================================================
 // 1. 타입 정의
@@ -577,7 +576,9 @@ function weightedPick(cards: LCKCard[]): LCKCard {
 // ============================================================
 
 /**
- * 팀 스탯 계산 (시너지 포함)
+ * 팀 스탯 계산 (강화 적용, 시너지 별도)
+ * - totalOVR은 각 카드의 calculateEnhancedOVR 합산 (시너지 미포함)
+ * - 시너지는 display/simulation 시점에서 별도 추가
  */
 function calculateTeamStats(squad: Team["squad"]) {
   const cards = Object.values(squad).filter(c => c !== null) as LCKCard[];
@@ -593,9 +594,9 @@ function calculateTeamStats(squad: Team["squad"]) {
     };
   }
   
-  // 기본 스탯 합계
+  // 🔥 각 카드의 강화된 실제 OVR을 calculateEnhancedOVR로 계산
   const baseStats = {
-    totalOVR: cards.reduce((sum, c) => sum + c.stats.ovr + (c.upgradeLevel || 0), 0),
+    totalOVR: cards.reduce((sum, c) => sum + calculateEnhancedOVR(c.stats, c.upgradeLevel || 0, c.grade, c.position), 0),
     mechanics: cards.reduce((sum, c) => sum + c.stats.mechanics, 0),
     laning: cards.reduce((sum, c) => sum + c.stats.laning, 0),
     teamfight: cards.reduce((sum, c) => sum + c.stats.teamfight, 0),
@@ -603,21 +604,8 @@ function calculateTeamStats(squad: Team["squad"]) {
     clutch: cards.reduce((sum, c) => sum + c.stats.clutch, 0)
   };
   
-  // 시너지 보너스 계산
-  const synergies = calculateSynergies(squad);
-  const cardBonuses = calculateCardSynergyBonuses(squad, synergies);
-  
-  // 각 카드의 시너지 보너스 합산
-  let totalSynergyBonus = 0;
-  for (const card of cards) {
-    const bonus = cardBonuses[card.id];
-    if (bonus) {
-      totalSynergyBonus += bonus.totalBonus || 0;
-    }
-  }
-  
-  // 시너지 보너스를 totalOVR에 추가
-  baseStats.totalOVR += totalSynergyBonus;
+  // 🔥 시너지는 totalOVR에 포함하지 않음 (display/simulation에서 별도 추가)
+  // 시너지 보너스는 이 함수에서 제외하여 이중 계산 방지
   
   return baseStats;
 }
@@ -798,4 +786,3 @@ function applyUpgradeToTeams(teams: Team[], upgradeLevel: number): Team[] {
     };
   });
 }
-

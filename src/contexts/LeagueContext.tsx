@@ -352,11 +352,19 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     if (team1Wins !== undefined) series.team1Wins = team1Wins;
     if (team2Wins !== undefined) series.team2Wins = team2Wins;
     
-    // 플레이어가 승리했으면 포인트 지급
+    // 플레이어가 승리했으면 보상 지급
     let newPoints = currentLeague.currentPoints;
     if (winnerId === currentLeague.playerTeamId) {
       const config = LEAGUE_CONFIGS[currentLeague.leagueType];
-      newPoints += config.winPoints;
+      
+      // 🔥 보상 타입에 따라 처리
+      if (config.rewardType === "shards") {
+        // 샤드 직접 지급
+        addCurrency(config.winPoints, "shards");
+      } else {
+        // 포인트 누적 (나중에 일괄 지급)
+        newPoints += config.winPoints;
+      }
     }
     
     // 다음 라운드에 승자 진출

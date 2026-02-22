@@ -188,9 +188,11 @@ export function LeagueProgressPage({
             </div>
 
             <div className="text-right">
-              <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">포인트</div>
-              <div className="text-2xl font-bold text-amber-400">
-                {currentLeague.currentPoints.toLocaleString()}
+              <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+                {leagueConfig.rewardType === "shards" ? "샤드 보상" : "포인트"}
+              </div>
+              <div className={`text-2xl font-bold ${leagueConfig.rewardType === "shards" ? "text-blue-400" : "text-amber-400"}`}>
+                {leagueConfig.rewardType === "shards" ? "직접 지급" : currentLeague.currentPoints.toLocaleString()}
               </div>
             </div>
           </div>
@@ -666,7 +668,10 @@ export function LeagueProgressPage({
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6">
               <p className="text-sm text-red-300 text-center">
                 ⚠️ 현재까지의 모든 진행 상황이 삭제됩니다<br/>
-                획득한 RP는 유지되지만 복구할 수 없습니다
+                {leagueConfig.rewardType === "shards" 
+                  ? "지급된 샤드는 유지되지만 복구할 수 없습니다"
+                  : "획득한 RP는 유지되지만 복구할 수 없습니다"
+                }
               </p>
             </div>
 
