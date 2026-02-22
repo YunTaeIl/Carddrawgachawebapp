@@ -29,7 +29,7 @@ export const LEAGUE_CONFIGS: Record<LeagueType, LeagueConfig> = {
     description: "강화된 최정예 선수들의 궁극의 리그",
     rewardType: "shards",
     upgradeLevel: 7,
-    adminOnly: true
+    adminOnly: false
   },
   legend: {
     id: "legend",

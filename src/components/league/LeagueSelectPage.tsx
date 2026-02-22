@@ -129,13 +129,6 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
                            } group`}
                 disabled={isDisabled}
               >
-                {/* 관리자 전용 배지 */}
-                {config.adminOnly && (
-                  <div className="absolute -top-3 -right-3 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold z-10 shadow-lg">
-                    관리자 전용
-                  </div>
-                )}
-                
                 {/* 리그 타이틀 */}
                 <div className="mb-6">
                   <h2 className={`text-3xl font-bold font-display mb-2 ${accentClass}`}>
