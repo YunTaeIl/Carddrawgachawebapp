@@ -14,6 +14,12 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
   const { startNewLeague } = useLeague();
   const { userData } = useGame();
 
+  // 관리자 체크 (userId가 "admin" 포함 시)
+  const isAdmin = userData.userId?.includes("admin") || userData.userId === "test-admin";
+  
+  // 디버깅용 로그
+  console.log("🔑 현재 userId:", userData.userId, "| 관리자:", isAdmin);
+
   // 스쿼드 검증 - 5개 포지션 모두 채워져 있는지 확인
   const isSquadComplete = () => {
     const { squad } = userData;
@@ -35,6 +41,8 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
 
   const getLeagueColor = (leagueType: LeagueType) => {
     switch (leagueType) {
+      case "masters":
+        return "from-purple-500/20 to-pink-600/20 border-purple-500/70";
       case "legend":
         return "from-amber-500/10 to-red-600/10 border-amber-500/50";
       case "tier1":
@@ -48,6 +56,7 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
 
   const getLeagueAccent = (leagueType: LeagueType) => {
     switch (leagueType) {
+      case "masters": return "text-purple-400";
       case "legend": return "text-amber-400";
       case "tier1": return "text-red-500";
       case "tier2": return "text-blue-500";
@@ -98,7 +107,14 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {(["legend", "tier1", "tier2", "tier3"] as LeagueType[]).map((leagueType) => {
+          {(["masters", "legend", "tier1", "tier2", "tier3"] as LeagueType[])
+            .filter(leagueType => {
+              const config = LEAGUE_CONFIGS[leagueType];
+              // 관리자 전용 리그는 관리자만 볼 수 있음
+              if (config.adminOnly && !isAdmin) return false;
+              return true;
+            })
+            .map((leagueType) => {
             const config = LEAGUE_CONFIGS[leagueType];
             const colorClass = getLeagueColor(leagueType);
             const accentClass = getLeagueAccent(leagueType);
@@ -137,16 +153,26 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
                 <div className="space-y-3 bg-black/20 rounded-xl p-4 mb-6">
                   <div className="flex justify-between items-baseline">
                     <span className="text-sm text-slate-400">승리당</span>
-                    <span className="text-xl font-bold text-amber-400">
-                      {config.winPoints.toLocaleString()}
+                    <span className={`text-xl font-bold ${config.rewardType === "shards" ? "text-blue-400" : "text-amber-400"}`}>
+                      {config.winPoints.toLocaleString()} {config.rewardType === "shards" ? "샤드" : "RP"}
                     </span>
                   </div>
                   <div className="flex justify-between items-baseline">
                     <span className="text-sm text-slate-400">우승 보너스</span>
-                    <span className="text-2xl font-bold text-amber-400">
-                      {config.championBonus.toLocaleString()}
+                    <span className={`text-2xl font-bold ${config.rewardType === "shards" ? "text-blue-400" : "text-amber-400"}`}>
+                      {config.championBonus.toLocaleString()} {config.rewardType === "shards" ? "샤드" : "RP"}
                     </span>
                   </div>
+                  {config.upgradeLevel && config.upgradeLevel > 0 && (
+                    <div className="pt-2 border-t border-white/10">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-sm text-slate-400">AI 선수 강화</span>
+                        <span className="text-lg font-bold text-purple-400">
+                          전원 +{config.upgradeLevel}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 버튼 힌트 */}

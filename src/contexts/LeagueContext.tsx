@@ -205,11 +205,19 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       m.awayTeamId !== currentLeague.playerTeamId
     );
     
-    // 승리 포인트 지급
+    // 승리 보상 지급
     let newPoints = currentLeague.currentPoints;
     if (result.winnerId === currentLeague.playerTeamId) {
       const config = LEAGUE_CONFIGS[currentLeague.leagueType];
-      newPoints += config.winPoints;
+      
+      // 🔥 보상 타입에 따라 처리
+      if (config.rewardType === "shards") {
+        // 샤드 직접 지급
+        addCurrency(config.winPoints, "shards");
+      } else {
+        // 포인트 누적 (나중에 일괄 지급)
+        newPoints += config.winPoints;
+      }
     }
     
     // 순위표 재계산 (시뮬레이션된 경기 포함)
@@ -374,19 +382,27 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   const finishSeason = (isChampion: boolean, playoffResult?: "champion" | "runner-up" | "playoffs" | "semifinals" | "wildcard" | "eliminated") => {
     if (!currentLeague) return;
     
+    const config = LEAGUE_CONFIGS[currentLeague.leagueType];
     let additionalPoints = 0;
     
     // 우승 시 보너스 지급
     if (isChampion) {
-      const config = LEAGUE_CONFIGS[currentLeague.leagueType];
       additionalPoints = config.championBonus;
     }
     
     const finalPoints = currentLeague.currentPoints + additionalPoints;
     
-    // 🔥 실제로 포인트 지급! (누적 포인트 전부)
-    if (finalPoints > 0) {
-      addCurrency(finalPoints);
+    // 🔥 보상 타입에 따라 지급
+    if (config.rewardType === "shards") {
+      // 샤드로 지급 (우승 보너스만)
+      if (additionalPoints > 0) {
+        addCurrency(additionalPoints, "shards");
+      }
+    } else {
+      // 포인트로 지급 (누적 포인트 전부)
+      if (finalPoints > 0) {
+        addCurrency(finalPoints);
+      }
     }
     
     setCurrentLeague({

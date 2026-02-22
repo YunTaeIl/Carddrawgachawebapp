@@ -60,7 +60,7 @@ interface GameContextType {
   
   // 유틸
   resetGame: () => void;
-  addCurrency: (amount: number) => void;
+  addCurrency: (amount: number, type?: "points" | "shards") => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -967,12 +967,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     toast.success("게임 데이터가 초기화되었습니다!");
   };
 
-  // 재화 추가 (테스트용)
-  const addCurrency = (amount: number) => {
-    setUserData({
-      ...userData,
-      currency: userData.currency + amount
-    });
+  // 재화 추가
+  const addCurrency = (amount: number, type: "points" | "shards" = "points") => {
+    if (type === "shards") {
+      setUserData({
+        ...userData,
+        shards: userData.shards + amount
+      });
+    } else {
+      setUserData({
+        ...userData,
+        currency: userData.currency + amount
+      });
+    }
   };
 
   const value: GameContextType = {

@@ -29,6 +29,11 @@ interface GradeWeights {
 }
 
 const LEAGUE_GRADE_WEIGHTS: Record<LeagueType, GradeWeights> = {
+  masters: {
+    weights: { S: 0.6, A: 0.4, B: 0, C: 0, D: 0 },
+    fallbackOrder: ["S", "A", "B", "C", "D"],
+    minOvr: 93,
+  },
   tier3: {
     weights: { B: 0.4, C: 0.4, A: 0.2, S: 0, D: 0 },
     fallbackOrder: ["B", "C", "A", "D", "S"],
@@ -291,6 +296,12 @@ export function generateAITeams(
   // 🏆 레전드 리그는 역대 명문팀 중 랜덤 9팀 선택
   if (leagueType === "legend") {
     return generateLegendTeams(allCards);
+  }
+  
+  // 🔥 마스터즈 리그는 레전드 리그와 동일하지만 +7 강화 적용
+  if (leagueType === "masters") {
+    const legendTeams = generateLegendTeams(allCards);
+    return applyUpgradeToTeams(legendTeams, 7);
   }
   
   // 1) 리그별 후보 풀 구축함
@@ -752,3 +763,39 @@ function generateLegendTeams(allCards: LCKCard[]): Team[] {
   
   return aiTeams;
 }
+
+// ============================================================
+// 11. 팀에 강화 레벨 적용
+// ============================================================
+
+/**
+ * 🔥 팀의 모든 선수에게 강화 레벨을 적용함
+ * - 마스터즈 리그 전용
+ * - AI 팀 선수들의 upgradeLevel을 설정하고 스탯 재계산
+ */
+function applyUpgradeToTeams(teams: Team[], upgradeLevel: number): Team[] {
+  console.log(`🔥 마스터즈 리그: 모든 AI 선수에게 +${upgradeLevel} 강화 적용`);
+  
+  return teams.map(team => {
+    // 각 선수에게 upgradeLevel 적용
+    const upgradedSquad: Team["squad"] = {
+      TOP: team.squad.TOP ? { ...team.squad.TOP, upgradeLevel } : null,
+      JGL: team.squad.JGL ? { ...team.squad.JGL, upgradeLevel } : null,
+      MID: team.squad.MID ? { ...team.squad.MID, upgradeLevel } : null,
+      ADC: team.squad.ADC ? { ...team.squad.ADC, upgradeLevel } : null,
+      SUP: team.squad.SUP ? { ...team.squad.SUP, upgradeLevel } : null,
+    };
+    
+    // 스탯 재계산 (강화 레벨 포함)
+    const stats = calculateTeamStats(upgradedSquad);
+    
+    console.log(`  ✅ ${team.name}: OVR ${team.stats.totalOVR} → ${stats.totalOVR} (+${stats.totalOVR - team.stats.totalOVR})`);
+    
+    return {
+      ...team,
+      squad: upgradedSquad,
+      stats
+    };
+  });
+}
+

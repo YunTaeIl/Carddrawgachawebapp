@@ -3,7 +3,7 @@
 import { LCKCard } from "./lck";
 
 // 리그 타입
-export type LeagueType = "legend" | "tier1" | "tier2" | "tier3";
+export type LeagueType = "masters" | "legend" | "tier1" | "tier2" | "tier3";
 
 // 리그 설정
 export interface LeagueConfig {
@@ -13,17 +13,32 @@ export interface LeagueConfig {
   winPoints: number;
   championBonus: number;
   description: string;
+  rewardType?: "points" | "shards"; // 보상 타입 (기본값: points)
+  upgradeLevel?: number; // 선수 강화 레벨 (기본값: 0)
+  adminOnly?: boolean; // 관리자 전용 (기본값: false)
 }
 
 // 리그 설정 상수
 export const LEAGUE_CONFIGS: Record<LeagueType, LeagueConfig> = {
+  masters: {
+    id: "masters",
+    name: "마스터즈 리그",
+    difficulty: "극한의 난이도",
+    winPoints: 1000,
+    championBonus: 10000,
+    description: "강화된 최정예 선수들의 궁극의 리그",
+    rewardType: "shards",
+    upgradeLevel: 7,
+    adminOnly: true
+  },
   legend: {
     id: "legend",
     name: "레전드 리그",
     difficulty: "최고 난이도",
     winPoints: 5000,
     championBonus: 50000,
-    description: "역대 최강 선수들과의 대결"
+    description: "역대 최강 선수들과의 대결",
+    rewardType: "points"
   },
   tier1: {
     id: "tier1",
@@ -31,7 +46,8 @@ export const LEAGUE_CONFIGS: Record<LeagueType, LeagueConfig> = {
     difficulty: "S급 위주",
     winPoints: 2000,
     championBonus: 20000,
-    description: "현역 최강 선수들의 리그"
+    description: "현역 최강 선수들의 리그",
+    rewardType: "points"
   },
   tier2: {
     id: "tier2",
@@ -39,7 +55,8 @@ export const LEAGUE_CONFIGS: Record<LeagueType, LeagueConfig> = {
     difficulty: "A급 위주",
     winPoints: 1000,
     championBonus: 10000,
-    description: "신예 선수들의 각축전"
+    description: "신예 선수들의 각축전",
+    rewardType: "points"
   },
   tier3: {
     id: "tier3",
@@ -47,7 +64,8 @@ export const LEAGUE_CONFIGS: Record<LeagueType, LeagueConfig> = {
     difficulty: "B~C급 위주",
     winPoints: 500,
     championBonus: 5000,
-    description: "입문자를 위한 리그"
+    description: "입문자를 위한 리그",
+    rewardType: "points"
   }
 };
 
