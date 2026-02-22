@@ -3,6 +3,7 @@ import { Button } from "@/app/components/ui/button";
 import { LeagueType, LEAGUE_CONFIGS } from "@/types/league";
 import { useLeague } from "@/contexts/LeagueContext";
 import { useGame } from "@/contexts/GameContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 interface LeagueSelectPageProps {
@@ -13,12 +14,7 @@ interface LeagueSelectPageProps {
 export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProps) {
   const { startNewLeague } = useLeague();
   const { userData } = useGame();
-
-  // 관리자 체크 (userId가 "admin" 포함 시)
-  const isAdmin = userData.userId?.includes("admin") || userData.userId === "test-admin";
-  
-  // 디버깅용 로그
-  console.log("🔑 현재 userId:", userData.userId, "| 관리자:", isAdmin);
+  const { isAdmin } = useAuth(); // 🔐 user_profiles.is_admin 확인
 
   // 스쿼드 검증 - 5개 포지션 모두 채워져 있는지 확인
   const isSquadComplete = () => {
@@ -133,6 +129,13 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
                            } group`}
                 disabled={isDisabled}
               >
+                {/* 관리자 전용 배지 */}
+                {config.adminOnly && (
+                  <div className="absolute -top-3 -right-3 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold z-10 shadow-lg">
+                    관리자 전용
+                  </div>
+                )}
+                
                 {/* 리그 타이틀 */}
                 <div className="mb-6">
                   <h2 className={`text-3xl font-bold font-display mb-2 ${accentClass}`}>
@@ -197,7 +200,7 @@ export function LeagueSelectPage({ onBack, onLeagueStart }: LeagueSelectPageProp
             <div>정규시즌 18경기 (더블 라운드 로빈)</div>
             <div>5위 이상 플레이오프 진출</div>
             <div>플레이오프 단계별 BO3/BO5</div>
-            <div>우승 시 보너스 RP 지급</div>
+            <div>우승 시 보너스 지급</div>
           </div>
         </div>
       </div>
