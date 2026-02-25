@@ -140,6 +140,9 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     };
     
     setCurrentLeague(newLeague);
+    
+    // 🔥 리그 횟수 증가
+    gameContext.incrementLeagueCount();
   };
 
   /**

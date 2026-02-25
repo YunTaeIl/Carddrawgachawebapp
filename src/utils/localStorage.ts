@@ -52,6 +52,8 @@ export function getDefaultUserData(): UserData {
     },
     pityData: getDefaultPityData(),
     packStatistics: getDefaultPackStatistics(),
+    totalShardsSpent: 0,
+    totalLeagueCount: 0,
     squad: {
       TOP: null,
       JGL: null,

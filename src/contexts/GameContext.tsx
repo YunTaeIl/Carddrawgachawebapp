@@ -61,6 +61,7 @@ interface GameContextType {
   // 유틸
   resetGame: () => void;
   addCurrency: (amount: number, type?: "points" | "shards") => void;
+  incrementLeagueCount: () => void; // 🔥 리그 횟수 증가
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -85,7 +86,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ownedCards: [],
         squad: { TOP: null, JGL: null, MID: null, ADC: null, SUP: null },
         pityData: { standard: { s_pity_stack: 0, a_pity_stack: 0 } },
-        packStatistics: {}
+        packStatistics: {},
+        totalShardsSpent: 0,
+        totalLeagueCount: 0,
       } as UserData;
     }
   });
@@ -115,7 +118,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           currency: data.currency,
           shards: data.shards,
           pity_data: data.pityData, // 🔥 JSONB
-          pack_statistics: data.packStatistics // 🔥 JSONB
+          pack_statistics: data.packStatistics, // 🔥 JSONB
+          total_shards_spent: data.totalShardsSpent, // 🔥 총 소비 샤드
+          total_league_count: data.totalLeagueCount, // 🔥 총 리그 횟수
         });
       } catch (error: any) {
         // DB 저장 실패 시 무시
@@ -207,6 +212,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           shards: gameData.shards ?? prevData.shards,
           lastCheckIn: gameData.last_check_in || undefined,
           isAdmin: gameData.is_admin || false,
+          totalShardsSpent: gameData.total_shards_spent ?? 0,
+          totalLeagueCount: gameData.total_league_count ?? 0,
           pityData,
           packStatistics,
           gachaState: {
@@ -341,6 +348,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     userData.ownedCards.length,
     userData.pityData,
     userData.packStatistics,
+    userData.totalShardsSpent,
+    userData.totalLeagueCount,
     isLoading
   ]); // 스쿼드는 의존성에서 제외 → 스쿼드 변경 시 DB 저장 안 함
 
@@ -540,7 +549,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const upgradeCard = async (cardInstanceId: string): Promise<UpgradeResultData | null> => {
     const cardIndex = userData.ownedCards.findIndex(c => c.instanceId === cardInstanceId);
     if (cardIndex === -1) {
-      toast.error("카드를 찾을 수 없습니���!");
+      toast.error("카드를 찾을 수 없습니!");
       return null;
     }
 
@@ -596,7 +605,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       newData = {
         ...userData,
         ownedCards: newCards,
-        shards: userData.shards - cost
+        shards: userData.shards - cost,
+        totalShardsSpent: (userData.totalShardsSpent || 0) + cost
       };
 
       // DB 저장 (upgrade_level만 저장)
@@ -609,7 +619,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // 샤드만 차감
       newData = {
         ...userData,
-        shards: userData.shards - cost
+        shards: userData.shards - cost,
+        totalShardsSpent: (userData.totalShardsSpent || 0) + cost
       };
       updatedCard = card;
 
@@ -636,7 +647,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ...userData,
         ownedCards: newCards,
         squad: newSquad,
-        shards: userData.shards - cost
+        shards: userData.shards - cost,
+        totalShardsSpent: (userData.totalShardsSpent || 0) + cost
       };
 
       // DB에서 삭제
@@ -687,7 +699,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const newData: UserData = {
       ...userData,
       ownedCards: newCards,
-      shards: userData.shards - cost + shardsGained
+      shards: userData.shards - cost + shardsGained,
+      totalShardsSpent: (userData.totalShardsSpent || 0) + cost
     };
 
     setUserData(newData);
@@ -761,7 +774,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const newData: UserData = {
         ...userData,
         ownedCards: newCards,
-        shards: userData.shards - cost + shardsGained
+        shards: userData.shards - cost + shardsGained,
+        totalShardsSpent: (userData.totalShardsSpent || 0) + cost
       };
 
       setUserData(newData);
@@ -884,7 +898,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const newData: UserData = {
       ...userData,
       ownedCards: [...userData.ownedCards, newCard],
-      shards: userData.shards - cost
+      shards: userData.shards - cost,
+      totalShardsSpent: (userData.totalShardsSpent || 0) + cost
     };
     
     setUserData(newData);
@@ -982,6 +997,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 🔥 리그 횟수 증가
+  const incrementLeagueCount = () => {
+    setUserData({
+      ...userData,
+      totalLeagueCount: userData.totalLeagueCount + 1
+    });
+  };
+
   const value: GameContextType = {
     userData,
     isLoading,
@@ -996,7 +1019,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setSquadCard,
     saveSquadToDB,
     resetGame,
-    addCurrency
+    addCurrency,
+    incrementLeagueCount
   };
 
   return (

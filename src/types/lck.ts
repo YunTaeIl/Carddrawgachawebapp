@@ -76,6 +76,8 @@ export interface UserData {
   gachaState: GachaState; // 🔥 deprecated - 하위 호환용
   pityData: Record<CardPackType, PackPityState>; // 🔥 팩별 천장 데이터
   packStatistics: Record<CardPackType, PackStatistics>; // 🔥 팩별 통계
+  totalShardsSpent: number; // 🔥 총 소비 샤드
+  totalLeagueCount: number; // 🔥 총 리그 진행 횟수
   squad: {
     TOP: UserCard | null;
     JGL: UserCard | null;

@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { GACHA_CONFIG, getTotalUpgradeBonus, calculateEnhancedOVR } from "@/types/lck";
-import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calendar, Copy, Check } from "lucide-react";
+import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calendar, Copy, Check, Trophy, Gem } from "lucide-react";
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
@@ -21,8 +21,22 @@ interface LCKHomeProps {
 }
 
 export function LCKHome({ onNavigate }: LCKHomeProps) {
-  const { userData } = useGame();
+  const gameContext = useGame();
   const { user, isAuthenticated, signOut, accessToken } = useAuth();
+
+  // 🔥 GameContext가 아직 로드되지 않았으면 로딩 표시
+  if (!gameContext) {
+    return (
+      <div className="min-h-screen bg-[#0A0E27] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-2 border-[#C8102E] border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-[#8B95B5]">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { userData } = gameContext;
 
   const positions = ["TOP", "JGL", "MID", "ADC", "SUP"] as const;
   
@@ -682,6 +696,18 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 </span>
               </div>
               <div className="flex justify-between items-center">
+                <span className="text-sm text-[#8B95B5]">총 소비 샤드</span>
+                <span className="text-xl font-display font-bold text-[#FFB81C]">
+                  {(userData.totalShardsSpent || 0).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-[#8B95B5]">리그 진행</span>
+                <span className="text-xl font-display font-bold text-[#10B981]">
+                  {userData.totalLeagueCount || 0}회
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-sm text-[#8B95B5]">S 등급</span>
                 <span className="text-xl font-display font-bold text-[#FFB81C]">
                   {userData.ownedCards.filter(c => c.grade === "S").length}
@@ -691,6 +717,36 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 <span className="text-sm text-[#8B95B5]">A 등급</span>
                 <span className="text-xl font-display font-bold text-[#0047AB]">
                   {userData.ownedCards.filter(c => c.grade === "A").length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-[#8B95B5]">B 등급</span>
+                <span className="text-xl font-display font-bold text-[#7C3AED]">
+                  {userData.ownedCards.filter(c => c.grade === "B").length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-[#8B95B5]">C 등급</span>
+                <span className="text-xl font-display font-bold text-[#6B7280]">
+                  {userData.ownedCards.filter(c => c.grade === "C").length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-[#8B95B5]">LIVE 등급</span>
+                <span className="text-xl font-display font-bold text-[#E11D48]">
+                  {userData.ownedCards.filter(c => c.grade === "LIVE" || c.year === 2026).length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-[#8B95B5]">최고 강화</span>
+                <span className="text-xl font-display font-bold text-[#F59E0B]">
+                  +{userData.ownedCards.length > 0 ? Math.max(...userData.ownedCards.map(c => c.upgradeLevel || 0)) : 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-[#8B95B5]">총 카드 수</span>
+                <span className="text-xl font-display font-bold text-white">
+                  {userData.ownedCards.length}장
                 </span>
               </div>
             </div>

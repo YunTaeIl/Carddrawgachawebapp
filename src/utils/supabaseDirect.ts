@@ -85,6 +85,8 @@ export async function updateGameDataDirect(
     shards?: number;
     pity_data?: any; // 🔥 JSONB
     pack_statistics?: any; // 🔥 JSONB
+    total_shards_spent?: number; // 🔥 총 소비 샤드
+    total_league_count?: number; // 🔥 총 리그 진행 횟수
   }
 ) {
   const { data: { user } } = await supabase.auth.getUser();
