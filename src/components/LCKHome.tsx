@@ -708,45 +708,15 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-[#8B95B5]">S 등급</span>
-                <span className="text-xl font-display font-bold text-[#FFB81C]">
-                  {userData.ownedCards.filter(c => c.grade === "S").length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-[#8B95B5]">A 등급</span>
-                <span className="text-xl font-display font-bold text-[#0047AB]">
-                  {userData.ownedCards.filter(c => c.grade === "A").length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-[#8B95B5]">B 등급</span>
-                <span className="text-xl font-display font-bold text-[#7C3AED]">
-                  {userData.ownedCards.filter(c => c.grade === "B").length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-[#8B95B5]">C 등급</span>
-                <span className="text-xl font-display font-bold text-[#6B7280]">
-                  {userData.ownedCards.filter(c => c.grade === "C").length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-[#8B95B5]">LIVE 등급</span>
-                <span className="text-xl font-display font-bold text-[#E11D48]">
-                  {userData.ownedCards.filter(c => c.grade === "LIVE" || c.year === 2026).length}
+                <span className="text-sm text-[#8B95B5]">총 카드 수</span>
+                <span className="text-xl font-display font-bold text-white">
+                  {userData.ownedCards.length}장
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-[#8B95B5]">최고 강화</span>
                 <span className="text-xl font-display font-bold text-[#F59E0B]">
                   +{userData.ownedCards.length > 0 ? Math.max(...userData.ownedCards.map(c => c.upgradeLevel || 0)) : 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-[#8B95B5]">총 카드 수</span>
-                <span className="text-xl font-display font-bold text-white">
-                  {userData.ownedCards.length}장
                 </span>
               </div>
             </div>
