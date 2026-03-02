@@ -328,23 +328,25 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           brokenCard: result.brokenCard,
           statChanges: result.statChanges
         };
+        // 강화 모달 or 카드 상세 다이얼로그 중 열린 것을 모두 닫기
         setUpgradeModalCard(null);
+        setSelectedCard(null);
       }
-      // SUCCESS/KEEP: 별도 결과창 없이 강화 모달에서 수치만 자연스럽게 갱신됨
+      // SUCCESS/KEEP: 별도 결과창 없이 열린 다이얼로그에서 수치만 자연스럽게 갱신됨
     }
   };
 
-  // 💥 강화 모달이 완전히 닫힌 후 BREAK 복구 Dialog를 안전하게 열기
+  // 💥 모든 다이얼로그가 완전히 닫힌 후 BREAK 복구 Dialog를 안전하게 열기
   useEffect(() => {
-    if (upgradeModalCard === null && pendingBreakRef.current) {
-      // 강화 모달의 exit 애니메이션이 끝날 때까지 대기 (300ms)
+    if (upgradeModalCard === null && selectedCard === null && pendingBreakRef.current) {
+      // 다이얼로그의 exit 애니메이션이 끝날 때까지 대기 (300ms)
       const timer = setTimeout(() => {
         setUpgradeResult(pendingBreakRef.current);
         pendingBreakRef.current = null;
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [upgradeModalCard]);
+  }, [upgradeModalCard, selectedCard]);
   
   // 🔥 샤드로 랜덤 카드 제작 핸들러
   const handleCraftCard = async (grade: "A" | "S" | "LIVE-A" | "LIVE-S") => {
@@ -1237,7 +1239,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         </Dialog>
 
         {/* 💥 BREAK 전용 복구 Dialog (강화 모달이 닫힌 후 단독으로 열림 → aria-hidden 충돌 없음) */}
-        <Dialog open={upgradeResult?.result === "BREAK" && upgradeModalCard === null ? true : false} onOpenChange={() => {}}>
+        <Dialog open={upgradeResult?.result === "BREAK" && upgradeModalCard === null && selectedCard === null ? true : false} onOpenChange={() => {}}>
           <DialogContent 
             className="max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 border-red-500/50 relative overflow-hidden"
             onPointerDownOutside={(e) => e.preventDefault()}
