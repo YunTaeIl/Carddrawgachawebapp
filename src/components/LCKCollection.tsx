@@ -1,6 +1,6 @@
 // LCK 컬렉션 (인벤토리) 화면
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
@@ -263,24 +263,6 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     setCurrentPage(1);
   };
 
-  // BREAK 결과를 임시 저장 (강화 모달이 완전히 닫힌 후 복구 Dialog를 열기 위해)
-  const pendingBreakRef = useRef<{
-    result: import("@/types/lck").UpgradeResult;
-    card?: UserCard;
-    beforeLevel: number;
-    afterLevel: number;
-    shardsCost: number;
-    recoveryCost?: number;
-    brokenCard?: UserCard;
-    statChanges?: {
-      mechanics: number;
-      laning: number;
-      teamfight: number;
-      macro: number;
-      clutch: number;
-    };
-  } | null>(null);
-
   const [upgradeResult, setUpgradeResult] = useState<{
     result: import("@/types/lck").UpgradeResult;
     card?: UserCard;
@@ -316,9 +298,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     
     if (result) {
       if (result.result === "BREAK") {
-        // 💥 BREAK: ref에 결과 저장 후 강화 모달 닫기
-        // → useEffect가 모달 닫힘 감지 후 복구 Dialog 열기
-        pendingBreakRef.current = {
+        // 💥 BREAK: upgradeResult 세팅 → 강화 모달 안에서 복구 UI를 인라인으로 표시
+        const breakData = {
           result: result.result,
           card: result.card,
           beforeLevel: beforeLevel,
@@ -328,25 +309,16 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           brokenCard: result.brokenCard,
           statChanges: result.statChanges
         };
-        // 강화 모달 or 카드 상세 다이얼로그 중 열린 것을 모두 닫기
-        setUpgradeModalCard(null);
-        setSelectedCard(null);
+        setUpgradeResult(breakData);
+        // 카드 상세 다이얼로그에서 강화한 경우 → 상세 닫고 강화 모달로 전환
+        if (selectedCard && !upgradeModalCard) {
+          setSelectedCard(null);
+          setUpgradeModalCard(result.brokenCard || card);
+        }
       }
-      // SUCCESS/KEEP: 별도 결과창 없이 열린 다이얼로그에서 수치만 자연스럽게 갱신됨
+      // SUCCESS/KEEP: 별도 결과창 없이 수치만 자연스럽게 갱신됨
     }
   };
-
-  // 💥 모든 다이얼로그가 완전히 닫힌 후 BREAK 복구 Dialog를 안전하게 열기
-  useEffect(() => {
-    if (upgradeModalCard === null && selectedCard === null && pendingBreakRef.current) {
-      // 다이얼로그의 exit 애니메이션이 끝날 때까지 대기 (300ms)
-      const timer = setTimeout(() => {
-        setUpgradeResult(pendingBreakRef.current);
-        pendingBreakRef.current = null;
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [upgradeModalCard, selectedCard]);
   
   // 🔥 샤드로 랜덤 카드 제작 핸들러
   const handleCraftCard = async (grade: "A" | "S" | "LIVE-A" | "LIVE-S") => {
@@ -1082,258 +1054,264 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         {/* 🔧 강화 모달 (카드 뒷면 클릭 시) - SUCCESS/KEEP은 수치만 자동 갱신 */}
         <Dialog open={upgradeModalCard !== null} onOpenChange={(open) => {
           if (!open) {
+            // BREAK 상태일 때는 X버튼/외부 클릭으로 닫지 못하게 막음 (복구/포기 선택 강제)
+            if (upgradeResult?.result === "BREAK") return;
             setUpgradeModalCard(null);
+            setUpgradeResult(null);
           }
         }}>
-          <DialogContent className="max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 border-[#10B981]/50 max-h-[90vh] overflow-y-auto">
+          <DialogContent 
+            className={`max-w-sm bg-[#12182A] text-[#EAF0FF] max-h-[90vh] overflow-y-auto border-2 ${
+              upgradeResult?.result === "BREAK" ? "border-red-500/50" : "border-[#10B981]/50"
+            } relative overflow-hidden`}
+            onPointerDownOutside={(e) => { if (upgradeResult?.result === "BREAK") e.preventDefault(); }}
+            onInteractOutside={(e) => { if (upgradeResult?.result === "BREAK") e.preventDefault(); }}
+            onEscapeKeyDown={(e) => { if (upgradeResult?.result === "BREAK") e.preventDefault(); }}
+          >
             {upgradeModalCard ? (
-              /* 🔧 강화 UI */
-              (() => {
-                const targetLevel = upgradeModalCard.upgradeLevel + 1;
-                const rates = UPGRADE_RATES[targetLevel];
-                const baseCost = UPGRADE_COSTS[upgradeModalCard.grade][targetLevel];
-                const cost = isLiveCard(upgradeModalCard) ? baseCost * 100 : baseCost;
-                const statBonus = calculateUpgradeStatBonus(upgradeModalCard.grade, targetLevel, upgradeModalCard.position);
-                const canAfford = userData.shards >= cost;
-                
-                return (
-                  <>
-                    <DialogHeader>
-                      <DialogTitle className="text-lg text-center text-[#10B981] flex items-center justify-center gap-1.5">
-                        ⬆️ 카드 강화
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col items-center gap-2 py-1">
-                      {/* 카드 + 강화 애니메이션 */}
-                      <div 
-                        className="scale-90 -my-2 transition-all duration-300"
-                        style={{
-                          animation: isUpgrading ? "upgradeShake 0.5s ease-in-out infinite" : "none",
-                          filter: isUpgrading ? "brightness(1.5) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))" : "none"
-                        }}
-                      >
-                        <LCKHoloCard 
-                          card={upgradeModalCard} 
-                          size="small" 
-                          upgradeLevel={upgradeModalCard.upgradeLevel}
-                          disableFlip={true}
-                        />
-                        {isUpgrading && (
-                          <div 
-                            className="absolute inset-0 rounded-2xl pointer-events-none"
-                            style={{
-                              background: "radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent 70%)",
-                              animation: "pulse 0.5s ease-in-out infinite"
-                            }}
-                          />
-                        )}
-                      </div>
+              upgradeResult?.result === "BREAK" && upgradeResult.brokenCard ? (
+                /* 💥 BREAK 복구 UI (강화 모달 안에서 인라인 표시) */
+                <>
+                  {/* 배경 효과 */}
+                  <div 
+                    className="absolute inset-0 pointer-events-none z-0"
+                    style={{
+                      background: "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3), transparent 70%)",
+                      animation: "pulse 1s ease-out"
+                    }}
+                  />
+                  
+                  <DialogHeader className="relative z-10">
+                    <DialogTitle className="text-2xl text-center font-bold text-red-400 flex items-center justify-center gap-2">
+                      <Skull className="w-6 h-6" /> 카드 파괴!
+                    </DialogTitle>
+                  </DialogHeader>
 
-                      <div className="text-center -mt-2">
-                        <h3 className="text-base font-bold">{upgradeModalCard.name}</h3>
-                        <div className="text-xs text-[#9AA6C3]">
-                          {upgradeModalCard.team} • {upgradeModalCard.year} • {upgradeModalCard.position}
+                  <div className="flex flex-col items-center gap-3 py-3 relative z-10">
+                    <div className="text-center space-y-3">
+                      <div className="text-5xl">💥</div>
+                      <p className="text-sm text-[#9AA6C3]">
+                        강화 실패! 소모한 샤드: {upgradeResult.shardsCost.toLocaleString()}
+                      </p>
+                    </div>
+                    
+                    {/* 복구 옵션 */}
+                    {upgradeResult.recoveryCost !== undefined && (
+                      <div className="w-full bg-[#0A0E27] rounded-xl p-4 border border-[#FFB81C]/40 space-y-3">
+                        <div className="flex items-center justify-center gap-2 text-[#FFB81C]">
+                          <Shield className="w-5 h-5" />
+                          <span className="font-bold text-base">카드 복구 가능</span>
                         </div>
-                      </div>
-
-                      <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#10B981]/30">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs text-[#9AA6C3]">강화 단계</span>
-                          <span className="text-sm font-bold text-[#10B981]">
-                            +{upgradeModalCard.upgradeLevel} → +{targetLevel}
+                        <p className="text-xs text-[#9AA6C3] text-center">
+                          샤드를 지불하면 카드를 복구할 수 있습니다.<br/>
+                          <span className="text-[#FFB81C] font-bold">강화 레벨은 +0으로 초기화</span>됩니다.
+                        </p>
+                        <div className="flex items-center justify-center gap-2 bg-[#141B3D] rounded-lg py-2 px-4">
+                          <Sparkles className="w-4 h-4 text-[#FFB81C]" />
+                          <span className="text-lg font-bold text-[#FFB81C]">
+                            {upgradeResult.recoveryCost.toLocaleString()}
                           </span>
+                          <span className="text-xs text-[#8B95B5]">샤드</span>
                         </div>
-                        <div className="w-full bg-[#12182A] rounded-full h-1.5">
-                          <div 
-                            className="bg-[#10B981] h-1.5 rounded-full transition-all"
-                            style={{ width: `${(upgradeModalCard.upgradeLevel / GACHA_CONFIG.MAX_UPGRADE) * 100}%` }}
-                          />
+                        <div className="text-[10px] text-[#8B95B5] text-center">
+                          보유 샤드: {userData.shards.toLocaleString()}
                         </div>
                       </div>
+                    )}
 
-                      <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#9AA6C3]/30">
-                        <div className="text-xs text-[#9AA6C3] mb-1.5 text-center font-bold">강화 확률</div>
-                        <div className="grid grid-cols-3 gap-1 text-xs">
-                          <div className="bg-[#10B981]/20 border border-[#10B981]/50 rounded p-1.5 text-center">
-                            <div className="flex items-center justify-center gap-1 mb-0.5">
-                              <TrendingUp className="w-3 h-3 text-[#10B981]" />
-                              <span className="text-[#10B981] font-bold">성공</span>
-                            </div>
-                            <div className="text-base font-bold text-[#10B981]">{rates.success}%</div>
-                          </div>
-                          <div className="bg-[#FFB81C]/20 border border-[#FFB81C]/50 rounded p-1.5 text-center">
-                            <div className="flex items-center justify-center gap-1 mb-0.5">
-                              <Shield className="w-3 h-3 text-[#FFB81C]" />
-                              <span className="text-[#FFB81C] font-bold">유지</span>
-                            </div>
-                            <div className="text-base font-bold text-[#FFB81C]">{rates.keep}%</div>
-                          </div>
-                          <div className="bg-red-500/20 border border-red-500/50 rounded p-1.5 text-center">
-                            <div className="flex items-center justify-center gap-1 mb-0.5">
-                              <Skull className="w-3 h-3 text-red-400" />
-                              <span className="text-red-400 font-bold">파괴</span>
-                            </div>
-                            <div className="text-base font-bold text-red-400">{rates.break}%</div>
-                          </div>
-                        </div>
-                        {rates.break > 0 && (
-                          <div className="mt-2 text-xs text-red-400 text-center">
-                            ⚠️ 파괴 시 복구 비용(샤드)을 지불하거나 카드를 잃게 됩니다!
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#10B981]/30">
-                        <div className="text-xs text-[#9AA6C3] mb-1 text-center font-bold">성공 시 획득 스탯</div>
-                        <div className="grid grid-cols-5 gap-1 text-xs">
-                          {(["mechanics", "laning", "teamfight", "macro", "clutch"] as const).map((stat) => {
-                            const statNames = {
-                              mechanics: "메카닉", laning: "라인전", teamfight: "한타", macro: "운영", clutch: "클러치"
-                            };
-                            const bonus = statBonus[stat];
-                            return (
-                              <div key={stat} className={`text-center p-1 rounded ${bonus > 0 ? "bg-[#10B981]/20" : "bg-[#12182A]"}`}>
-                                <div className="text-[10px] text-[#9AA6C3] mb-0.5 truncate">{statNames[stat]}</div>
-                                <div className={`text-sm font-bold ${bonus > 0 ? "text-[#10B981]" : "text-gray-500"}`}>
-                                  {bonus > 0 ? `+${bonus}` : "-"}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#D4AF37]/30">
-                        <div className="flex justify-between items-center text-xs mb-1">
-                          <span className="text-[#9AA6C3]">강화 비용</span>
-                          <span className="font-bold text-[#D4AF37]">
-                            💎 {cost.toLocaleString()} 샤드
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-[#9AA6C3]">보유 샤드</span>
-                          <span className={`font-bold ${canAfford ? "text-[#10B981]" : "text-red-400"}`}>
-                            💎 {userData.shards.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-
+                    {/* 복구 / 포기 버튼 */}
+                    <div className="w-full flex flex-col gap-2">
                       <Button
-                        onClick={() => handleUpgrade(upgradeModalCard.instanceId)}
-                        disabled={!canAfford || isUpgrading}
-                        className="w-full bg-[#10B981] hover:bg-[#10B981]/80 text-white font-bold py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={async () => {
+                          const brokenCardId = upgradeResult.brokenCard!.instanceId;
+                          const success = await recoverBrokenCard(brokenCardId);
+                          if (success) {
+                            // 복구 성공 → upgradeResult 클리어 → +0 카드로 강화 모달 복귀
+                            setUpgradeResult(null);
+                            // 복구된 카드(+0)를 ownedCards에서 찾아서 강화 모달에 다시 표시
+                            setTimeout(() => {
+                              const recoveredCard = userData.ownedCards.find(c => c.instanceId === brokenCardId);
+                              if (recoveredCard) {
+                                setUpgradeModalCard({ ...recoveredCard, upgradeLevel: 0 });
+                              }
+                            }, 50);
+                          }
+                        }}
+                        disabled={userData.shards < (upgradeResult.recoveryCost || 0)}
+                        className="w-full font-bold bg-gradient-to-r from-[#FFB81C] to-[#F59E0B] hover:from-[#FFB81C]/90 hover:to-[#F59E0B]/90 text-[#0B0F1A] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        {isUpgrading 
-                          ? "⚡ 강화 중..." 
-                          : !canAfford 
-                          ? "샤드 부족" 
-                          : `⬆️ 강화하기 (${cost.toLocaleString()} 샤드)`
+                        <Shield className="w-4 h-4 mr-2" />
+                        {userData.shards < (upgradeResult.recoveryCost || 0)
+                          ? "샤드 부족"
+                          : `복구하기 (${(upgradeResult.recoveryCost || 0).toLocaleString()} 샤드)`
                         }
                       </Button>
-                    </div>
-                  </>
-                );
-              })()
-            ) : null}
-          </DialogContent>
-        </Dialog>
-
-        {/* 💥 BREAK 전용 복구 Dialog (강화 모달이 닫힌 후 단독으로 열림 → aria-hidden 충돌 없음) */}
-        <Dialog open={upgradeResult?.result === "BREAK" && upgradeModalCard === null && selectedCard === null ? true : false} onOpenChange={() => {}}>
-          <DialogContent 
-            className="max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 border-red-500/50 relative overflow-hidden"
-            onPointerDownOutside={(e) => e.preventDefault()}
-            onInteractOutside={(e) => e.preventDefault()}
-            onEscapeKeyDown={(e) => e.preventDefault()}
-          >
-            {upgradeResult?.result === "BREAK" && upgradeResult.brokenCard && (
-              <>
-                {/* 배경 효과 */}
-                <div 
-                  className="absolute inset-0 pointer-events-none z-0"
-                  style={{
-                    background: "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3), transparent 70%)",
-                    animation: "pulse 1s ease-out"
-                  }}
-                />
-                
-                <DialogHeader className="relative z-10">
-                  <DialogTitle className="text-2xl text-center font-bold text-red-400 flex items-center justify-center gap-2">
-                    <Skull className="w-6 h-6" /> 카드 파괴!
-                  </DialogTitle>
-                </DialogHeader>
-
-                <div className="flex flex-col items-center gap-3 py-3 relative z-10">
-                  <div className="text-center space-y-3">
-                    <div className="text-5xl">💥</div>
-                    <p className="text-sm text-[#9AA6C3]">
-                      강화 실패! 소모한 샤드: {upgradeResult.shardsCost.toLocaleString()}
-                    </p>
-                  </div>
-                  
-                  {/* 복구 옵션 */}
-                  {upgradeResult.recoveryCost !== undefined && (
-                    <div className="w-full bg-[#0A0E27] rounded-xl p-4 border border-[#FFB81C]/40 space-y-3">
-                      <div className="flex items-center justify-center gap-2 text-[#FFB81C]">
-                        <Shield className="w-5 h-5" />
-                        <span className="font-bold text-base">카드 복구 가능</span>
-                      </div>
-                      <p className="text-xs text-[#9AA6C3] text-center">
-                        샤드를 지불하면 카드를 복구할 수 있습니다.<br/>
-                        <span className="text-[#FFB81C] font-bold">강화 레벨은 +0으로 초기화</span>됩니다.
-                      </p>
-                      <div className="flex items-center justify-center gap-2 bg-[#141B3D] rounded-lg py-2 px-4">
-                        <Sparkles className="w-4 h-4 text-[#FFB81C]" />
-                        <span className="text-lg font-bold text-[#FFB81C]">
-                          {upgradeResult.recoveryCost.toLocaleString()}
-                        </span>
-                        <span className="text-xs text-[#8B95B5]">샤드</span>
-                      </div>
-                      <div className="text-[10px] text-[#8B95B5] text-center">
-                        보유 샤드: {userData.shards.toLocaleString()}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 복구 / 포기 버튼 */}
-                  <div className="w-full flex flex-col gap-2">
-                    <Button
-                      onClick={async () => {
-                        const brokenCardId = upgradeResult.brokenCard!.instanceId;
-                        const success = await recoverBrokenCard(brokenCardId);
-                        if (success) {
-                          // 복구 성공 → 복구 Dialog 닫기 (강화 모달은 열지 않음 - 깔끔하게 끝)
+                      <Button
+                        onClick={() => {
+                          const brokenId = upgradeResult.brokenCard!.instanceId;
+                          confirmCardBreak(brokenId);
                           setUpgradeResult(null);
-                        }
-                      }}
-                      disabled={userData.shards < (upgradeResult.recoveryCost || 0)}
-                      className="w-full font-bold bg-gradient-to-r from-[#FFB81C] to-[#F59E0B] hover:from-[#FFB81C]/90 hover:to-[#F59E0B]/90 text-[#0B0F1A] disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      {userData.shards < (upgradeResult.recoveryCost || 0)
-                        ? "샤드 부족"
-                        : `복구하기 (${(upgradeResult.recoveryCost || 0).toLocaleString()} 샤드)`
-                      }
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        const brokenId = upgradeResult.brokenCard!.instanceId;
-                        confirmCardBreak(brokenId);
-                        setUpgradeResult(null);
-                        if (selectedCard?.instanceId === brokenId) {
-                          setSelectedCard(null);
-                        }
-                      }}
-                      variant="ghost"
-                      className="w-full font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30"
-                    >
-                      <Skull className="w-4 h-4 mr-2" />
-                      복구 포기 (카드 파괴)
-                    </Button>
+                          setUpgradeModalCard(null);
+                        }}
+                        variant="ghost"
+                        className="w-full font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30"
+                      >
+                        <Skull className="w-4 h-4 mr-2" />
+                        복구 포기 (카드 파괴)
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              ) : (
+                /* 🔧 강화 UI */
+                (() => {
+                  const targetLevel = upgradeModalCard.upgradeLevel + 1;
+                  const rates = UPGRADE_RATES[targetLevel];
+                  const baseCost = UPGRADE_COSTS[upgradeModalCard.grade][targetLevel];
+                  const cost = isLiveCard(upgradeModalCard) ? baseCost * 100 : baseCost;
+                  const statBonus = calculateUpgradeStatBonus(upgradeModalCard.grade, targetLevel, upgradeModalCard.position);
+                  const canAfford = userData.shards >= cost;
+                  
+                  return (
+                    <>
+                      <DialogHeader>
+                        <DialogTitle className="text-lg text-center text-[#10B981] flex items-center justify-center gap-1.5">
+                          ⬆️ 카드 강화
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="flex flex-col items-center gap-2 py-1">
+                        {/* 카드 + 강화 애니메이션 */}
+                        <div 
+                          className="scale-90 -my-2 transition-all duration-300"
+                          style={{
+                            animation: isUpgrading ? "upgradeShake 0.5s ease-in-out infinite" : "none",
+                            filter: isUpgrading ? "brightness(1.5) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))" : "none"
+                          }}
+                        >
+                          <LCKHoloCard 
+                            card={upgradeModalCard} 
+                            size="small" 
+                            upgradeLevel={upgradeModalCard.upgradeLevel}
+                            disableFlip={true}
+                          />
+                          {isUpgrading && (
+                            <div 
+                              className="absolute inset-0 rounded-2xl pointer-events-none"
+                              style={{
+                                background: "radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent 70%)",
+                                animation: "pulse 0.5s ease-in-out infinite"
+                              }}
+                            />
+                          )}
+                        </div>
+
+                        <div className="text-center -mt-2">
+                          <h3 className="text-base font-bold">{upgradeModalCard.name}</h3>
+                          <div className="text-xs text-[#9AA6C3]">
+                            {upgradeModalCard.team} • {upgradeModalCard.year} • {upgradeModalCard.position}
+                          </div>
+                        </div>
+
+                        <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#10B981]/30">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs text-[#9AA6C3]">강화 단계</span>
+                            <span className="text-sm font-bold text-[#10B981]">
+                              +{upgradeModalCard.upgradeLevel} → +{targetLevel}
+                            </span>
+                          </div>
+                          <div className="w-full bg-[#12182A] rounded-full h-1.5">
+                            <div 
+                              className="bg-[#10B981] h-1.5 rounded-full transition-all"
+                              style={{ width: `${(upgradeModalCard.upgradeLevel / GACHA_CONFIG.MAX_UPGRADE) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#9AA6C3]/30">
+                          <div className="text-xs text-[#9AA6C3] mb-1.5 text-center font-bold">강화 확률</div>
+                          <div className="grid grid-cols-3 gap-1 text-xs">
+                            <div className="bg-[#10B981]/20 border border-[#10B981]/50 rounded p-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1 mb-0.5">
+                                <TrendingUp className="w-3 h-3 text-[#10B981]" />
+                                <span className="text-[#10B981] font-bold">성공</span>
+                              </div>
+                              <div className="text-base font-bold text-[#10B981]">{rates.success}%</div>
+                            </div>
+                            <div className="bg-[#FFB81C]/20 border border-[#FFB81C]/50 rounded p-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1 mb-0.5">
+                                <Shield className="w-3 h-3 text-[#FFB81C]" />
+                                <span className="text-[#FFB81C] font-bold">유지</span>
+                              </div>
+                              <div className="text-base font-bold text-[#FFB81C]">{rates.keep}%</div>
+                            </div>
+                            <div className="bg-red-500/20 border border-red-500/50 rounded p-1.5 text-center">
+                              <div className="flex items-center justify-center gap-1 mb-0.5">
+                                <Skull className="w-3 h-3 text-red-400" />
+                                <span className="text-red-400 font-bold">파괴</span>
+                              </div>
+                              <div className="text-base font-bold text-red-400">{rates.break}%</div>
+                            </div>
+                          </div>
+                          {rates.break > 0 && (
+                            <div className="mt-2 text-xs text-red-400 text-center">
+                              ⚠️ 파괴 시 복구 비용(샤드)을 지불하거나 카드를 잃게 됩니다!
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#10B981]/30">
+                          <div className="text-xs text-[#9AA6C3] mb-1 text-center font-bold">성공 시 획득 스탯</div>
+                          <div className="grid grid-cols-5 gap-1 text-xs">
+                            {(["mechanics", "laning", "teamfight", "macro", "clutch"] as const).map((stat) => {
+                              const statNames = {
+                                mechanics: "메카닉", laning: "라인전", teamfight: "한타", macro: "운영", clutch: "클러치"
+                              };
+                              const bonus = statBonus[stat];
+                              return (
+                                <div key={stat} className={`text-center p-1 rounded ${bonus > 0 ? "bg-[#10B981]/20" : "bg-[#12182A]"}`}>
+                                  <div className="text-[10px] text-[#9AA6C3] mb-0.5 truncate">{statNames[stat]}</div>
+                                  <div className={`text-sm font-bold ${bonus > 0 ? "text-[#10B981]" : "text-gray-500"}`}>
+                                    {bonus > 0 ? `+${bonus}` : "-"}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="w-full bg-[#0B0F1A] p-2 rounded border border-[#D4AF37]/30">
+                          <div className="flex justify-between items-center text-xs mb-1">
+                            <span className="text-[#9AA6C3]">강화 비용</span>
+                            <span className="font-bold text-[#D4AF37]">
+                              💎 {cost.toLocaleString()} 샤드
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-[#9AA6C3]">보유 샤드</span>
+                            <span className={`font-bold ${canAfford ? "text-[#10B981]" : "text-red-400"}`}>
+                              💎 {userData.shards.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => handleUpgrade(upgradeModalCard.instanceId)}
+                          disabled={!canAfford || isUpgrading}
+                          className="w-full bg-[#10B981] hover:bg-[#10B981]/80 text-white font-bold py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isUpgrading 
+                            ? "⚡ 강화 중..." 
+                            : !canAfford 
+                            ? "샤드 부족" 
+                            : `⬆️ 강화하기 (${cost.toLocaleString()} 샤드)`
+                          }
+                        </Button>
+                      </div>
+                    </>
+                  );
+                })()
+              )
+            ) : null}
           </DialogContent>
         </Dialog>
 
