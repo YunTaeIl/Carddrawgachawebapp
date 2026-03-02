@@ -5,7 +5,7 @@ import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { ArrowLeft, Filter, Sparkles, ChevronLeft, ChevronRight, Hammer, Search, X, TrendingUp, Shield, Skull, HelpCircle } from "lucide-react";
-import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, getTotalUpgradeBonus, calculateEnhancedOVR, isLiveCard } from "@/types/lck";
+import { Grade, Position, UserCard, LCKCard, GACHA_CONFIG, UPGRADE_RATES, UPGRADE_COSTS, calculateUpgradeStatBonus, getTotalUpgradeBonus, calculateEnhancedOVR, isLiveCard, UpgradeResult as UpgradeResultType } from "@/types/lck";
 import {
   Dialog,
   DialogContent,
@@ -264,7 +264,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
   };
 
   const [upgradeResult, setUpgradeResult] = useState<{
-    result: import("@/types/lck").UpgradeResult;
+    result: UpgradeResultType;
     card?: UserCard;
     beforeLevel: number;
     afterLevel: number;
@@ -980,17 +980,19 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         </div>
                       </div>
                       <div className="text-xs text-[#9AA6C3] mb-3">
-                        샤드 {GACHA_CONFIG.UPGRADE_COST}개당 +1 OVR
+                        카드 뒷면의 강화 버튼을 이용하세요
                       </div>
                       <Button
-                        onClick={() => handleUpgrade(selectedCard.instanceId)}
-                        disabled={
-                          selectedCard.upgradeLevel >= GACHA_CONFIG.MAX_UPGRADE ||
-                          userData.shards < GACHA_CONFIG.UPGRADE_COST
-                        }
-                        className="w-full bg-[#2B6CFF] hover:bg-[#2B6CFF]/80"
+                        onClick={() => {
+                          setSelectedCard(null);
+                          setUpgradeModalCard(selectedCard);
+                        }}
+                        disabled={selectedCard.upgradeLevel >= GACHA_CONFIG.MAX_UPGRADE}
+                        className="w-full bg-[#10B981] hover:bg-[#10B981]/80"
                       >
-                        강화 ({GACHA_CONFIG.UPGRADE_COST} 샤드)
+                        {selectedCard.upgradeLevel >= GACHA_CONFIG.MAX_UPGRADE 
+                          ? "✅ 최대 강화 달성" 
+                          : "⬆️ 강화하기"}
                       </Button>
                     </div>
                   </div>
@@ -1060,14 +1062,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             setUpgradeResult(null);
           }
         }}>
-          <DialogContent 
-            className={`max-w-sm bg-[#12182A] text-[#EAF0FF] max-h-[90vh] overflow-y-auto border-2 ${
-              upgradeResult?.result === "BREAK" ? "border-red-500/50" : "border-[#10B981]/50"
-            } relative overflow-hidden`}
-            onPointerDownOutside={(e) => { if (upgradeResult?.result === "BREAK") e.preventDefault(); }}
-            onInteractOutside={(e) => { if (upgradeResult?.result === "BREAK") e.preventDefault(); }}
-            onEscapeKeyDown={(e) => { if (upgradeResult?.result === "BREAK") e.preventDefault(); }}
-          >
+          <DialogContent className={`max-w-sm bg-[#12182A] text-[#EAF0FF] max-h-[90vh] overflow-y-auto border-2 relative ${upgradeResult?.result === "BREAK" ? "border-red-500/50" : "border-[#10B981]/50"}`}>
             {upgradeModalCard ? (
               upgradeResult?.result === "BREAK" && upgradeResult.brokenCard ? (
                 /* 💥 BREAK 복구 UI (강화 모달 안에서 인라인 표시) */
@@ -1166,11 +1161,12 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                 /* 🔧 강화 UI */
                 (() => {
                   const targetLevel = upgradeModalCard.upgradeLevel + 1;
-                  const rates = UPGRADE_RATES[targetLevel];
-                  const baseCost = UPGRADE_COSTS[upgradeModalCard.grade][targetLevel];
+                  const rates = UPGRADE_RATES[targetLevel] || { success: 0, keep: 0, break: 0 };
+                  const baseCost = (UPGRADE_COSTS[upgradeModalCard.grade] || {})[targetLevel] || 0;
                   const cost = isLiveCard(upgradeModalCard) ? baseCost * 100 : baseCost;
                   const statBonus = calculateUpgradeStatBonus(upgradeModalCard.grade, targetLevel, upgradeModalCard.position);
-                  const canAfford = userData.shards >= cost;
+                  const isMaxLevel = upgradeModalCard.upgradeLevel >= GACHA_CONFIG.MAX_UPGRADE;
+                  const canAfford = !isMaxLevel && userData.shards >= cost;
                   
                   return (
                     <>
@@ -1301,6 +1297,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         >
                           {isUpgrading 
                             ? "⚡ 강화 중..." 
+                            : isMaxLevel
+                            ? "✅ 최대 강화 달성"
                             : !canAfford 
                             ? "샤드 부족" 
                             : `⬆️ 강화하기 (${cost.toLocaleString()} 샤드)`
