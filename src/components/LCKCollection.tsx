@@ -297,23 +297,25 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     setIsUpgrading(false);
     
     if (result) {
-      // 결과 모달 표시
-      setUpgradeResult({
-        result: result.result,
-        card: result.card,
-        beforeLevel: beforeLevel,
-        afterLevel: result.result === "SUCCESS" ? beforeLevel + 1 : beforeLevel,
-        shardsCost: result.shardsCost,
-        recoveryCost: result.recoveryCost,
-        brokenCard: result.brokenCard,
-        statChanges: result.statChanges
-      });
-
-      // BREAK 시: 강화 모달을 먼저 닫고 → 별도 복구 Dialog로 전환 (동시 열림 방지)
-      // SUCCESS/KEEP 시: 강화 모달 내부에서 인라인 표시
       if (result.result === "BREAK") {
+        // 💥 BREAK: 강화 모달 먼저 닫고 → 복구 Dialog 열기 (동시 열림 방지)
         setUpgradeModalCard(null);
+        // 약간의 지연으로 Dialog 전환 충돌 방지
+        setTimeout(() => {
+          setUpgradeResult({
+            result: result.result,
+            card: result.card,
+            beforeLevel: beforeLevel,
+            afterLevel: beforeLevel,
+            shardsCost: result.shardsCost,
+            recoveryCost: result.recoveryCost,
+            brokenCard: result.brokenCard,
+            statChanges: result.statChanges
+          });
+        }, 150);
       }
+      // SUCCESS/KEEP: 별도 결과창 없이 강화 모달에서 수치만 자연스럽게 갱신됨
+      // (useEffect가 userData.ownedCards 변경 감지 → upgradeModalCard 자동 업데이트)
     }
   };
   
@@ -1048,155 +1050,15 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           </DialogContent>
         </Dialog>
 
-        {/* 🎲 강화 결과 (카드 상세에서 강화한 경우 - upgradeModalCard가 없을 때) */}
-        <Dialog open={upgradeResult !== null && upgradeResult.result !== "BREAK" && upgradeModalCard === null} onOpenChange={(open) => {
-          if (!open) setUpgradeResult(null);
-        }}>
-          <DialogContent className={`max-w-md bg-[#12182A] text-[#EAF0FF] border-2 relative overflow-hidden ${
-            upgradeResult?.result === "SUCCESS" ? "border-[#10B981]/50" : "border-[#FFB81C]/50"
-          }`}>
-            {upgradeResult && upgradeResult.result !== "BREAK" && upgradeModalCard === null && (
-              <>
-                <div 
-                  className="absolute inset-0 pointer-events-none z-0"
-                  style={{
-                    background: upgradeResult.result === "SUCCESS" 
-                      ? "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.3), transparent 70%)"
-                      : "radial-gradient(circle at 50% 50%, rgba(255, 184, 28, 0.3), transparent 70%)",
-                    animation: "pulse 1s ease-out"
-                  }}
-                />
-                <DialogHeader className="relative z-10">
-                  <DialogTitle className={`text-2xl text-center font-bold flex items-center justify-center gap-2 ${
-                    upgradeResult.result === "SUCCESS" ? "text-[#10B981]" : "text-[#FFB81C]"
-                  }`}>
-                    {upgradeResult.result === "SUCCESS" && <><TrendingUp className="w-6 h-6" /> 강화 성공!</>}
-                    {upgradeResult.result === "KEEP" && <><Shield className="w-6 h-6" /> 강화 유지</>}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="flex flex-col items-center gap-4 py-4 relative z-10">
-                  {upgradeResult.result === "SUCCESS" && upgradeResult.card && (
-                    <div className="text-center space-y-2">
-                      <div className="text-lg font-bold text-[#10B981]">
-                        +{upgradeResult.beforeLevel} → +{upgradeResult.afterLevel}
-                      </div>
-                    </div>
-                  )}
-                  {upgradeResult.result === "KEEP" && (
-                    <div className="text-center space-y-2">
-                      <div className="text-lg font-bold text-[#FFB81C]">
-                        +{upgradeResult.beforeLevel} (유지됨)
-                      </div>
-                    </div>
-                  )}
-                  <Button onClick={() => setUpgradeResult(null)} className="w-full font-bold bg-[#FFB81C] hover:bg-[#FFB81C]/80 text-[#0B0F1A]">
-                    확인
-                  </Button>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* 🔧 강화 모달 (카드 뒷면 클릭 시) - SUCCESS/KEEP 인라인 표시 */}
+        {/* 🔧 강화 모달 (카드 뒷면 클릭 시) - SUCCESS/KEEP은 수치만 자동 갱신 */}
         <Dialog open={upgradeModalCard !== null} onOpenChange={(open) => {
           if (!open) {
             setUpgradeModalCard(null);
-            setUpgradeResult(null);
           }
         }}>
-          <DialogContent className={`max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 max-h-[90vh] overflow-y-auto ${
-            upgradeResult?.result === "SUCCESS" ? "border-[#10B981]/50" :
-            upgradeResult?.result === "KEEP" ? "border-[#FFB81C]/50" :
-            "border-[#10B981]/50"
-          }`}>
-            {/* 🎲 SUCCESS/KEEP 결과 인라인 */}
-            {upgradeModalCard && upgradeResult && upgradeResult.result !== "BREAK" ? (
-              <div className="relative overflow-hidden">
-                <div 
-                  className="absolute inset-0 pointer-events-none z-0"
-                  style={{
-                    background: upgradeResult.result === "SUCCESS" 
-                      ? "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.3), transparent 70%)"
-                      : "radial-gradient(circle at 50% 50%, rgba(255, 184, 28, 0.3), transparent 70%)",
-                    animation: "pulse 1s ease-out"
-                  }}
-                />
-
-                <DialogHeader className="relative z-10">
-                  <DialogTitle className={`text-2xl text-center font-bold flex items-center justify-center gap-2 ${
-                    upgradeResult.result === "SUCCESS" ? "text-[#10B981]" : "text-[#FFB81C]"
-                  }`}>
-                    {upgradeResult.result === "SUCCESS" && <><TrendingUp className="w-6 h-6" /> 강화 성공!</>}
-                    {upgradeResult.result === "KEEP" && <><Shield className="w-6 h-6" /> 강화 유지</>}
-                  </DialogTitle>
-                </DialogHeader>
-
-                <div className="flex flex-col items-center gap-3 py-3 relative z-10">
-                  {upgradeResult.result === "SUCCESS" && upgradeResult.card && (
-                    <>
-                      <div className="transform scale-90 -my-1">
-                        <LCKHoloCard card={upgradeResult.card} size="small" upgradeLevel={upgradeResult.afterLevel} disableFlip={true} />
-                      </div>
-                      <div className="text-center space-y-2">
-                        <h3 className="text-lg font-bold">{upgradeResult.card.name}</h3>
-                        <div className="text-lg font-bold text-[#10B981]">
-                          +{upgradeResult.beforeLevel} → +{upgradeResult.afterLevel}
-                        </div>
-                        {upgradeResult.statChanges && (
-                          <div className="bg-[#0B0F1A] p-2 rounded border border-[#10B981]/30">
-                            <div className="text-xs text-[#9AA6C3] mb-1">획득한 스탯</div>
-                            <div className="grid grid-cols-5 gap-1 text-xs">
-                              {(Object.entries(upgradeResult.statChanges) as [keyof typeof upgradeResult.statChanges, number][]).map(([stat, value]) => {
-                                const statNames: Record<string, string> = {
-                                  mechanics: "메카닉", laning: "라인전", teamfight: "한타", macro: "운영", clutch: "클러치"
-                                };
-                                return value > 0 ? (
-                                  <div key={stat} className="text-center bg-[#10B981]/20 p-1.5 rounded">
-                                    <div className="text-[10px] text-[#9AA6C3] mb-0.5">{statNames[stat]}</div>
-                                    <div className="text-sm font-bold text-[#10B981]">+{value}</div>
-                                  </div>
-                                ) : null;
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        onClick={() => setUpgradeResult(null)}
-                        className="w-full font-bold bg-[#10B981] hover:bg-[#10B981]/80"
-                      >
-                        확인 (계속 강화)
-                      </Button>
-                    </>
-                  )}
-
-                  {upgradeResult.result === "KEEP" && upgradeResult.card && (
-                    <>
-                      <div className="transform scale-90 -my-1">
-                        <LCKHoloCard card={upgradeResult.card} size="small" upgradeLevel={upgradeResult.beforeLevel} disableFlip={true} />
-                      </div>
-                      <div className="text-center space-y-2">
-                        <h3 className="text-lg font-bold">{upgradeResult.card.name}</h3>
-                        <div className="text-lg font-bold text-[#FFB81C]">
-                          +{upgradeResult.beforeLevel} (유지됨)
-                        </div>
-                        <p className="text-sm text-[#9AA6C3]">
-                          강화에 실패했지만 카드는 안전합니다!
-                        </p>
-                      </div>
-                      <Button
-                        onClick={() => setUpgradeResult(null)}
-                        className="w-full font-bold bg-[#FFB81C] hover:bg-[#FFB81C]/80 text-[#0B0F1A]"
-                      >
-                        확인 (다시 도전)
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ) : upgradeModalCard && !upgradeResult ? (
-              /* 🔧 일반 강화 UI */
+          <DialogContent className="max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 border-[#10B981]/50 max-h-[90vh] overflow-y-auto">
+            {upgradeModalCard ? (
+              /* 🔧 강화 UI */
               (() => {
                 const targetLevel = upgradeModalCard.upgradeLevel + 1;
                 const rates = UPGRADE_RATES[targetLevel];
@@ -1348,7 +1210,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         </Dialog>
 
         {/* 💥 BREAK 전용 복구 Dialog (강화 모달이 닫힌 후 단독으로 열림 → aria-hidden 충돌 없음) */}
-        <Dialog open={upgradeResult?.result === "BREAK" && upgradeModalCard === null} onOpenChange={() => {}}>
+        <Dialog open={upgradeResult?.result === "BREAK" && upgradeModalCard === null ? true : false} onOpenChange={() => {}}>
           <DialogContent 
             className="max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 border-red-500/50 relative overflow-hidden"
             onPointerDownOutside={(e) => e.preventDefault()}
@@ -1408,15 +1270,17 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                   <div className="w-full flex flex-col gap-2">
                     <Button
                       onClick={async () => {
-                        const success = await recoverBrokenCard(upgradeResult.brokenCard!.instanceId);
+                        const brokenCardId = upgradeResult.brokenCard!.instanceId;
+                        const success = await recoverBrokenCard(brokenCardId);
                         if (success) {
-                          // 복구 성공 → 복구 Dialog 닫고 강화 모달 다시 열기
-                          const recoveredCard = userData.ownedCards.find(c => c.instanceId === upgradeResult.brokenCard!.instanceId);
+                          // 복구 성공 → 복구 Dialog 닫고 → 약간 지연 후 강화 모달 다시 열기
                           setUpgradeResult(null);
-                          // 복구된 카드로 강화 모달 다시 열기
-                          if (recoveredCard) {
-                            setUpgradeModalCard({ ...recoveredCard, upgradeLevel: 0 });
-                          }
+                          setTimeout(() => {
+                            const recoveredCard = userData.ownedCards.find(c => c.instanceId === brokenCardId);
+                            if (recoveredCard) {
+                              setUpgradeModalCard({ ...recoveredCard, upgradeLevel: 0 });
+                            }
+                          }, 200);
                         }
                       }}
                       disabled={userData.shards < (upgradeResult.recoveryCost || 0)}
