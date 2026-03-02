@@ -309,8 +309,11 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         statChanges: result.statChanges
       });
 
-      // 강화 결과를 강화 모달 내부에 인라인으로 표시 (별도 Dialog X → aria-hidden 충돌 방지)
-      // 성공/유지/파괴 모두 강화 모달 안에서 처리
+      // BREAK 시: 강화 모달을 먼저 닫고 → 별도 복구 Dialog로 전환 (동시 열림 방지)
+      // SUCCESS/KEEP 시: 강화 모달 내부에서 인라인 표시
+      if (result.result === "BREAK") {
+        setUpgradeModalCard(null);
+      }
     }
   };
   
@@ -1045,76 +1048,48 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           </DialogContent>
         </Dialog>
 
-        {/* 🎲 강화 결과 모달 - 강화 모달이 닫혀있을 때만 (카드 상세에서 강화한 경우) */}
-        <Dialog open={upgradeResult !== null && upgradeModalCard === null} onOpenChange={(open) => {
-          if (!open && upgradeResult?.result === "BREAK") return;
+        {/* 🎲 강화 결과 (카드 상세에서 강화한 경우 - upgradeModalCard가 없을 때) */}
+        <Dialog open={upgradeResult !== null && upgradeResult.result !== "BREAK" && upgradeModalCard === null} onOpenChange={(open) => {
           if (!open) setUpgradeResult(null);
         }}>
           <DialogContent className={`max-w-md bg-[#12182A] text-[#EAF0FF] border-2 relative overflow-hidden ${
-            upgradeResult?.result === "BREAK" ? "border-red-500/50" : "border-[#10B981]/50"
-          }`} onPointerDownOutside={(e) => {
-            if (upgradeResult?.result === "BREAK") e.preventDefault();
-          }} onInteractOutside={(e) => {
-            if (upgradeResult?.result === "BREAK") e.preventDefault();
-          }} onEscapeKeyDown={(e) => {
-            if (upgradeResult?.result === "BREAK") e.preventDefault();
-          }}>
-            {upgradeResult && upgradeModalCard === null && (
+            upgradeResult?.result === "SUCCESS" ? "border-[#10B981]/50" : "border-[#FFB81C]/50"
+          }`}>
+            {upgradeResult && upgradeResult.result !== "BREAK" && upgradeModalCard === null && (
               <>
                 <div 
                   className="absolute inset-0 pointer-events-none z-0"
                   style={{
                     background: upgradeResult.result === "SUCCESS" 
                       ? "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.3), transparent 70%)"
-                      : upgradeResult.result === "KEEP"
-                      ? "radial-gradient(circle at 50% 50%, rgba(255, 184, 28, 0.3), transparent 70%)"
-                      : "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3), transparent 70%)",
+                      : "radial-gradient(circle at 50% 50%, rgba(255, 184, 28, 0.3), transparent 70%)",
                     animation: "pulse 1s ease-out"
                   }}
                 />
                 <DialogHeader className="relative z-10">
                   <DialogTitle className={`text-2xl text-center font-bold flex items-center justify-center gap-2 ${
-                    upgradeResult.result === "SUCCESS" ? "text-[#10B981]" :
-                    upgradeResult.result === "KEEP" ? "text-[#FFB81C]" :
-                    "text-red-400"
+                    upgradeResult.result === "SUCCESS" ? "text-[#10B981]" : "text-[#FFB81C]"
                   }`}>
                     {upgradeResult.result === "SUCCESS" && <><TrendingUp className="w-6 h-6" /> 강화 성공!</>}
                     {upgradeResult.result === "KEEP" && <><Shield className="w-6 h-6" /> 강화 유지</>}
-                    {upgradeResult.result === "BREAK" && <><Skull className="w-6 h-6" /> 카드 파괴...</>}
                   </DialogTitle>
                 </DialogHeader>
-                <div className="flex flex-col items-center gap-4 py-4">
+                <div className="flex flex-col items-center gap-4 py-4 relative z-10">
                   {upgradeResult.result === "SUCCESS" && upgradeResult.card && (
-                    <>
-                      <div className="transform scale-90">
-                        <LCKHoloCard card={upgradeResult.card} size="medium" upgradeLevel={upgradeResult.afterLevel} disableFlip={true} />
-                      </div>
-                      <div className="text-center space-y-2">
-                        <h3 className="text-xl font-bold">{upgradeResult.card.name}</h3>
-                        <div className="text-lg font-bold text-[#10B981]">
-                          +{upgradeResult.beforeLevel} → +{upgradeResult.afterLevel}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  {upgradeResult.result === "KEEP" && upgradeResult.card && (
                     <div className="text-center space-y-2">
-                      <h3 className="text-xl font-bold">{upgradeResult.card.name}</h3>
+                      <div className="text-lg font-bold text-[#10B981]">
+                        +{upgradeResult.beforeLevel} → +{upgradeResult.afterLevel}
+                      </div>
+                    </div>
+                  )}
+                  {upgradeResult.result === "KEEP" && (
+                    <div className="text-center space-y-2">
                       <div className="text-lg font-bold text-[#FFB81C]">
                         +{upgradeResult.beforeLevel} (유지됨)
                       </div>
                     </div>
                   )}
-                  {upgradeResult.result === "BREAK" && upgradeResult.brokenCard && (
-                    <div className="text-center space-y-4">
-                      <div className="text-6xl">💥</div>
-                      <h3 className="text-2xl font-bold text-red-400">카드가 파괴됩니다!</h3>
-                    </div>
-                  )}
-                  <Button
-                    onClick={() => setUpgradeResult(null)}
-                    className="w-full font-bold bg-[#FFB81C] hover:bg-[#FFB81C]/80 text-[#0B0F1A]"
-                  >
+                  <Button onClick={() => setUpgradeResult(null)} className="w-full font-bold bg-[#FFB81C] hover:bg-[#FFB81C]/80 text-[#0B0F1A]">
                     확인
                   </Button>
                 </div>
@@ -1123,62 +1098,41 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
           </DialogContent>
         </Dialog>
 
-        {/* 🔧 강화 모달 (카드 뒷면 클릭 시) - 결과/복구도 여기서 인라인 표시 */}
+        {/* 🔧 강화 모달 (카드 뒷면 클릭 시) - SUCCESS/KEEP 인라인 표시 */}
         <Dialog open={upgradeModalCard !== null} onOpenChange={(open) => {
-          // BREAK 결과 표시 중에는 닫기 방지
-          if (!open && upgradeResult?.result === "BREAK") return;
           if (!open) {
             setUpgradeModalCard(null);
             setUpgradeResult(null);
           }
         }}>
-          <DialogContent 
-            className={`max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 max-h-[90vh] overflow-y-auto ${
-              upgradeResult?.result === "BREAK" ? "border-red-500/50" :
-              upgradeResult?.result === "SUCCESS" ? "border-[#10B981]/50" :
-              upgradeResult?.result === "KEEP" ? "border-[#FFB81C]/50" :
-              "border-[#10B981]/50"
-            }`}
-            onPointerDownOutside={(e) => {
-              if (upgradeResult?.result === "BREAK") e.preventDefault();
-            }}
-            onInteractOutside={(e) => {
-              if (upgradeResult?.result === "BREAK") e.preventDefault();
-            }}
-            onEscapeKeyDown={(e) => {
-              if (upgradeResult?.result === "BREAK") e.preventDefault();
-            }}
-          >
-            {/* 🎲 강화 결과 인라인 표시 (upgradeResult가 있을 때) */}
-            {upgradeModalCard && upgradeResult ? (
+          <DialogContent className={`max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 max-h-[90vh] overflow-y-auto ${
+            upgradeResult?.result === "SUCCESS" ? "border-[#10B981]/50" :
+            upgradeResult?.result === "KEEP" ? "border-[#FFB81C]/50" :
+            "border-[#10B981]/50"
+          }`}>
+            {/* 🎲 SUCCESS/KEEP 결과 인라인 */}
+            {upgradeModalCard && upgradeResult && upgradeResult.result !== "BREAK" ? (
               <div className="relative overflow-hidden">
-                {/* 결과별 배경 효과 */}
                 <div 
                   className="absolute inset-0 pointer-events-none z-0"
                   style={{
                     background: upgradeResult.result === "SUCCESS" 
                       ? "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.3), transparent 70%)"
-                      : upgradeResult.result === "KEEP"
-                      ? "radial-gradient(circle at 50% 50%, rgba(255, 184, 28, 0.3), transparent 70%)"
-                      : "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3), transparent 70%)",
+                      : "radial-gradient(circle at 50% 50%, rgba(255, 184, 28, 0.3), transparent 70%)",
                     animation: "pulse 1s ease-out"
                   }}
                 />
 
                 <DialogHeader className="relative z-10">
                   <DialogTitle className={`text-2xl text-center font-bold flex items-center justify-center gap-2 ${
-                    upgradeResult.result === "SUCCESS" ? "text-[#10B981]" :
-                    upgradeResult.result === "KEEP" ? "text-[#FFB81C]" :
-                    "text-red-400"
+                    upgradeResult.result === "SUCCESS" ? "text-[#10B981]" : "text-[#FFB81C]"
                   }`}>
                     {upgradeResult.result === "SUCCESS" && <><TrendingUp className="w-6 h-6" /> 강화 성공!</>}
                     {upgradeResult.result === "KEEP" && <><Shield className="w-6 h-6" /> 강화 유지</>}
-                    {upgradeResult.result === "BREAK" && <><Skull className="w-6 h-6" /> 카드 파괴!</>}
                   </DialogTitle>
                 </DialogHeader>
 
                 <div className="flex flex-col items-center gap-3 py-3 relative z-10">
-                  {/* ✅ 성공 */}
                   {upgradeResult.result === "SUCCESS" && upgradeResult.card && (
                     <>
                       <div className="transform scale-90 -my-1">
@@ -1217,7 +1171,6 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                     </>
                   )}
 
-                  {/* 😐 유지 */}
                   {upgradeResult.result === "KEEP" && upgradeResult.card && (
                     <>
                       <div className="transform scale-90 -my-1">
@@ -1238,80 +1191,6 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                       >
                         확인 (다시 도전)
                       </Button>
-                    </>
-                  )}
-
-                  {/* 💥 파괴 → 복구 선택 */}
-                  {upgradeResult.result === "BREAK" && upgradeResult.brokenCard && (
-                    <>
-                      <div className="text-center space-y-3">
-                        <div className="text-5xl">💥</div>
-                        <p className="text-sm text-[#9AA6C3]">
-                          소모한 샤드: {upgradeResult.shardsCost.toLocaleString()}
-                        </p>
-                      </div>
-                      
-                      {/* 복구 옵션 */}
-                      {upgradeResult.recoveryCost !== undefined && (
-                        <div className="w-full bg-[#0A0E27] rounded-xl p-4 border border-[#FFB81C]/40 space-y-3">
-                          <div className="flex items-center justify-center gap-2 text-[#FFB81C]">
-                            <Shield className="w-5 h-5" />
-                            <span className="font-bold text-base">카드 복구 가능</span>
-                          </div>
-                          <p className="text-xs text-[#9AA6C3] text-center">
-                            샤드를 지불하면 카드를 복구할 수 있습니다.<br/>
-                            <span className="text-[#FFB81C] font-bold">강화 레벨은 +0으로 초기화</span>됩니다.
-                          </p>
-                          <div className="flex items-center justify-center gap-2 bg-[#141B3D] rounded-lg py-2 px-4">
-                            <Sparkles className="w-4 h-4 text-[#FFB81C]" />
-                            <span className="text-lg font-bold text-[#FFB81C]">
-                              {upgradeResult.recoveryCost.toLocaleString()}
-                            </span>
-                            <span className="text-xs text-[#8B95B5]">샤드</span>
-                          </div>
-                          <div className="text-[10px] text-[#8B95B5] text-center">
-                            보유 샤드: {userData.shards.toLocaleString()}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 복구 / 포기 버튼 */}
-                      <div className="w-full flex flex-col gap-2">
-                        <Button
-                          onClick={async () => {
-                            const success = await recoverBrokenCard(upgradeResult.brokenCard!.instanceId);
-                            if (success) {
-                              // 복구 성공 → 강화 모달로 복귀 (+0 상태)
-                              setUpgradeResult(null);
-                              // upgradeModalCard는 useEffect로 자동 갱신됨
-                            }
-                          }}
-                          disabled={userData.shards < (upgradeResult.recoveryCost || 0)}
-                          className="w-full font-bold bg-gradient-to-r from-[#FFB81C] to-[#F59E0B] hover:from-[#FFB81C]/90 hover:to-[#F59E0B]/90 text-[#0B0F1A] disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <Shield className="w-4 h-4 mr-2" />
-                          {userData.shards < (upgradeResult.recoveryCost || 0)
-                            ? "샤드 부족"
-                            : `복구하기 (${(upgradeResult.recoveryCost || 0).toLocaleString()} 샤드)`
-                          }
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            const brokenId = upgradeResult.brokenCard!.instanceId;
-                            confirmCardBreak(brokenId);
-                            setUpgradeResult(null);
-                            setUpgradeModalCard(null); // 강화창 닫기
-                            if (selectedCard?.instanceId === brokenId) {
-                              setSelectedCard(null);
-                            }
-                          }}
-                          variant="ghost"
-                          className="w-full font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30"
-                        >
-                          <Skull className="w-4 h-4 mr-2" />
-                          복구 포기 (카드 파괴)
-                        </Button>
-                      </div>
                     </>
                   )}
                 </div>
@@ -1465,6 +1344,109 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                 );
               })()
             ) : null}
+          </DialogContent>
+        </Dialog>
+
+        {/* 💥 BREAK 전용 복구 Dialog (강화 모달이 닫힌 후 단독으로 열림 → aria-hidden 충돌 없음) */}
+        <Dialog open={upgradeResult?.result === "BREAK" && upgradeModalCard === null} onOpenChange={() => {}}>
+          <DialogContent 
+            className="max-w-sm bg-[#12182A] text-[#EAF0FF] border-2 border-red-500/50 relative overflow-hidden"
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+          >
+            {upgradeResult?.result === "BREAK" && upgradeResult.brokenCard && (
+              <>
+                {/* 배경 효과 */}
+                <div 
+                  className="absolute inset-0 pointer-events-none z-0"
+                  style={{
+                    background: "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3), transparent 70%)",
+                    animation: "pulse 1s ease-out"
+                  }}
+                />
+                
+                <DialogHeader className="relative z-10">
+                  <DialogTitle className="text-2xl text-center font-bold text-red-400 flex items-center justify-center gap-2">
+                    <Skull className="w-6 h-6" /> 카드 파괴!
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="flex flex-col items-center gap-3 py-3 relative z-10">
+                  <div className="text-center space-y-3">
+                    <div className="text-5xl">💥</div>
+                    <p className="text-sm text-[#9AA6C3]">
+                      강화 실패! 소모한 샤드: {upgradeResult.shardsCost.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  {/* 복구 옵션 */}
+                  {upgradeResult.recoveryCost !== undefined && (
+                    <div className="w-full bg-[#0A0E27] rounded-xl p-4 border border-[#FFB81C]/40 space-y-3">
+                      <div className="flex items-center justify-center gap-2 text-[#FFB81C]">
+                        <Shield className="w-5 h-5" />
+                        <span className="font-bold text-base">카드 복구 가능</span>
+                      </div>
+                      <p className="text-xs text-[#9AA6C3] text-center">
+                        샤드를 지불하면 카드를 복구할 수 있습니다.<br/>
+                        <span className="text-[#FFB81C] font-bold">강화 레벨은 +0으로 초기화</span>됩니다.
+                      </p>
+                      <div className="flex items-center justify-center gap-2 bg-[#141B3D] rounded-lg py-2 px-4">
+                        <Sparkles className="w-4 h-4 text-[#FFB81C]" />
+                        <span className="text-lg font-bold text-[#FFB81C]">
+                          {upgradeResult.recoveryCost.toLocaleString()}
+                        </span>
+                        <span className="text-xs text-[#8B95B5]">샤드</span>
+                      </div>
+                      <div className="text-[10px] text-[#8B95B5] text-center">
+                        보유 샤드: {userData.shards.toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 복구 / 포기 버튼 */}
+                  <div className="w-full flex flex-col gap-2">
+                    <Button
+                      onClick={async () => {
+                        const success = await recoverBrokenCard(upgradeResult.brokenCard!.instanceId);
+                        if (success) {
+                          // 복구 성공 → 복구 Dialog 닫고 강화 모달 다시 열기
+                          const recoveredCard = userData.ownedCards.find(c => c.instanceId === upgradeResult.brokenCard!.instanceId);
+                          setUpgradeResult(null);
+                          // 복구된 카드로 강화 모달 다시 열기
+                          if (recoveredCard) {
+                            setUpgradeModalCard({ ...recoveredCard, upgradeLevel: 0 });
+                          }
+                        }
+                      }}
+                      disabled={userData.shards < (upgradeResult.recoveryCost || 0)}
+                      className="w-full font-bold bg-gradient-to-r from-[#FFB81C] to-[#F59E0B] hover:from-[#FFB81C]/90 hover:to-[#F59E0B]/90 text-[#0B0F1A] disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      {userData.shards < (upgradeResult.recoveryCost || 0)
+                        ? "샤드 부족"
+                        : `복구하기 (${(upgradeResult.recoveryCost || 0).toLocaleString()} 샤드)`
+                      }
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        const brokenId = upgradeResult.brokenCard!.instanceId;
+                        confirmCardBreak(brokenId);
+                        setUpgradeResult(null);
+                        if (selectedCard?.instanceId === brokenId) {
+                          setSelectedCard(null);
+                        }
+                      }}
+                      variant="ghost"
+                      className="w-full font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30"
+                    >
+                      <Skull className="w-4 h-4 mr-2" />
+                      복구 포기 (카드 파괴)
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </DialogContent>
         </Dialog>
 
