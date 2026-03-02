@@ -1,6 +1,6 @@
 // LCK 컬렉션 (인벤토리) 화면
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useGame, CraftResult } from "@/contexts/GameContext";
 import { Button } from "@/app/components/ui/button";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
@@ -263,6 +263,24 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     setCurrentPage(1);
   };
 
+  // BREAK 결과를 임시 저장 (강화 모달이 완전히 닫힌 후 복구 Dialog를 열기 위해)
+  const pendingBreakRef = useRef<{
+    result: import("@/types/lck").UpgradeResult;
+    card?: UserCard;
+    beforeLevel: number;
+    afterLevel: number;
+    shardsCost: number;
+    recoveryCost?: number;
+    brokenCard?: UserCard;
+    statChanges?: {
+      mechanics: number;
+      laning: number;
+      teamfight: number;
+      macro: number;
+      clutch: number;
+    };
+  } | null>(null);
+
   const [upgradeResult, setUpgradeResult] = useState<{
     result: import("@/types/lck").UpgradeResult;
     card?: UserCard;
@@ -298,26 +316,35 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     
     if (result) {
       if (result.result === "BREAK") {
-        // 💥 BREAK: 강화 모달 먼저 닫고 → 복구 Dialog 열기 (동시 열림 방지)
+        // 💥 BREAK: ref에 결과 저장 후 강화 모달 닫기
+        // → useEffect가 모달 닫힘 감지 후 복구 Dialog 열기
+        pendingBreakRef.current = {
+          result: result.result,
+          card: result.card,
+          beforeLevel: beforeLevel,
+          afterLevel: beforeLevel,
+          shardsCost: result.shardsCost,
+          recoveryCost: result.recoveryCost,
+          brokenCard: result.brokenCard,
+          statChanges: result.statChanges
+        };
         setUpgradeModalCard(null);
-        // 약간의 지연으로 Dialog 전환 충돌 방지
-        setTimeout(() => {
-          setUpgradeResult({
-            result: result.result,
-            card: result.card,
-            beforeLevel: beforeLevel,
-            afterLevel: beforeLevel,
-            shardsCost: result.shardsCost,
-            recoveryCost: result.recoveryCost,
-            brokenCard: result.brokenCard,
-            statChanges: result.statChanges
-          });
-        }, 150);
       }
       // SUCCESS/KEEP: 별도 결과창 없이 강화 모달에서 수치만 자연스럽게 갱신됨
-      // (useEffect가 userData.ownedCards 변경 감지 → upgradeModalCard 자동 업데이트)
     }
   };
+
+  // 💥 강화 모달이 완전히 닫힌 후 BREAK 복구 Dialog를 안전하게 열기
+  useEffect(() => {
+    if (upgradeModalCard === null && pendingBreakRef.current) {
+      // 강화 모달의 exit 애니메이션이 끝날 때까지 대기 (300ms)
+      const timer = setTimeout(() => {
+        setUpgradeResult(pendingBreakRef.current);
+        pendingBreakRef.current = null;
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [upgradeModalCard]);
   
   // 🔥 샤드로 랜덤 카드 제작 핸들러
   const handleCraftCard = async (grade: "A" | "S" | "LIVE-A" | "LIVE-S") => {
@@ -1273,14 +1300,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         const brokenCardId = upgradeResult.brokenCard!.instanceId;
                         const success = await recoverBrokenCard(brokenCardId);
                         if (success) {
-                          // 복구 성공 → 복구 Dialog 닫고 → 약간 지연 후 강화 모달 다시 열기
+                          // 복구 성공 → 복구 Dialog 닫기 (강화 모달은 열지 않음 - 깔끔하게 끝)
                           setUpgradeResult(null);
-                          setTimeout(() => {
-                            const recoveredCard = userData.ownedCards.find(c => c.instanceId === brokenCardId);
-                            if (recoveredCard) {
-                              setUpgradeModalCard({ ...recoveredCard, upgradeLevel: 0 });
-                            }
-                          }, 200);
                         }
                       }}
                       disabled={userData.shards < (upgradeResult.recoveryCost || 0)}
