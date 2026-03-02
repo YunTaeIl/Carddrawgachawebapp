@@ -309,10 +309,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         statChanges: result.statChanges
       });
 
-      // 🔥 파괴 시 강화창 닫기 (복구 모달은 유지)
-      if (result.result === "BREAK") {
-        setUpgradeModalCard(null);
-      }
+      // 🔥 파괴 시 강화창은 복구/포기 선택 후에 닫음 (Dialog 충돌 방지)
+      // setUpgradeModalCard를 여기서 닫으면 Radix Dialog 간 충돌로 결과 모달이 안 열림
       // 성공/유지 시에는 강화창 유지 (닫지 않음)
     }
   };
@@ -1058,6 +1056,10 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
             upgradeResult?.result === "BREAK" ? "border-red-500/50" : "border-[#10B981]/50"
           }`} onPointerDownOutside={(e) => {
             if (upgradeResult?.result === "BREAK") e.preventDefault();
+          }} onInteractOutside={(e) => {
+            if (upgradeResult?.result === "BREAK") e.preventDefault();
+          }} onEscapeKeyDown={(e) => {
+            if (upgradeResult?.result === "BREAK") e.preventDefault();
           }}>
             {upgradeResult && (
               <>
@@ -1180,7 +1182,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                           const success = await recoverBrokenCard(upgradeResult.brokenCard!.instanceId);
                           if (success) {
                             setUpgradeResult(null);
-                            // 복구 후 카드 선택 해제하지 않음
+                            setUpgradeModalCard(null); // 강화 모달도 닫기
                           }
                         }}
                         disabled={userData.shards < (upgradeResult.recoveryCost || 0)}
@@ -1196,6 +1198,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                         onClick={() => {
                           confirmCardBreak(upgradeResult.brokenCard!.instanceId);
                           setUpgradeResult(null);
+                          setUpgradeModalCard(null); // 강화 모달도 닫기
                           if (selectedCard?.instanceId === upgradeResult.brokenCard!.instanceId) {
                             setSelectedCard(null);
                           }
