@@ -58,6 +58,10 @@ interface GameContextType {
   setSquadCard: (position: Position, card: UserCard | null) => void;
   saveSquadToDB: () => Promise<boolean>;
   
+  // 🔥 카드 복구 (파괴된 카드를 샤드로 복구, 강화 레벨 +0으로 초기화)
+  recoverBrokenCard: (cardInstanceId: string) => Promise<boolean>;
+  confirmCardBreak: (cardInstanceId: string) => void;
+  
   // 유틸
   resetGame: () => void;
   addCurrency: (amount: number, type?: "points" | "shards") => void;
@@ -631,40 +635,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       toast.warning(`😐 강화 유지... +${currentLevel}`);
     } else {
-      // BREAK - 카드 삭제
-      const newCards = userData.ownedCards.filter(c => c.instanceId !== cardInstanceId);
-      
-      // 스쿼드에서도 제거
-      const newSquad = { ...userData.squad };
-      Object.keys(newSquad).forEach(pos => {
-        const p = pos as Position;
-        if (newSquad[p]?.instanceId === cardInstanceId) {
-          newSquad[p] = null;
-        }
-      });
-
+      // 🔥 BREAK - 카드를 즉시 삭제하지 않음! (복구 기회 제공)
+      // 샤드만 차감, 카드는 유지 (UI에서 복구/포기 선택)
       newData = {
         ...userData,
-        ownedCards: newCards,
-        squad: newSquad,
         shards: userData.shards - cost,
         totalShardsSpent: (userData.totalShardsSpent || 0) + cost
       };
+      updatedCard = card;
 
-      // DB에서 삭제
-      if (isAuthenticated && accessToken) {
-        deleteUserCard(accessToken, cardInstanceId).catch(() => {});
-      }
-
-      toast.error(`💥 강화 실패! 카드가 파괴되었습니다...`);
+      toast.error(`💥 강화 실패! 카드가 파괴됩니다...`);
     }
 
     setUserData(newData);
+
+    // 🔥 BREAK 시 복구 비용 계산 (상점 구매가의 1/10)
+    let recoveryCost: number | undefined;
+    let brokenCard: UserCard | undefined;
+    if (result === "BREAK") {
+      const isLive = isLiveCard(card);
+      const shopPrices: Record<string, number> = isLive
+        ? { C: 400000, B: 3500000, A: 7000000, S: 10000000 }
+        : { C: 4000, B: 35000, A: 70000, S: 100000 };
+      recoveryCost = Math.floor((shopPrices[card.grade] || 10000) / 10);
+      brokenCard = card;
+    }
 
     return {
       result,
       card: updatedCard,
       shardsCost: cost,
+      recoveryCost,
+      brokenCard,
       statChanges
     };
   };
@@ -974,6 +976,79 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 🔥 카드 복구 (파괴된 카드를 샤드로 복구, 강화 레벨 +0으로 초기화)
+  const recoverBrokenCard = async (cardInstanceId: string): Promise<boolean> => {
+    const cardIndex = userData.ownedCards.findIndex(c => c.instanceId === cardInstanceId);
+    if (cardIndex === -1) {
+      toast.error("복구할 카드를 찾을 수 없습니다!");
+      return false;
+    }
+
+    const card = userData.ownedCards[cardIndex];
+    
+    // 복구 비용 계산 (상점 구매가의 1/10)
+    const isLive = isLiveCard(card);
+    const shopPrices: Record<string, number> = isLive
+      ? { C: 400000, B: 3500000, A: 7000000, S: 10000000 }
+      : { C: 4000, B: 35000, A: 70000, S: 100000 };
+    const recoveryCost = Math.floor((shopPrices[card.grade] || 10000) / 10);
+
+    if (userData.shards < recoveryCost) {
+      toast.error(`샤드가 부족합니다! (필요: ${recoveryCost.toLocaleString()})`);
+      return false;
+    }
+
+    // 카드 복구: 강화 레벨 +0으로 초기화, 샤드 차감
+    const newCards = [...userData.ownedCards];
+    newCards[cardIndex] = { ...card, upgradeLevel: 0 };
+
+    const newData: UserData = {
+      ...userData,
+      ownedCards: newCards,
+      shards: userData.shards - recoveryCost,
+      totalShardsSpent: (userData.totalShardsSpent || 0) + recoveryCost
+    };
+
+    setUserData(newData);
+
+    // DB 저장 (upgrade_level을 0으로)
+    if (isAuthenticated && accessToken) {
+      upgradeUserCardDirect(accessToken, cardInstanceId, 0).catch(() => {});
+    }
+
+    toast.success(`🛡️ 카드 복구 성공! +0으로 초기화되었습니다.`);
+    return true;
+  };
+
+  // 🔥 카드 파괴 확인 (복구 거부 → 실제 삭제)
+  const confirmCardBreak = (cardInstanceId: string) => {
+    const newCards = userData.ownedCards.filter(c => c.instanceId !== cardInstanceId);
+
+    // 스쿼드에서도 제거
+    const newSquad = { ...userData.squad };
+    Object.keys(newSquad).forEach(pos => {
+      const p = pos as Position;
+      if (newSquad[p]?.instanceId === cardInstanceId) {
+        newSquad[p] = null;
+      }
+    });
+
+    const newData: UserData = {
+      ...userData,
+      ownedCards: newCards,
+      squad: newSquad
+    };
+
+    setUserData(newData);
+
+    // DB에서 삭제
+    if (isAuthenticated && accessToken) {
+      deleteUserCard(accessToken, cardInstanceId).catch(() => {});
+    }
+
+    toast.error(`💀 카드가 영구 삭제되었습니다...`);
+  };
+
   // 게임 리셋
   const resetGame = () => {
     const defaultData = getDefaultUserData();
@@ -1018,6 +1093,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     craftSpecificCard,
     setSquadCard,
     saveSquadToDB,
+    recoverBrokenCard,
+    confirmCardBreak,
     resetGame,
     addCurrency,
     incrementLeagueCount

@@ -118,6 +118,8 @@ export interface UpgradeResultData {
   result: UpgradeResult;
   card?: UserCard; // SUCCESS/KEEP 시 업데이트된 카드
   shardsCost: number;
+  recoveryCost?: number; // 🔥 BREAK 시 복구 비용
+  brokenCard?: UserCard; // 🔥 BREAK 시 파괴된 카드 정보
   statChanges?: {
     mechanics: number;
     laning: number;

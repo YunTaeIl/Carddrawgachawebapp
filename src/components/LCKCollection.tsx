@@ -41,7 +41,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     );
   }
   
-  const { userData, allCards, upgradeCard, craftCardWithShards, craftLiveCardWithShards, craftSpecificCard } = gameContext;
+  const { userData, allCards, upgradeCard, craftCardWithShards, craftLiveCardWithShards, craftSpecificCard, recoverBrokenCard, confirmCardBreak } = gameContext;
   const [activeTab, setActiveTab] = useState<"owned" | "craft">("owned");
   const [selectedCard, setSelectedCard] = useState<UserCard | null>(null);
   const [upgradeModalCard, setUpgradeModalCard] = useState<UserCard | null>(null); // 🔧 강화 모달용
@@ -269,6 +269,8 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
     beforeLevel: number;
     afterLevel: number;
     shardsCost: number;
+    recoveryCost?: number;
+    brokenCard?: UserCard;
     statChanges?: {
       mechanics: number;
       laning: number;
@@ -302,16 +304,14 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         beforeLevel: beforeLevel,
         afterLevel: result.result === "SUCCESS" ? beforeLevel + 1 : beforeLevel,
         shardsCost: result.shardsCost,
+        recoveryCost: result.recoveryCost,
+        brokenCard: result.brokenCard,
         statChanges: result.statChanges
       });
 
-      // 🔥 파괴 시에만 강화창 닫기
+      // 🔥 파괴 시 강화창 닫기 (복구 모달은 유지)
       if (result.result === "BREAK") {
         setUpgradeModalCard(null);
-        // 파괴된 경우 선택 해제
-        if (selectedCard?.instanceId === cardInstanceId) {
-          setSelectedCard(null);
-        }
       }
       // 성공/유지 시에는 강화창 유지 (닫지 않음)
     }
@@ -1049,8 +1049,16 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
         </Dialog>
 
         {/* 🎲 강화 결과 모달 */}
-        <Dialog open={upgradeResult !== null} onOpenChange={() => setUpgradeResult(null)}>
-          <DialogContent className="max-w-md bg-[#12182A] text-[#EAF0FF] border-2 border-[#10B981]/50 relative overflow-hidden">
+        <Dialog open={upgradeResult !== null} onOpenChange={(open) => {
+          // BREAK 시에는 닫기 방지 (복구/포기 선택 필수)
+          if (!open && upgradeResult?.result === "BREAK") return;
+          if (!open) setUpgradeResult(null);
+        }}>
+          <DialogContent className={`max-w-md bg-[#12182A] text-[#EAF0FF] border-2 relative overflow-hidden ${
+            upgradeResult?.result === "BREAK" ? "border-red-500/50" : "border-[#10B981]/50"
+          }`} onPointerDownOutside={(e) => {
+            if (upgradeResult?.result === "BREAK") e.preventDefault();
+          }}>
             {upgradeResult && (
               <>
                 {/* ⬆️ 결과별 폭발 효과 */}
@@ -1131,27 +1139,85 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                     </>
                   )}
                   {upgradeResult.result === "BREAK" && (
-                    <div className="text-center space-y-4 py-8">
+                    <div className="text-center space-y-4 py-6">
                       <div className="text-6xl">💥</div>
-                      <h3 className="text-2xl font-bold text-red-400">카드가 파괴되었습니다!</h3>
+                      <h3 className="text-2xl font-bold text-red-400">카드가 파괴됩니다!</h3>
                       <p className="text-sm text-[#9AA6C3]">
-                        강화 실패로 카드가 영구 삭제되었습니다.<br/>
-                        소모한 샤드: {upgradeResult.shardsCost.toLocaleString()}
+                        강화 실패! 소모한 샤드: {upgradeResult.shardsCost.toLocaleString()}
                       </p>
+                      
+                      {/* 🔥 복구 옵션 */}
+                      {upgradeResult.recoveryCost !== undefined && upgradeResult.brokenCard && (
+                        <div className="bg-[#0A0E27] rounded-xl p-4 border border-[#FFB81C]/40 space-y-3 mt-2">
+                          <div className="flex items-center justify-center gap-2 text-[#FFB81C]">
+                            <Shield className="w-5 h-5" />
+                            <span className="font-bold text-base">카드 복구 가능</span>
+                          </div>
+                          <p className="text-xs text-[#9AA6C3]">
+                            샤드를 지불하면 카드를 복구할 수 있습니다.<br/>
+                            <span className="text-[#FFB81C] font-bold">강화 레벨은 +0으로 초기화</span>됩니다.
+                          </p>
+                          <div className="flex items-center justify-center gap-2 bg-[#141B3D] rounded-lg py-2 px-4">
+                            <Sparkles className="w-4 h-4 text-[#FFB81C]" />
+                            <span className="text-lg font-bold text-[#FFB81C]">
+                              {upgradeResult.recoveryCost.toLocaleString()}
+                            </span>
+                            <span className="text-xs text-[#8B95B5]">샤드</span>
+                          </div>
+                          <div className="text-[10px] text-[#8B95B5]">
+                            보유 샤드: {userData.shards.toLocaleString()}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* 확인 버튼 */}
-                  <Button
-                    onClick={() => setUpgradeResult(null)}
-                    className={`w-full font-bold ${
-                      upgradeResult.result === "SUCCESS" ? "bg-[#10B981] hover:bg-[#10B981]/80" :
-                      upgradeResult.result === "KEEP" ? "bg-[#FFB81C] hover:bg-[#FFB81C]/80 text-[#0B0F1A]" :
-                      "bg-red-500 hover:bg-red-600"
-                    }`}
-                  >
-                    확인
-                  </Button>
+                  {/* 버튼 */}
+                  {upgradeResult.result === "BREAK" && upgradeResult.brokenCard ? (
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={async () => {
+                          const success = await recoverBrokenCard(upgradeResult.brokenCard!.instanceId);
+                          if (success) {
+                            setUpgradeResult(null);
+                            // 복구 후 카드 선택 해제하지 않음
+                          }
+                        }}
+                        disabled={userData.shards < (upgradeResult.recoveryCost || 0)}
+                        className="w-full font-bold bg-gradient-to-r from-[#FFB81C] to-[#F59E0B] hover:from-[#FFB81C]/90 hover:to-[#F59E0B]/90 text-[#0B0F1A] disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Shield className="w-4 h-4 mr-2" />
+                        {userData.shards < (upgradeResult.recoveryCost || 0)
+                          ? "샤드 부족"
+                          : `복구하기 (${(upgradeResult.recoveryCost || 0).toLocaleString()} 샤드)`
+                        }
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          confirmCardBreak(upgradeResult.brokenCard!.instanceId);
+                          setUpgradeResult(null);
+                          if (selectedCard?.instanceId === upgradeResult.brokenCard!.instanceId) {
+                            setSelectedCard(null);
+                          }
+                        }}
+                        variant="ghost"
+                        className="w-full font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30"
+                      >
+                        <Skull className="w-4 h-4 mr-2" />
+                        복구 포기 (카드 파괴)
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => setUpgradeResult(null)}
+                      className={`w-full font-bold ${
+                        upgradeResult.result === "SUCCESS" ? "bg-[#10B981] hover:bg-[#10B981]/80" :
+                        "bg-[#FFB81C] hover:bg-[#FFB81C]/80 text-[#0B0F1A]"
+                      }`}
+                    >
+                      확인
+                    </Button>
+                  )}
                 </div>
               </>
             )}
@@ -1257,7 +1323,7 @@ export function LCKCollection({ onBack }: LCKCollectionProps) {
                       </div>
                       {rates.break > 0 && (
                         <div className="mt-2 text-xs text-red-400 text-center">
-                          ⚠️ 파괴 시 카드가 영구 삭제됩니다!
+                          ⚠️ 파괴 시 복구 비용(샤드)을 지불하거나 카드를 잃게 됩니다!
                         </div>
                       )}
                     </div>
