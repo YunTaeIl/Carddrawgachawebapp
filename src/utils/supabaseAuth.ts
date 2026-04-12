@@ -1,7 +1,7 @@
 // Supabase 인증 유틸리티
 
 import { createClient } from '@supabase/supabase-js';
-import { projectId, publicAnonKey } from '@/utils/supabase/info';
+import { projectId, publicAnonKey, authStorageKey } from '@/utils/supabase/info';
 
 const supabaseUrl = `https://${projectId}.supabase.co`;
 
@@ -15,7 +15,7 @@ export const supabase = createClient(supabaseUrl, publicAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     storage: window.localStorage,
-    storageKey: 'sb-legends-manager-auth-token',
+    storageKey: authStorageKey,
     flowType: 'pkce'
   }
 });

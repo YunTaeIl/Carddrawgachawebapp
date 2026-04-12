@@ -1,8 +1,9 @@
 // Supabase API 호출
 import { LCKCard } from "@/types/lck";
 import { projectId, publicAnonKey } from "@/utils/supabaseAuth";
+import { functionsBasePath } from "@/utils/supabase/info";
 
-const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0`;
+const API_URL = `https://${projectId}.supabase.co/functions/v1/${functionsBasePath}`;
 
 // 서버 응답 타입
 interface ServerCard {

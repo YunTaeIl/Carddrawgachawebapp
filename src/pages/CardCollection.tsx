@@ -3,7 +3,7 @@ import { UserCard, LCKCard } from "@/types/lck";
 import { Book, Lock, CheckCircle2 } from "lucide-react";
 import { LCKHoloCard } from "@/components/LCKHoloCard";
 import { SYNERGIES } from "@/data/synergyData";
-import { projectId, publicAnonKey } from "/utils/supabase/info";
+import { projectId, publicAnonKey, functionsBasePath } from "/utils/supabase/info";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface CardCollectionProps {
@@ -17,6 +17,7 @@ type SortBy = "default" | "team" | "grade" | "position";
 
 export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
   const { accessToken, user } = useAuth();
+  const codexBaseUrl = `https://${projectId}.supabase.co/functions/v1/${functionsBasePath}/codex`;
   const [selectedYear, setSelectedYear] = useState<YearTab>("all");
   const [selectedTab, setSelectedTab] = useState<"collection" | "synergy">("collection");
   const [sortBy, setSortBy] = useState<SortBy>("default");
@@ -40,7 +41,7 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
 
         // 1. 도감 데이터 로드
         const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/${user.id}`,
+          `${codexBaseUrl}/${user.id}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -89,7 +90,7 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
           console.log(`🔄 Auto-syncing ${cardsToDiscover.length} cards to codex...`);
             
           const discoverResponse = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/discover/${user.id}`,
+            `${codexBaseUrl}/discover/${user.id}`,
             {
               method: "POST",
               headers: {
@@ -111,7 +112,7 @@ export function CardCollection({ ownedCards, allCards }: CardCollectionProps) {
 
           // 4. 도감 데이터 다시 로드
           const updatedResponse = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-ffd115c0/codex/${user.id}`,
+            `${codexBaseUrl}/${user.id}`,
             {
               headers: {
                 "Content-Type": "application/json",

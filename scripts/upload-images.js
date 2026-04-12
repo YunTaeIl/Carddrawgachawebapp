@@ -1,13 +1,14 @@
 // Supabase Storage 대량 이미지 업로드 스크립트
-// 
+//
 // 사용법:
-// 1. npm install @supabase/supabase-js
+// 1. npm install
 // 2. .env 파일에 SUPABASE_URL과 SUPABASE_SERVICE_ROLE_KEY 설정
 // 3. node scripts/upload-images.js
 
-const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
-const path = require('path');
+import "dotenv/config";
+import { createClient } from '@supabase/supabase-js';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // 환경 변수에서 Supabase 정보 가져오기
 const supabaseUrl = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL';

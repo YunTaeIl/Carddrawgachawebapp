@@ -134,7 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
       options: {
-        redirectTo: "https://legendsmanager.com/", // 🔥 프로덕션 URL
+        // 공개 저장소에서는 현재 origin 기준으로 처리하고,
+        // 실제 허용 URL은 Supabase Auth 설정에서 관리합니다.
+        redirectTo: window.location.origin + "/",
       },
     });
     

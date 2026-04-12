@@ -61,7 +61,7 @@
 
 ### 3. 환경 변수 설정
 
-루트에 `.env` 파일 생성:
+루트에 `.env` 파일 생성 (`.env.example` 참고):
 
 ```env
 SUPABASE_URL=https://your-project.supabase.co
@@ -79,7 +79,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ### 1. 패키지 설치
 
 ```bash
-npm install @supabase/supabase-js
+npm install
 ```
 
 ### 2. 스크립트 실행
