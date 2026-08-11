@@ -207,32 +207,6 @@ export async function getGameData(userId: string) {
   };
 }
 
-// 게임 데이터 업데이트
-export async function updateGameData(
-  userId: string,
-  updates: {
-    currency?: number;
-    shards?: number;
-    s_pity_stack?: number;
-    a_pity_stack?: number;
-    total_pulls?: number;
-  }
-) {
-  const { data, error } = await supabase
-    .from("user_game_data")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", userId)  // id를 키로 사용
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Update game data error:", error);
-    throw new Error(`Failed to update game data: ${error.message}`);
-  }
-  
-  return data;
-}
-
 // 보유 카드 조회
 export async function getUserCards(userId: string) {
   const { data, error } = await supabase
@@ -335,64 +309,19 @@ export async function updateUserSquad(
   return data;
 }
 
-// 출석 체크
-export async function checkDailyAttendance(userId: string) {
-  // 1. 현재 게임 데이터 조회
-  const gameData = await getGameData(userId);
-  if (!gameData) {
-    throw new Error("Game data not found");
-  }
-  
-  // 2. 마지막 출석 체크 시간 확인
-  const lastCheckIn = gameData.last_check_in ? new Date(gameData.last_check_in) : null;
-  const now = new Date();
-  
-  // 한국 시간 기준 자정 계산 (UTC+9)
-  const koreaOffset = 9 * 60; // 9시간을 분으로
-  const nowKorea = new Date(now.getTime() + koreaOffset * 60 * 1000);
-  const todayKorea = new Date(nowKorea.getFullYear(), nowKorea.getMonth(), nowKorea.getDate());
-  
-  let lastCheckInKorea = null;
-  if (lastCheckIn) {
-    const lastCheckInKoreaTime = new Date(lastCheckIn.getTime() + koreaOffset * 60 * 1000);
-    lastCheckInKorea = new Date(lastCheckInKoreaTime.getFullYear(), lastCheckInKoreaTime.getMonth(), lastCheckInKoreaTime.getDate());
-  }
-  
-  // 3. 오늘 이미 출석했는지 확인
-  if (lastCheckInKorea && lastCheckInKorea.getTime() === todayKorea.getTime()) {
-    return {
-      success: false,
-      message: "이미 오늘 출석했습니다.",
-      nextCheckIn: new Date(todayKorea.getTime() + 24 * 60 * 60 * 1000 - koreaOffset * 60 * 1000).toISOString()
-    };
-  }
-  
-  // 4. 출석 보상 지급 (5000 RP)
-  const newCurrency = gameData.currency + 5000;
-  
-  const { data, error } = await supabase
-    .from("user_game_data")
-    .update({ 
-      currency: newCurrency,
-      last_check_in: now.toISOString(),
-      updated_at: now.toISOString()
-    })
-    .eq("id", userId)  // id를 키로 사용
-    .select()
-    .single();
-  
+// 출석 체크. 날짜 판정/잔액 증가/중복 방지는 DB의 단일 트랜잭션에서 처리한다.
+export async function checkDailyAttendance(userId: string, requestKey: string) {
+  const { data, error } = await supabase.rpc("claim_daily_attendance_for_user", {
+    p_user_id: userId,
+    p_request_key: requestKey,
+  });
+
   if (error) {
-    console.error("Check-in error:", error);
+    console.error("Check-in RPC error:", error);
     throw new Error(`Failed to check in: ${error.message}`);
   }
-  
-  return {
-    success: true,
-    reward: 5000,
-    newCurrency: newCurrency,
-    message: "출석 완료! 5,000 RP를 받았습니다.",
-    nextCheckIn: new Date(todayKorea.getTime() + 24 * 60 * 60 * 1000 - koreaOffset * 60 * 1000).toISOString()
-  };
+
+  return data;
 }
 
 // ==================== 도감 API ====================

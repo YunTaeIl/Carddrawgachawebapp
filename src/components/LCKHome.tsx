@@ -10,8 +10,7 @@ import { Coins, Sparkles, Users, Library, Zap, TrendingUp, LogOut, Share2, Calen
 import { calculateSynergies, calculateCardSynergyBonuses } from "@/utils/synergyEngine";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { toast } from "sonner";
-import { projectId } from '/utils/supabase/info';
-import { supabase } from "@/utils/supabaseAuth";
+import { claimDailyAttendance } from "@/utils/userApi";
 import { generateShareURL } from "@/utils/squadEncryption";
 import { Page } from "@/components/Sidebar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
@@ -163,63 +162,20 @@ export function LCKHome({ onNavigate }: LCKHomeProps) {
   };
 
   const handleCheckIn = async () => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !accessToken) {
       toast.error("로그인이 필요합니다");
       return;
     }
 
     try {
-      // 1. 현재 게임 데이터 조회
-      const { data: gameData, error: fetchError } = await supabase
-        .from('user_game_data')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const result = await claimDailyAttendance(accessToken, crypto.randomUUID());
 
-      if (fetchError || !gameData) {
-        console.error("게임 데이터 조회 실패:", fetchError);
-        toast.error("데이터를 불러올 수 없습니다");
+      if (!result.success) {
+        toast.info(result.message || "이미 오늘 출석했습니다!");
         return;
       }
 
-      // 2. 오늘 이미 출석했는지 확인
-      const now = new Date();
-      const lastCheckIn = gameData.last_check_in ? new Date(gameData.last_check_in) : null;
-
-      if (lastCheckIn) {
-        // 한국 시간 기준으로 날짜 비교
-        const koreaOffset = 9 * 60 * 60 * 1000;
-        const nowKorea = new Date(now.getTime() + koreaOffset);
-        const lastCheckInKorea = new Date(lastCheckIn.getTime() + koreaOffset);
-
-        const todayDate = nowKorea.toISOString().split('T')[0];
-        const lastCheckDate = lastCheckInKorea.toISOString().split('T')[0];
-
-        if (todayDate === lastCheckDate) {
-          toast.info("이미 오늘 출석했습니다!");
-          return;
-        }
-      }
-
-      // 3. 출석 보상 지급 (5000 RP)
-      const newCurrency = gameData.currency + 5000;
-
-      const { error: updateError } = await supabase
-        .from('user_game_data')
-        .update({
-          currency: newCurrency,
-          last_check_in: now.toISOString(),
-          updated_at: now.toISOString()
-        })
-        .eq('user_id', user.id);
-
-      if (updateError) {
-        console.error("업데이트 실패:", updateError);
-        toast.error("출석 체크에 실패했습니다");
-        return;
-      }
-
-      toast.success("출석 완료! 5,000 RP를 받았습니다!");
+      toast.success(result.message || "출석 완료! 5,000 RP를 받았습니다!");
       window.location.reload();
 
     } catch (error) {

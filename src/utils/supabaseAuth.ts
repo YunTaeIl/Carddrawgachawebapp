@@ -90,21 +90,9 @@ export async function createUserProfile(userId: string, username: string) {
   
   if (profileError) throw profileError;
 
-  // 2. 게임 데이터 초기화
-  const { error: gameDataError } = await supabase
-    .from('user_game_data')
-    .insert({
-      id: userId,
-      currency: 10000,
-      shards: 0,
-      s_pity_stack: 0,
-      a_pity_stack: 0,
-      total_pulls: 0
-    });
-  
-  if (gameDataError) throw gameDataError;
+  // 게임 데이터는 auth.users 트리거에서만 생성한다.
 
-  // 3. 스쿼드 슬롯 초기화
+  // 2. 스쿼드 슬롯 초기화
   const positions = ['TOP', 'JGL', 'MID', 'ADC', 'SUP'];
   const squadSlots = positions.map(pos => ({
     user_id: userId,

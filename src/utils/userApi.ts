@@ -50,23 +50,14 @@ export async function getGameData(accessToken: string) {
   });
 }
 
-// 게임 데이터 업데이트
-export async function updateGameData(
-  accessToken: string,
-  updates: {
-    currency?: number;
-    shards?: number;
-    s_pity_stack?: number;
-    a_pity_stack?: number;
-    total_pulls?: number;
-  }
-) {
-  return apiCall("/user/game-data", {
-    method: "PUT",
+// 출석 보상 요청. 같은 requestKey 재시도는 최초 결과를 그대로 반환한다.
+export async function claimDailyAttendance(accessToken: string, requestKey: string) {
+  return apiCall("/user/check-in", {
+    method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
+      "Idempotency-Key": requestKey,
     },
-    body: JSON.stringify(updates),
   });
 }
 

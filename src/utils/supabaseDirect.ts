@@ -14,7 +14,7 @@ export async function getGameDataDirect(accessToken: string) {
   const { data: gameData, error: gameError } = await supabase
     .from("user_game_data")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
   
   if (gameError) {
@@ -77,7 +77,7 @@ export async function getUserCardsDirect(accessToken: string) {
   return allCards;
 }
 
-// 🔥 게임 데이터 업데이트 (팩별 천장 시스템)
+// 게임 진행 저장. 재화 증가는 DB RPC에서 거부되고 서버 보상 API로만 가능하다.
 export async function updateGameDataDirect(
   accessToken: string,
   updates: {
@@ -89,18 +89,26 @@ export async function updateGameDataDirect(
     total_league_count?: number; // 🔥 총 리그 진행 횟수
   }
 ) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
   
-  if (!user) {
+  if (authError || !user) {
     throw new Error("인증되지 않은 사용자입니다.");
+  }
+
+  if (updates.currency === undefined || updates.shards === undefined) {
+    throw new Error("재화 잔액이 포함된 전체 진행 상태가 필요합니다.");
   }
   
   const { data, error } = await supabase
-    .from("user_game_data")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("user_id", user.id)
-    .select()
-    .single();
+    .rpc("save_game_progress", {
+      p_request_key: crypto.randomUUID(),
+      p_currency: updates.currency,
+      p_shards: updates.shards,
+      p_pity_data: updates.pity_data || {},
+      p_pack_statistics: updates.pack_statistics || {},
+      p_total_shards_spent: updates.total_shards_spent || 0,
+      p_total_league_count: updates.total_league_count || 0,
+    });
   
   if (error) {
     throw error;

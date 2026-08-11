@@ -14,7 +14,7 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "Idempotency-Key"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
@@ -116,22 +116,12 @@ app.get("/make-server-ffd115c0/user/game-data", async (c) => {
   }
 });
 
-// 게임 데이터 업데이트
+// 임의 게임 데이터 덮어쓰기는 더 이상 허용하지 않는다.
 app.put("/make-server-ffd115c0/user/game-data", async (c) => {
-  try {
-    const user = await userApi.getUserFromToken(c.req.header("Authorization"));
-    if (!user) {
-      return c.json({ success: false, error: "Unauthorized" }, 401);
-    }
-    
-    const updates = await c.req.json();
-    const gameData = await userApi.updateGameData(user.id, updates);
-    
-    return c.json({ success: true, gameData });
-  } catch (error) {
-    console.log(`Error updating game data: ${error}`);
-    return c.json({ success: false, error: String(error) }, 500);
-  }
+  return c.json({
+    success: false,
+    error: "Direct game data updates are disabled. Use an action-specific endpoint.",
+  }, 405);
 });
 
 // 보유 카드 조회
@@ -232,8 +222,13 @@ app.post("/make-server-ffd115c0/user/check-in", async (c) => {
     if (!user) {
       return c.json({ success: false, error: "Unauthorized" }, 401);
     }
+
+    const requestKey = c.req.header("Idempotency-Key");
+    if (!requestKey || requestKey.length > 128) {
+      return c.json({ success: false, error: "A valid Idempotency-Key header is required" }, 400);
+    }
     
-    const result = await userApi.checkDailyAttendance(user.id);
+    const result = await userApi.checkDailyAttendance(user.id, requestKey);
     return c.json(result);
   } catch (error) {
     console.log(`Error checking in: ${error}`);
